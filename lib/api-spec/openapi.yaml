@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: posts
+    description: Blog post operations
+  - name: comments
+    description: Comment operations
+  - name: categories
+    description: Category operations
 paths:
   /healthz:
     get:
@@ -24,6 +30,171 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /posts:
+    get:
+      operationId: listPosts
+      tags: [posts]
+      summary: List posts
+      description: Returns published posts, optionally filtered by category, tag, or search text
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: tag
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostSummary"
+    post:
+      operationId: createPost
+      tags: [posts]
+      summary: Create a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+  /posts/featured:
+    get:
+      operationId: listFeaturedPosts
+      tags: [posts]
+      summary: Featured posts
+      description: Returns a small curated set of featured/pinned posts for hero placement
+      responses:
+        "200":
+          description: Featured posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostSummary"
+  /posts/{slug}:
+    get:
+      operationId: getPost
+      tags: [posts]
+      summary: Get a post by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Post detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "404":
+          description: Not found
+    patch:
+      operationId: updatePost
+      tags: [posts]
+      summary: Update a post
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+    delete:
+      operationId: deletePost
+      tags: [posts]
+      summary: Delete a post
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+  /posts/{slug}/comments:
+    get:
+      operationId: listComments
+      tags: [comments]
+      summary: List comments for a post
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: createComment
+      tags: [comments]
+      summary: Add a comment to a post
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List categories with post counts
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategorySummary"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +204,76 @@ components:
           type: string
       required:
         - status
-
+    PostSummary:
+      type: object
+      required: [id, slug, title, excerpt, coverImageUrl, category, tags, authorName, publishedAt, readingMinutes, featured]
+      properties:
+        id: { type: integer }
+        slug: { type: string }
+        title: { type: string }
+        excerpt: { type: string }
+        coverImageUrl: { type: ["string", "null"] }
+        category: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        authorName: { type: string }
+        publishedAt: { type: string, format: date-time }
+        readingMinutes: { type: integer }
+        featured: { type: boolean }
+    Post:
+      allOf:
+        - $ref: "#/components/schemas/PostSummary"
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: string
+    PostInput:
+      type: object
+      required: [title, excerpt, content, category, authorName]
+      properties:
+        title: { type: string, minLength: 1 }
+        excerpt: { type: string, minLength: 1 }
+        content: { type: string, minLength: 1 }
+        coverImageUrl: { type: string }
+        category: { type: string, minLength: 1 }
+        tags:
+          type: array
+          items: { type: string }
+        authorName: { type: string, minLength: 1 }
+        featured: { type: boolean }
+    PostUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1 }
+        excerpt: { type: string, minLength: 1 }
+        content: { type: string, minLength: 1 }
+        coverImageUrl: { type: string }
+        category: { type: string, minLength: 1 }
+        tags:
+          type: array
+          items: { type: string }
+        authorName: { type: string, minLength: 1 }
+        featured: { type: boolean }
+    Comment:
+      type: object
+      required: [id, postSlug, authorName, body, createdAt]
+      properties:
+        id: { type: integer }
+        postSlug: { type: string }
+        authorName: { type: string }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+    CommentInput:
+      type: object
+      required: [authorName, body]
+      properties:
+        authorName: { type: string, minLength: 1 }
+        body: { type: string, minLength: 1 }
+    CategorySummary:
+      type: object
+      required: [name, postCount]
+      properties:
+        name: { type: string }
+        postCount: { type: integer }

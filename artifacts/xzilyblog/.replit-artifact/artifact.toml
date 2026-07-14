@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Xzily Blog"
+version = "1.0.0"
+id = "artifacts/xzilyblog"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18890
+
+[services.development]
+run = "pnpm --filter @workspace/xzilyblog run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/xzilyblog", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/xzilyblog/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18890"
+BASE_PATH = "/"
