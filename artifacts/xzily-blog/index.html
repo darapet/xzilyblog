@@ -2,23 +2,107 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Xzily</title>
-    <meta name="description" content="Xzily — built on Replit. Update this description to reflect the app." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xzily — Independent Editorial on Technology, Business &amp; Culture</title>
+    <meta name="description" content="Xzily is an independent editorial covering technology, business, lifestyle, health, culture, and travel." />
     <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="Xzily" />
-    <meta property="og:description" content="Xzily — built on Replit. Update this description to reflect the app." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Xzily" />
-    <meta name="twitter:description" content="Xzily — built on Replit. Update this description to reflect the app." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <div id="site-navbar"></div>
+
+    <main id="main">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="reveal is-visible">
+            <span class="hero-kicker">Est. 2024 &middot; Independent Editorial</span>
+            <h1>Stories that <em>sharpen</em><br />how you see the world.</h1>
+            <p class="lede">Xzily covers technology, business, lifestyle, health, culture, and travel &mdash; reported and written for readers who want depth, not noise.</p>
+            <div class="hero-actions">
+              <a href="#latest" class="btn btn-primary">Start reading</a>
+              <a href="/about.html" class="btn btn-outline">About Xzily</a>
+            </div>
+            <div class="hero-stats">
+              <div class="stat"><b id="statPosts">10</b><span>Stories</span></div>
+              <div class="stat"><b id="statCategories">6</b><span>Sections</span></div>
+              <div class="stat"><b id="statReaders">85k</b><span>Monthly readers</span></div>
+            </div>
+          </div>
+          <div class="hero-feature-card reveal is-visible" id="heroFeature"></div>
+        </div>
+      </section>
+
+      <section class="section" id="categories">
+        <div class="container">
+          <div class="section-head reveal">
+            <div>
+              <span class="eyebrow">Browse by section</span>
+              <h2>Find your beat</h2>
+            </div>
+          </div>
+          <div class="cat-grid reveal" id="catGrid"></div>
+        </div>
+      </section>
+
+      <section class="section section-soft" id="latest">
+        <div class="container">
+          <div class="section-head reveal">
+            <div>
+              <span class="eyebrow">Just published</span>
+              <h2>Latest stories</h2>
+            </div>
+            <a class="section-link" href="/search.html">All stories &rarr;</a>
+          </div>
+          <div class="grid grid-3 stagger reveal" id="latestGrid"></div>
+        </div>
+      </section>
+
+      <section class="section" id="trending">
+        <div class="container">
+          <div class="section-head reveal">
+            <div>
+              <span class="eyebrow">Reader favorites</span>
+              <h2>Trending this week</h2>
+            </div>
+          </div>
+          <div id="trendingList" class="reveal"></div>
+        </div>
+      </section>
+
+      <section class="section section-soft" id="bookmarks">
+        <div class="container">
+          <div class="section-head reveal">
+            <div>
+              <span class="eyebrow">Saved for later</span>
+              <h2>Your bookmarks</h2>
+            </div>
+          </div>
+          <div class="grid grid-3 stagger reveal" id="bookmarkGrid"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="newsletter reveal">
+            <div>
+              <h2>Never miss a story.</h2>
+              <p>One email a week. No spam, ever.</p>
+            </div>
+            <form class="newsletter-form">
+              <input type="email" placeholder="you@email.com" required />
+              <button class="btn btn-primary" type="submit">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="site-footer"></div>
+    <script type="module" src="/js/home.js"></script>
   </body>
 </html>

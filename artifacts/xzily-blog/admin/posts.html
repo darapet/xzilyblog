@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Posts — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Manage Posts</h1><p id="adminSub"></p></div>
+          <a href="/admin/editor.html" class="btn btn-primary">+ New story</a>
+        </div>
+        <div class="tab-strip" id="statusTabs">
+          <button class="active" data-status="all">All</button>
+          <button data-status="published">Published</button>
+          <button data-status="draft">Drafts</button>
+        </div>
+        <div class="admin-panel">
+          <table class="data-table">
+            <thead><tr><th>Story</th><th>Category</th><th>Status</th><th>Views</th><th>Published</th><th></th></tr></thead>
+            <tbody id="postsTableBody"></tbody>
+          </table>
+          <div id="postsEmpty"></div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/js/admin-posts.js"></script>
+  </body>
+</html>

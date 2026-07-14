@@ -1,9 +1,5 @@
 import path from 'path';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
-
-import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
 const rawPort = process.env.PORT;
 
@@ -27,42 +23,36 @@ if (!basePath) {
   );
 }
 
+// Plain HTML / CSS / JS static site -- no framework, no JSX.
+// Vite is used only as a lightweight static dev server + multi-page bundler.
 export default defineConfig({
   base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== 'production' &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import('@replit/vite-plugin-cartographer').then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, '..'),
-            }),
-          ),
-          await import('@replit/vite-plugin-dev-banner').then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(import.meta.dirname, 'src'),
-      '@assets': path.resolve(
-        import.meta.dirname,
-        '..',
-        '..',
-        'attached_assets',
-      ),
-    },
-    dedupe: ['react', 'react-dom'],
-  },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        index: path.resolve(import.meta.dirname, 'index.html'),
+        about: path.resolve(import.meta.dirname, 'about.html'),
+        contact: path.resolve(import.meta.dirname, 'contact.html'),
+        privacy: path.resolve(import.meta.dirname, 'privacy.html'),
+        terms: path.resolve(import.meta.dirname, 'terms.html'),
+        cookies: path.resolve(import.meta.dirname, 'cookies.html'),
+        disclaimer: path.resolve(import.meta.dirname, 'disclaimer.html'),
+        login: path.resolve(import.meta.dirname, 'login.html'),
+        register: path.resolve(import.meta.dirname, 'register.html'),
+        article: path.resolve(import.meta.dirname, 'article.html'),
+        category: path.resolve(import.meta.dirname, 'category.html'),
+        search: path.resolve(import.meta.dirname, 'search.html'),
+        adminLogin: path.resolve(import.meta.dirname, 'admin/login.html'),
+        adminIndex: path.resolve(import.meta.dirname, 'admin/index.html'),
+        adminPosts: path.resolve(import.meta.dirname, 'admin/posts.html'),
+        adminEditor: path.resolve(import.meta.dirname, 'admin/editor.html'),
+        adminComments: path.resolve(import.meta.dirname, 'admin/comments.html'),
+        adminSubscribers: path.resolve(import.meta.dirname, 'admin/subscribers.html'),
+      },
+    },
   },
   server: {
     port,

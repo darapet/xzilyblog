@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comments — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Comments</h1><p id="adminSub"></p></div>
+        </div>
+        <div class="admin-panel">
+          <table class="data-table">
+            <thead><tr><th>Reader</th><th>Comment</th><th>Story</th><th>Posted</th><th></th></tr></thead>
+            <tbody id="commentsTableBody"></tbody>
+          </table>
+          <div id="commentsEmpty"></div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/js/admin-comments.js"></script>
+  </body>
+</html>

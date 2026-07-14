@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Story Editor — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">New Story</h1><p id="adminSub"></p></div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-outline" id="saveDraftBtn">Save draft</button>
+            <button class="btn btn-primary" id="publishBtn">Publish</button>
+          </div>
+        </div>
+        <div class="admin-grid-2">
+          <div class="admin-panel">
+            <div class="field"><label for="fTitle">Title</label><input id="fTitle" placeholder="A striking headline" /></div>
+            <div class="field"><label for="fExcerpt">Excerpt</label><textarea id="fExcerpt" rows="2" placeholder="One or two sentences that summarize the story"></textarea></div>
+            <div class="field">
+              <label for="fBody">Body</label>
+              <div class="editor-toolbar" id="editorToolbar"></div>
+              <div class="editor-canvas" id="fBody" contenteditable="true" data-placeholder="Write your story…"></div>
+              <div class="autosave-note" id="autosaveNote"></div>
+            </div>
+          </div>
+          <div>
+            <div class="admin-panel">
+              <div class="admin-panel-head"><h3>Cover image</h3></div>
+              <div class="field"><input id="fCover" placeholder="/images/cover-1.jpg or paste an image URL" /></div>
+              <img id="coverPreview" src="/images/cover-1.jpg" alt="Cover preview" style="border-radius:10px;width:100%;aspect-ratio:16/10;object-fit:cover;" />
+            </div>
+            <div class="admin-panel">
+              <div class="admin-panel-head"><h3>Organize</h3></div>
+              <div class="field"><label for="fCategory">Category</label><select id="fCategory"></select></div>
+              <div class="field"><label for="fTags">Tags (comma separated)</label><input id="fTags" placeholder="AI, Design, Culture" /></div>
+              <div class="field"><label for="fAuthor">Author</label><select id="fAuthor"></select></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/js/admin-editor.js"></script>
+  </body>
+</html>
