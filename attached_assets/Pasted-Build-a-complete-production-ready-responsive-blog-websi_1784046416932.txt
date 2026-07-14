@@ -1,0 +1,204 @@
+Build a complete, production-ready, responsive blog website called "The Educative Blog".
+The website should be modern, professional, fast, mobile-friendly, SEO-optimized, and easy to maintain.
+Technology Stack
+Use:
+HTML5
+CSS3
+JavaScript
+Node.js
+Express.js
+MongoDB Atlas
+Mongoose
+JWT Authentication
+bcrypt
+Multer
+Nodemailer
+The project must be separated into:
+client/
+server/
+The frontend must be deployable on Vercel.
+The backend must be deployable on Render.
+The database must use MongoDB Atlas.
+Homepage
+Create a beautiful homepage containing:
+Professional logo
+Website title: The Educative Blog
+Hero section
+Featured article
+Latest articles
+Popular articles
+Categories
+Search bar
+Newsletter subscription
+Footer
+About section
+Contact page
+Privacy Policy
+Terms and Conditions
+Cookie Policy
+Disclaimer
+Use smooth animations and modern UI.
+User Features
+Visitors should be able to:
+Create an account
+Log in
+Stay logged in
+Read blog posts
+Search blogs
+Filter by category
+Like articles
+Comment on articles
+Reply to comments
+Edit and delete only their own comments
+Bookmark articles
+Share to WhatsApp, Facebook, Telegram, LinkedIn, X, and copy link
+Subscribe with email
+Turn browser notifications on or off
+View related articles
+View estimated reading time
+Admin Dashboard
+Create a hidden Admin Dashboard.
+The admin page should only be accessible after login.
+Do not expose admin routes publicly.
+Only authenticated administrators should have access.
+The admin dashboard must contain:
+Dashboard
+Create Blog
+Edit Blog
+Delete Blog
+Drafts
+Categories
+Tags
+Comments
+Subscribers
+Analytics
+Website Settings
+Notification Centre
+Rich Text Editor
+Integrate a professional rich text editor (such as TipTap, Editor.js, or TinyMCE) into the "Create Blog" and "Edit Blog" pages.
+The editor should support:
+Headings (H1-H6)
+Bold
+Italic
+Underline
+Text colours
+Font sizes
+Quotes
+Bullet lists
+Numbered lists
+Tables
+Hyperlinks
+Images
+YouTube embeds
+Code blocks
+Horizontal lines
+Undo/Redo
+Drag-and-drop image uploads
+Live preview
+Save as draft
+Auto-save while writing
+The published article should preserve all formatting.
+Blog System
+Every article should support:
+Cover image
+Title
+Subtitle
+Author
+Date
+Reading time
+Categories
+Tags
+SEO title
+SEO description
+Open Graph image
+Featured article option
+Draft or Published status
+Image Upload
+Allow uploading:
+Cover image
+Inline images
+Automatically compress uploaded images.
+Store image paths in MongoDB.
+Notifications
+Ask visitors:
+"Allow notifications from The Educative Blog?"
+If accepted:
+Send browser push notifications every time a new article is published.
+Include:
+Title
+Thumbnail
+Short description
+Link to article
+Allow users to unsubscribe later.
+Email Subscription
+Allow visitors to subscribe using email.
+Send:
+Welcome email
+New article email
+Store subscriber emails securely.
+Allow exporting subscriber emails.
+Authentication
+Create:
+User registration
+User login
+Admin login
+Forgot password
+Reset password
+Email verification
+JWT authentication
+bcrypt password hashing
+Comments
+Users should be able to:
+Comment
+Reply
+Like comments
+Edit their own comments
+Delete their own comments
+Report inappropriate comments
+Analytics
+The admin dashboard should display:
+Total users
+Subscribers
+Views
+Likes
+Comments
+Most viewed articles
+Recent users
+Popular categories
+Monthly statistics
+SEO
+Automatically generate:
+Meta title
+Meta description
+Friendly URLs
+XML sitemap
+robots.txt
+Structured data
+Open Graph tags
+Twitter Cards
+Performance
+Lazy loading
+Image compression
+Caching
+Pagination
+Responsive design
+Accessibility support
+Fast loading
+Security
+Input validation
+Rate limiting
+Helmet
+XSS protection
+CSRF protection
+Secure cookies
+JWT authentication
+Role-based authorization
+Backend API
+Create REST APIs for:
+Authentication
+Users
+Blogs
+Categories
+Comments
+Likes
+Subscribers
