@@ -104,6 +104,20 @@ function render(p) {
   });
 
   renderComments(p.id);
+  initReadingProgress();
+}
+
+function initReadingProgress() {
+  const bar = document.getElementById('readingProgress');
+  if (!bar) return;
+  const onScroll = () => {
+    const doc = document.documentElement;
+    const scrollable = doc.scrollHeight - doc.clientHeight;
+    const pct = scrollable > 0 ? (doc.scrollTop / scrollable) * 100 : 0;
+    bar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 }
 
 function shareUrl(p) {
