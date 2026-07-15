@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Settings</h1><p id="adminSub"></p></div>
+          <button class="btn btn-primary" id="saveSettingsBtn">Save changes</button>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h3>Cloudinary — image storage</h3>
+          </div>
+          <p class="settings-hint">
+            Create a free Cloudinary account, then in Settings → Upload, add an
+            <strong>unsigned</strong> upload preset. Paste the cloud name and preset name below —
+            no API secret is ever needed for this, so nothing sensitive is stored here.
+          </p>
+          <div class="field"><label for="fCloudName">Cloud name</label><input id="fCloudName" placeholder="e.g. dxy1abc23" /></div>
+          <div class="field"><label for="fUploadPreset">Unsigned upload preset</label><input id="fUploadPreset" placeholder="e.g. xzily_unsigned" /></div>
+          <p class="settings-status" id="cloudinaryStatus"></p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h3>Groq — AI Write</h3>
+          </div>
+          <p class="settings-hint">
+            Paste up to 5 Groq API keys (from <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>).
+            The AI Write button in the story editor tries them in order, so if one hits its rate
+            limit the next one keeps working.
+          </p>
+          <div class="settings-key-grid" id="groqKeyGrid"></div>
+          <p class="settings-status" id="groqStatus"></p>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="../js/admin-settings.js"></script>
+  </body>
+</html>

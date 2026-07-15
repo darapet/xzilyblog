@@ -114,6 +114,35 @@ function slugify(str) {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+function mapSettings(row) {
+  return {
+    cloudinaryCloudName: row?.cloudinary_cloud_name || '',
+    cloudinaryUploadPreset: row?.cloudinary_upload_preset || '',
+    groqApiKey1: row?.groq_api_key_1 || '',
+    groqApiKey2: row?.groq_api_key_2 || '',
+    groqApiKey3: row?.groq_api_key_3 || '',
+    groqApiKey4: row?.groq_api_key_4 || '',
+    groqApiKey5: row?.groq_api_key_5 || '',
+  };
+}
+
+// Unsigned upload -- only the cloud name + a preset (both non-secret,
+// configured for unsigned uploads in the Cloudinary dashboard) ever reach
+// the browser. No API secret is needed or stored anywhere for this to work.
+async function uploadToCloudinary(file, folder, settings) {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', settings.cloudinaryUploadPreset);
+  form.append('folder', `xzily/${folder}`);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${settings.cloudinaryCloudName}/image/upload`, {
+    method: 'POST',
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'Cloudinary upload failed');
+  return data.secure_url;
+}
+
 export const store = {
   // ---------------- Auth ----------------
   async getSession() {
@@ -327,10 +356,18 @@ export const store = {
     if (error) throw error;
   },
 
-  // ---------------- Image uploads (admin only, Supabase Storage) ----------------
+  // ---------------- Image uploads (admin only) ----------------
+  // Uploads to Cloudinary when it's configured in Settings (unsigned upload
+  // preset, so no API secret ever touches the browser); falls back to
+  // Supabase Storage otherwise so the editor keeps working before Cloudinary
+  // is set up.
   async uploadImage(file, folder = 'covers') {
     const session = await store.getSession();
     if (!session || !session.isAdmin) throw new AuthRequiredError('Sign in as an admin to upload images.');
+    const settings = await store.getSettings();
+    if (settings.cloudinaryCloudName && settings.cloudinaryUploadPreset) {
+      return await uploadToCloudinary(file, folder, settings);
+    }
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
     const id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
     const path = `${folder}/${id}.${ext}`;
@@ -342,6 +379,75 @@ export const store = {
     if (error) throw error;
     const { data } = supabase.storage.from('post-images').getPublicUrl(path);
     return data.publicUrl;
+  },
+
+  // ---------------- Site settings (admin only: Cloudinary + Groq) ----------------
+  async getSettings() {
+    const { data, error } = await supabase.from('site_settings').select('*').eq('id', true).maybeSingle();
+    if (error) throw error;
+    return mapSettings(data);
+  },
+  async saveSettings(patch) {
+    const record = {};
+    if ('cloudinaryCloudName' in patch) record.cloudinary_cloud_name = patch.cloudinaryCloudName.trim();
+    if ('cloudinaryUploadPreset' in patch) record.cloudinary_upload_preset = patch.cloudinaryUploadPreset.trim();
+    for (let i = 1; i <= 5; i++) {
+      const key = `groqApiKey${i}`;
+      if (key in patch) record[`groq_api_key_${i}`] = (patch[key] || '').trim();
+    }
+    record.updated_at = new Date().toISOString();
+    const { data, error } = await supabase.from('site_settings').update(record).eq('id', true).select().single();
+    if (error) throw error;
+    return mapSettings(data);
+  },
+
+  // ---------------- AI Write (Groq) ----------------
+  // Tries each configured key in order (1-5), skipping to the next on an
+  // auth/quota error so one exhausted free-tier key doesn't block writing.
+  async aiWrite(topic) {
+    const settings = await store.getSettings();
+    const keys = [1, 2, 3, 4, 5].map((i) => settings[`groqApiKey${i}`]).filter(Boolean);
+    if (keys.length === 0) throw new Error('No Groq API key configured yet. Add one in Settings.');
+
+    const prompt = `Write a blog post draft for "The Educative Blog" about: ${topic}\n\n` +
+      `Respond with strict JSON only, no markdown fences, in this exact shape:\n` +
+      `{"title": "...", "excerpt": "one or two sentence summary", "bodyHtml": "<h2>...</h2><p>...</p> using only h2, h3, p, ul, li, blockquote, strong, em tags"}`;
+
+    let lastError;
+    for (const key of keys) {
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: 'You are a skilled editorial writer. Always respond with strict JSON only.' },
+              { role: 'user', content: prompt },
+            ],
+            temperature: 0.7,
+          }),
+        });
+        if (!res.ok) {
+          const status = res.status;
+          lastError = new Error(`Groq request failed (${status})`);
+          if (status === 401 || status === 429) continue; // try next key
+          throw lastError;
+        }
+        const data = await res.json();
+        const raw = data.choices?.[0]?.message?.content || '';
+        const cleaned = raw.trim().replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+        const parsed = JSON.parse(cleaned);
+        return {
+          title: parsed.title || '',
+          excerpt: parsed.excerpt || '',
+          bodyHtml: parsed.bodyHtml || '',
+        };
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    throw lastError || new Error('AI write failed.');
   },
 
   // Editorial "author" metadata (Marcus Chen, Elena Rostova, etc.) is a

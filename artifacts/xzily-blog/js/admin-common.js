@@ -19,6 +19,7 @@ export function renderAdminShell(active, session) {
     ['editor.html', 'plus', 'New Story'],
     ['comments.html', 'messageCircle', 'Comments'],
     ['subscribers.html', 'usersIcon', 'Subscribers'],
+    ['settings.html', 'settings', 'Settings'],
   ];
   return `
     <aside class="admin-sidebar" id="adminSidebar">

@@ -270,3 +270,32 @@ create policy "Admins can update post images" on storage.objects
 drop policy if exists "Admins can delete post images" on storage.objects;
 create policy "Admins can delete post images" on storage.objects
   for delete using (bucket_id = 'post-images' and public.is_admin());
+
+-- =========================================================
+-- site_settings — single-row config for admin-configurable third-party
+-- services (Cloudinary image hosting, Groq API keys for AI-assisted
+-- writing). Admin-only read/write; never exposed to anonymous readers.
+-- =========================================================
+create table if not exists public.site_settings (
+  id boolean primary key default true,
+  cloudinary_cloud_name text not null default '',
+  cloudinary_upload_preset text not null default '',
+  groq_api_key_1 text not null default '',
+  groq_api_key_2 text not null default '',
+  groq_api_key_3 text not null default '',
+  groq_api_key_4 text not null default '',
+  groq_api_key_5 text not null default '',
+  updated_at timestamptz not null default now(),
+  constraint site_settings_singleton check (id)
+);
+insert into public.site_settings (id) values (true) on conflict (id) do nothing;
+
+alter table public.site_settings enable row level security;
+
+drop policy if exists "admins can view settings" on public.site_settings;
+create policy "admins can view settings" on public.site_settings
+  for select using (public.is_admin());
+
+drop policy if exists "admins can update settings" on public.site_settings;
+create policy "admins can update settings" on public.site_settings
+  for update using (public.is_admin());

@@ -79,10 +79,61 @@ async function init() {
   document.getElementById('previewBtn').addEventListener('click', () => openPreview(existing));
   document.getElementById('saveDraftBtn').addEventListener('click', () => save('draft', existing));
   document.getElementById('publishBtn').addEventListener('click', () => save('published', existing));
+  document.getElementById('aiWriteBtn').addEventListener('click', openAiWriteModal);
 
   document.getElementById('fBody').addEventListener('input', () => {
     const note = document.getElementById('autosaveNote');
     note.innerHTML = `${icon('save', 13)} Draft changes not yet saved — click "Save draft" to persist.`;
+  });
+}
+
+function openAiWriteModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'ai-write-modal';
+  overlay.innerHTML = `
+    <div class="ai-write-card">
+      <h3>${icon('sparkle', 18)} AI Write</h3>
+      <p>Describe what the story should be about. This replaces the title, excerpt, and body with a generated draft you can then edit.</p>
+      <textarea id="aiTopicInput" placeholder="e.g. Why remote teams still struggle with async communication"></textarea>
+      <div class="error" id="aiWriteError" style="display:none;"></div>
+      <div class="ai-write-actions">
+        <button class="btn btn-outline" id="aiWriteCancel">Cancel</button>
+        <button class="btn btn-primary" id="aiWriteGenerate">Generate</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('aiTopicInput').focus();
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.getElementById('aiWriteCancel').addEventListener('click', close);
+  document.getElementById('aiWriteGenerate').addEventListener('click', async () => {
+    const topic = document.getElementById('aiTopicInput').value.trim();
+    const errEl = document.getElementById('aiWriteError');
+    errEl.style.display = 'none';
+    if (!topic) {
+      errEl.textContent = 'Describe a topic first.';
+      errEl.style.display = '';
+      return;
+    }
+    const btn = document.getElementById('aiWriteGenerate');
+    btn.disabled = true;
+    btn.textContent = 'Writing…';
+    try {
+      const draft = await store.aiWrite(topic);
+      document.getElementById('fTitle').value = draft.title;
+      document.getElementById('fExcerpt').value = draft.excerpt;
+      document.getElementById('fBody').innerHTML = draft.bodyHtml;
+      const note = document.getElementById('autosaveNote');
+      note.innerHTML = `${icon('save', 13)} Draft changes not yet saved — click "Save draft" to persist.`;
+      toast('AI draft generated — review and edit before publishing');
+      close();
+    } catch (err) {
+      errEl.textContent = err.message || 'Could not generate a draft.';
+      errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Generate';
+    }
   });
 }
 
