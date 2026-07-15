@@ -327,6 +327,23 @@ export const store = {
     if (error) throw error;
   },
 
+  // ---------------- Image uploads (admin only, Supabase Storage) ----------------
+  async uploadImage(file, folder = 'covers') {
+    const session = await store.getSession();
+    if (!session || !session.isAdmin) throw new AuthRequiredError('Sign in as an admin to upload images.');
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    const path = `${folder}/${id}.${ext}`;
+    const { error } = await supabase.storage.from('post-images').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from('post-images').getPublicUrl(path);
+    return data.publicUrl;
+  },
+
   // Editorial "author" metadata (Marcus Chen, Elena Rostova, etc.) is a
   // fixed staff list, not tied to reader/admin auth accounts.
   userById(id) {

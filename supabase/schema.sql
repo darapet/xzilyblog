@@ -246,3 +246,27 @@ create table if not exists public.contacts (
 alter table public.contacts enable row level security;
 create policy "anyone can send a contact message" on public.contacts for insert with check (true);
 create policy "admins can view contact messages" on public.contacts for select using (public.is_admin());
+
+-- =========================================================
+-- storage — public bucket for cover images / in-story images,
+-- uploaded from the admin editor. Only admins may write; anyone may read.
+-- =========================================================
+insert into storage.buckets (id, name, public)
+values ('post-images', 'post-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Public read post images" on storage.objects;
+create policy "Public read post images" on storage.objects
+  for select using (bucket_id = 'post-images');
+
+drop policy if exists "Admins can upload post images" on storage.objects;
+create policy "Admins can upload post images" on storage.objects
+  for insert with check (bucket_id = 'post-images' and public.is_admin());
+
+drop policy if exists "Admins can update post images" on storage.objects;
+create policy "Admins can update post images" on storage.objects
+  for update using (bucket_id = 'post-images' and public.is_admin());
+
+drop policy if exists "Admins can delete post images" on storage.objects;
+create policy "Admins can delete post images" on storage.objects
+  for delete using (bucket_id = 'post-images' and public.is_admin());

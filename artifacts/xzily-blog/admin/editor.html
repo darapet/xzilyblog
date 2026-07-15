@@ -36,8 +36,15 @@
           <div>
             <div class="admin-panel">
               <div class="admin-panel-head"><h3>Cover image</h3></div>
-              <div class="field"><input id="fCover" placeholder="../images/cover-1.jpg or paste an image URL" /></div>
-              <img id="coverPreview" src="../images/cover-1.jpg" alt="Cover preview" style="border-radius:10px;width:100%;aspect-ratio:16/10;object-fit:cover;" />
+              <div class="cover-upload-zone" id="coverUploadZone">
+                <img id="coverPreview" alt="Cover preview" style="display:none;" />
+                <div id="coverEmptyHint">
+                  <div class="icon-wrap"></div>
+                  <p><strong>Click to upload</strong> or drag an image here</p>
+                  <span>PNG or JPG, up to a few MB</span>
+                </div>
+              </div>
+              <input type="file" id="coverFileInput" accept="image/*" hidden />
             </div>
             <div class="admin-panel">
               <div class="admin-panel-head"><h3>Organize</h3></div>
