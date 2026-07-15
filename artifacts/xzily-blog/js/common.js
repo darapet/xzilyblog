@@ -148,7 +148,7 @@ export function renderFooter() {
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="index.html" class="brand">THE EDUCATIVE BLOG<span class="dot">.</span></a>
-          <p>Independent editorial covering technology, business, culture, health, and travel.</p>
+          <p>Your trusted source for insightful stories, practical knowledge, and fresh perspectives on education, technology, business, lifestyle, health, travel, culture, and more.</p>
           <div class="footer-social">
             <a href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
             <a href="#" aria-label="Facebook">${icon('facebook', 16)}</a>
