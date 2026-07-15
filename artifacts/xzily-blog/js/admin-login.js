@@ -9,7 +9,7 @@ document.getElementById('adminLoginForm').addEventListener('submit', (e) => {
   if (session) {
     msg.textContent = 'Signed in — loading dashboard…';
     msg.className = 'form-msg success show';
-    setTimeout(() => (window.location.href = '/admin/index.html'), 500);
+    setTimeout(() => (window.location.href = 'index.html'), 500);
   } else {
     msg.textContent = 'Invalid credentials. Use the demo credentials shown above.';
     msg.className = 'form-msg error show';

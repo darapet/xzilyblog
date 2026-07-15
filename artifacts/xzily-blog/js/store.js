@@ -56,7 +56,7 @@ export const store = {
       title: post.title,
       excerpt: post.excerpt,
       content: post.content,
-      coverImage: post.coverImage || '/images/cover-1.jpg',
+      coverImage: post.coverImage || 'images/cover-1.jpg',
       authorId: post.authorId || 'u1',
       categoryId: post.categoryId,
       tags: post.tags || [],
@@ -228,7 +228,7 @@ export const store = {
   },
 
   userById(id) {
-    return USERS.find((u) => u.id === id) || { id, name: 'Guest Reader', avatar: '/images/avatar-1.jpg' };
+    return USERS.find((u) => u.id === id) || { id, name: 'Guest Reader', avatar: 'images/avatar-1.jpg' };
   },
 
   reset() {

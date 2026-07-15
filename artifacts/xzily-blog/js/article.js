@@ -22,7 +22,7 @@ function notFoundHtml() {
       <div class="icon-wrap">${icon('alertTriangle', 26)}</div>
       <h3>Story not found</h3>
       <p>That article may have been moved or unpublished.</p>
-      <p style="margin-top:18px;"><a class="btn btn-primary" href="/index.html">Back to home</a></p>
+      <p style="margin-top:18px;"><a class="btn btn-primary" href="index.html">Back to home</a></p>
     </div>`;
 }
 
@@ -34,8 +34,8 @@ function render(p) {
 
   document.getElementById('articleRoot').innerHTML = `
     <div class="breadcrumb">
-      <a href="/index.html">Home</a> ${icon('chevronRight', 12)}
-      <a href="/category.html?slug=${cat ? cat.slug : ''}">${cat ? cat.name : ''}</a> ${icon('chevronRight', 12)}
+      <a href="index.html">Home</a> ${icon('chevronRight', 12)}
+      <a href="category.html?slug=${cat ? cat.slug : ''}">${cat ? cat.name : ''}</a> ${icon('chevronRight', 12)}
       <span>${escapeHtml(p.title)}</span>
     </div>
     <span class="cat-badge">${cat ? cat.name : ''}</span>
@@ -57,7 +57,7 @@ function render(p) {
     <img class="article-cover" src="${p.coverImage}" alt="${escapeHtml(p.title)}" />
     <div class="article-body">${p.content}</div>
     <div class="article-tags">
-      ${p.tags.map((t) => `<a class="tag-chip" href="/search.html?q=${encodeURIComponent(t)}">${icon('tag', 12)} ${t}</a>`).join('')}
+      ${p.tags.map((t) => `<a class="tag-chip" href="search.html?q=${encodeURIComponent(t)}">${icon('tag', 12)} ${t}</a>`).join('')}
     </div>
     <div class="engage-bar">
       <button class="icon-btn ${store.isLiked(p.id) ? 'is-active' : ''}" id="likeBtn">${icon('heart', 18)} <span id="likeCount">${formatCount(p.likes)}</span></button>
@@ -125,7 +125,7 @@ function sidebarHtml(p) {
       <h5>Related stories</h5>
       <div style="display:flex;flex-direction:column;gap:14px;">
         ${related.map((r) => `
-          <a href="/article.html?slug=${r.slug}" style="display:flex;gap:10px;">
+          <a href="article.html?slug=${r.slug}" style="display:flex;gap:10px;">
             <span class="thumb" style="width:64px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;"><img src="${r.coverImage}" style="width:100%;height:100%;object-fit:cover;" /></span>
             <span style="font-size:13.5px;font-weight:600;line-height:1.3;">${r.title}</span>
           </a>`).join('') || '<span style="font-size:13px;color:var(--ink-400);">No related stories yet.</span>'}
@@ -208,7 +208,7 @@ function commentCount(id) {
 }
 
 function commentHtml(c) {
-  const author = store.userById(c.authorId) || { name: c.authorName || 'Guest Reader', avatar: '/images/avatar-1.jpg' };
+  const author = store.userById(c.authorId) || { name: c.authorName || 'Guest Reader', avatar: 'images/avatar-1.jpg' };
   const liked = store.getState().likedComments.includes(c.id);
   return `
     <div class="comment">

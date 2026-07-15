@@ -50,12 +50,12 @@ export function renderNavbar(activePath = '') {
   const session = store.getSession();
   const bookmarkCount = store.getBookmarkedPosts().length;
   const links = [
-    ['/index.html', 'Home'],
-    ['/category.html?slug=technology', 'Technology'],
-    ['/category.html?slug=business', 'Business'],
-    ['/category.html?slug=lifestyle', 'Lifestyle'],
-    ['/category.html?slug=health', 'Health'],
-    ['/about.html', 'About'],
+    ['index.html', 'Home'],
+    ['category.html?slug=technology', 'Technology'],
+    ['category.html?slug=business', 'Business'],
+    ['category.html?slug=lifestyle', 'Lifestyle'],
+    ['category.html?slug=health', 'Health'],
+    ['about.html', 'About'],
   ];
   const navLinks = links
     .map(([href, label]) => `<a href="${href}" class="${isActive(href, activePath) ? 'active' : ''}">${label}</a>`)
@@ -63,20 +63,20 @@ export function renderNavbar(activePath = '') {
 
   const authArea = session
     ? `<a href="#" id="logoutBtn" class="btn btn-outline btn-sm">${icon('logOut', 15)} ${escapeHtml(session.name.split(' ')[0])}</a>`
-    : `<a href="/login.html" class="btn btn-primary btn-sm">Sign in</a>`;
+    : `<a href="login.html" class="btn btn-primary btn-sm">Sign in</a>`;
 
   return `
   <div class="notice-bar">Frontend preview build &mdash; <strong>Xzily</strong> data lives in your browser only, no backend yet.</div>
   <header class="navbar">
     <div class="container">
-      <a href="/index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
+      <a href="index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
       <nav class="nav-links">${navLinks}</nav>
       <div class="nav-actions">
-        <form class="nav-search-form" action="/search.html" method="get">
+        <form class="nav-search-form" action="search.html" method="get">
           ${icon('search', 16)}
           <input type="search" name="q" placeholder="Search articles&hellip;" aria-label="Search articles" />
         </form>
-        <a href="/index.html#bookmarks" class="icon-btn" id="bookmarkNavBtn" title="Bookmarks">
+        <a href="index.html#bookmarks" class="icon-btn" id="bookmarkNavBtn" title="Bookmarks">
           ${icon('bookmark', 18)}
           ${bookmarkCount ? `<span class="count-badge">${bookmarkCount}</span>` : ''}
         </a>
@@ -89,7 +89,7 @@ export function renderNavbar(activePath = '') {
     <div class="mobile-drawer-panel">
       <button class="icon-btn mobile-drawer-close" id="mobileMenuClose" aria-label="Close menu">${icon('close', 18)}</button>
       ${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}
-      ${session ? '' : '<a href="/login.html">Sign in</a><a href="/register.html">Create account</a>'}
+      ${session ? '' : '<a href="login.html">Sign in</a><a href="register.html">Create account</a>'}
     </div>
   </div>`;
 }
@@ -105,7 +105,7 @@ export function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="/index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
+          <a href="index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
           <p>Independent editorial covering technology, business, culture, health, and travel &mdash; built for readers who want substance over noise.</p>
           <div class="footer-social">
             <a class="icon-btn" href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
@@ -116,24 +116,24 @@ export function renderFooter() {
         <div>
           <h5>Sections</h5>
           <ul>
-            ${CATEGORIES.map((c) => `<li><a href="/category.html?slug=${c.slug}">${c.name}</a></li>`).join('')}
+            ${CATEGORIES.map((c) => `<li><a href="category.html?slug=${c.slug}">${c.name}</a></li>`).join('')}
           </ul>
         </div>
         <div>
           <h5>Company</h5>
           <ul>
-            <li><a href="/about.html">About Xzily</a></li>
-            <li><a href="/contact.html">Contact</a></li>
-            <li><a href="/admin/login.html">Editor Login</a></li>
+            <li><a href="about.html">About Xzily</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="admin/login.html">Editor Login</a></li>
           </ul>
         </div>
         <div>
           <h5>Legal</h5>
           <ul>
-            <li><a href="/privacy.html">Privacy Policy</a></li>
-            <li><a href="/terms.html">Terms of Service</a></li>
-            <li><a href="/cookies.html">Cookie Policy</a></li>
-            <li><a href="/disclaimer.html">Disclaimer</a></li>
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li><a href="cookies.html">Cookie Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
           </ul>
         </div>
       </div>
@@ -175,7 +175,7 @@ function wireLayoutEvents() {
       e.preventDefault();
       store.logout();
       toast('Signed out');
-      setTimeout(() => window.location.href = '/index.html', 500);
+      setTimeout(() => window.location.href = 'index.html', 500);
     });
   }
   wireNewsletterForms();
@@ -245,7 +245,7 @@ export function initNotificationPrompt() {
     const perm = await Notification.requestPermission();
     if (perm === 'granted') {
       store.setNotificationOptIn(true);
-      new Notification('Xzily', { body: "You're subscribed to new-story alerts.", icon: '/favicon.svg' });
+      new Notification('Xzily', { body: "You're subscribed to new-story alerts.", icon: 'favicon.svg' });
       toast('Notifications enabled');
     }
     el.classList.remove('show');

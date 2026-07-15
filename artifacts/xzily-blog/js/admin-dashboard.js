@@ -2,8 +2,9 @@ import { mountAdmin } from './admin-common.js';
 import { icon } from './icons.js';
 import { formatCount, timeAgo } from './common.js';
 import { store } from './store.js';
+import { toAdminAsset } from './asset.js';
 
-const session = mountAdmin('/admin/index.html', 'Dashboard', `Welcome back, ${store.getSession()?.name || ''}.`);
+const session = mountAdmin('index.html', 'Dashboard', `Welcome back, ${store.getSession()?.name || ''}.`);
 if (session) render();
 
 function render() {
@@ -31,7 +32,7 @@ function render() {
   const top = [...published].sort((a, b) => b.views - a.views).slice(0, 6);
   document.querySelector('#topPostsTable tbody').innerHTML = top.map((p) => `
     <tr>
-      <td class="table-post-title"><img src="${p.coverImage}" alt="" /><div><div class="t">${p.title}</div></div></td>
+      <td class="table-post-title"><img src="${toAdminAsset(p.coverImage)}" alt="" /><div><div class="t">${p.title}</div></div></td>
       <td>${formatCount(p.views)}</td>
       <td>${formatCount(p.likes)}</td>
     </tr>`).join('') || `<tr><td colspan="3" style="color:var(--ink-400);">No stories yet.</td></tr>`;

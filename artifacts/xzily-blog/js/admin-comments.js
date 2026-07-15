@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { formatDate, escapeHtml, toast } from './common.js';
 import { store } from './store.js';
 
-const session = mountAdmin('/admin/comments.html', 'Comments', 'Moderate reader comments across all stories.');
+const session = mountAdmin('comments.html', 'Comments', 'Moderate reader comments across all stories.');
 if (session) render();
 
 function render() {

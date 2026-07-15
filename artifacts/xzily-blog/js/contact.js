@@ -2,7 +2,7 @@ import { mountLayout, toast } from './common.js';
 import { icon } from './icons.js';
 import { store } from './store.js';
 
-mountLayout('/contact.html');
+mountLayout('contact.html');
 
 document.getElementById('iconMail').innerHTML = icon('mail', 18);
 document.getElementById('iconPhone').innerHTML = icon('phone', 18);

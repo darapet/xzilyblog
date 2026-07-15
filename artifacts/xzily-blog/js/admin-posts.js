@@ -3,8 +3,9 @@ import { icon } from './icons.js';
 import { formatDate, formatCount, toast } from './common.js';
 import { categoryById } from './data.js';
 import { store } from './store.js';
+import { toAdminAsset } from './asset.js';
 
-const session = mountAdmin('/admin/posts.html', 'Manage Posts', 'Edit, publish, or delete stories.');
+const session = mountAdmin('posts.html', 'Manage Posts', 'Edit, publish, or delete stories.');
 let currentStatus = 'all';
 
 if (session) {
@@ -26,7 +27,7 @@ function render() {
     return `
     <tr>
       <td class="table-post-title">
-        <img src="${p.coverImage}" alt="" />
+        <img src="${toAdminAsset(p.coverImage)}" alt="" />
         <div><div class="t">${p.title}</div><div class="c">${p.readingTime} min read</div></div>
       </td>
       <td>${cat ? cat.name : '—'}</td>
@@ -35,7 +36,7 @@ function render() {
       <td>${formatDate(p.createdAt)}</td>
       <td>
         <div class="row-actions">
-          <a class="icon-btn" href="/admin/editor.html?id=${p.id}" title="Edit">${icon('edit', 15)}</a>
+          <a class="icon-btn" href="editor.html?id=${p.id}" title="Edit">${icon('edit', 15)}</a>
           <button class="icon-btn" data-toggle="${p.id}" title="Toggle publish">${icon(p.status === 'published' ? 'bellOff' : 'checkCircle', 15)}</button>
           <button class="icon-btn" data-delete="${p.id}" title="Delete">${icon('trash', 15)}</button>
         </div>
@@ -47,7 +48,7 @@ function render() {
     <div class="empty-state">
       <div class="icon-wrap">${icon('fileText', 24)}</div>
       <h3>No stories here yet</h3>
-      <p><a href="/admin/editor.html">Write your first story</a></p>
+      <p><a href="editor.html">Write your first story</a></p>
     </div>` : '';
 
   document.querySelectorAll('[data-toggle]').forEach((btn) => {

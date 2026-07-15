@@ -11,7 +11,7 @@ if (loginForm) {
     const password = document.getElementById('loginPassword').value;
     store.login(email, password);
     showMsg('loginMsg', 'Signed in — redirecting…', 'success');
-    setTimeout(() => (window.location.href = '/index.html'), 700);
+    setTimeout(() => (window.location.href = 'index.html'), 700);
   });
 }
 
@@ -24,7 +24,7 @@ if (registerForm) {
     const password = document.getElementById('regPassword').value;
     store.register(name, email, password);
     showMsg('registerMsg', 'Account created — redirecting…', 'success');
-    setTimeout(() => (window.location.href = '/index.html'), 700);
+    setTimeout(() => (window.location.href = 'index.html'), 700);
   });
 }
 

@@ -5,7 +5,8 @@ import { store } from './store.js';
 export function requireAdmin() {
   const session = store.getSession();
   if (!session || !session.isAdmin) {
-    window.location.href = '/admin/login.html';
+    const inAdmin = location.pathname.includes('/admin/');
+    window.location.href = inAdmin ? 'login.html' : 'admin/login.html';
     return null;
   }
   return session;
@@ -13,11 +14,11 @@ export function requireAdmin() {
 
 export function renderAdminShell(active, session) {
   const nav = [
-    ['/admin/index.html', 'layoutDashboard', 'Dashboard'],
-    ['/admin/posts.html', 'fileText', 'Manage Posts'],
-    ['/admin/editor.html', 'plus', 'New Story'],
-    ['/admin/comments.html', 'messageCircle', 'Comments'],
-    ['/admin/subscribers.html', 'usersIcon', 'Subscribers'],
+    ['index.html', 'layoutDashboard', 'Dashboard'],
+    ['posts.html', 'fileText', 'Manage Posts'],
+    ['editor.html', 'plus', 'New Story'],
+    ['comments.html', 'messageCircle', 'Comments'],
+    ['subscribers.html', 'usersIcon', 'Subscribers'],
   ];
   return `
     <aside class="admin-sidebar" id="adminSidebar">
@@ -27,13 +28,13 @@ export function renderAdminShell(active, session) {
       </nav>
       <div class="sidebar-foot">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <img class="avatar" src="/images/avatar-1.jpg" alt="${session.name}" />
+          <img class="avatar" src="../images/avatar-1.jpg" alt="${session.name}" />
           <div>
             <div style="font-weight:700;color:#fff;">${session.name}</div>
             <div style="opacity:.6;">Editor</div>
           </div>
         </div>
-        <a href="/index.html" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">${icon('externalLink', 15)} View site</a>
+        <a href="../index.html" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">${icon('externalLink', 15)} View site</a>
         <a href="#" id="adminLogoutBtn" style="display:flex;align-items:center;gap:8px;">${icon('logOut', 15)} Sign out</a>
       </div>
     </aside>`;
@@ -50,7 +51,7 @@ export function mountAdmin(active, topbarTitle, topbarSub) {
   document.getElementById('adminLogoutBtn').addEventListener('click', (e) => {
     e.preventDefault();
     store.logout();
-    window.location.href = '/admin/login.html';
+    window.location.href = 'login.html';
   });
   return session;
 }

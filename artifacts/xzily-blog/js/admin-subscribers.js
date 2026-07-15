@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { formatDate, toast } from './common.js';
 import { store } from './store.js';
 
-const session = mountAdmin('/admin/subscribers.html', 'Subscribers', 'Manage the Xzily newsletter list.');
+const session = mountAdmin('subscribers.html', 'Subscribers', 'Manage the Xzily newsletter list.');
 if (session) {
   render();
   document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);

@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { CATEGORIES, userById, categoryById } from './data.js';
 import { store } from './store.js';
 
-mountLayout('/index.html');
+mountLayout('index.html');
 
 const posts = store.getPosts({ status: 'published' }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 const featured = posts.find((p) => p.featured) || posts[0];
@@ -13,7 +13,7 @@ document.getElementById('statPosts').textContent = posts.length;
 document.getElementById('statCategories').textContent = CATEGORIES.length;
 
 document.getElementById('catGrid').innerHTML = CATEGORIES.map((c) => `
-  <a class="cat-chip" href="/category.html?slug=${c.slug}">
+  <a class="cat-chip" href="category.html?slug=${c.slug}">
     ${icon(c.icon, 26)}
     <h4>${c.name}</h4>
     <span>${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length} stories</span>
@@ -42,7 +42,7 @@ function featureCardHtml(p) {
   const cat = categoryById(p.categoryId);
   const author = userById(p.authorId);
   return `
-    <a href="/article.html?slug=${p.slug}" style="display:block;height:100%;">
+    <a href="article.html?slug=${p.slug}" style="display:block;height:100%;">
       <img src="${p.coverImage}" alt="${escAttr(p.title)}" />
       <div class="overlay">
         <span class="tag-pill">${cat ? cat.name : ''}</span>
@@ -62,12 +62,12 @@ function cardHtml(p, i) {
   const author = userById(p.authorId);
   return `
     <div class="card" style="--i:${i}">
-      <a class="card-media" href="/article.html?slug=${p.slug}">
+      <a class="card-media" href="article.html?slug=${p.slug}">
         <span class="card-cat">${cat ? cat.name : ''}</span>
         <img src="${p.coverImage}" alt="${escAttr(p.title)}" loading="lazy" />
       </a>
       <div class="card-body">
-        <h3><a href="/article.html?slug=${p.slug}">${p.title}</a></h3>
+        <h3><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
         <p class="card-excerpt">${p.excerpt}</p>
         <div class="card-meta">
           <img class="avatar" src="${author.avatar}" alt="${escAttr(author.name)}" />
@@ -84,7 +84,7 @@ function cardHtml(p, i) {
 function rowCardHtml(p, rank) {
   const author = userById(p.authorId);
   return `
-    <a class="row-card" href="/article.html?slug=${p.slug}">
+    <a class="row-card" href="article.html?slug=${p.slug}">
       <span class="rank">${rank}</span>
       <span class="thumb"><img src="${p.coverImage}" alt="${escAttr(p.title)}" /></span>
       <div class="info">

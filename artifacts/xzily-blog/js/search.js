@@ -49,12 +49,12 @@ function cardHtml(p, i) {
   const cat = categoryById(p.categoryId);
   return `
     <div class="card" style="--i:${i}">
-      <a class="card-media" href="/article.html?slug=${p.slug}">
+      <a class="card-media" href="article.html?slug=${p.slug}">
         <span class="card-cat">${cat ? cat.name : ''}</span>
         <img src="${p.coverImage}" alt="${p.title}" loading="lazy" />
       </a>
       <div class="card-body">
-        <h3><a href="/article.html?slug=${p.slug}">${p.title}</a></h3>
+        <h3><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
         <p class="card-excerpt">${p.excerpt}</p>
         <div class="card-meta">
           <img class="avatar" src="${author.avatar}" alt="${author.name}" />

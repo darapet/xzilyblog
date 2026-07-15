@@ -3,8 +3,9 @@ import { icon } from './icons.js';
 import { qs, toast } from './common.js';
 import { CATEGORIES, USERS } from './data.js';
 import { store } from './store.js';
+import { toAdminAsset } from './asset.js';
 
-const session = mountAdmin('/admin/editor.html', 'New Story', 'Write a lightweight rich-text story.');
+const session = mountAdmin('editor.html', 'New Story', 'Write a lightweight rich-text story.');
 if (session) init();
 
 const TOOLBAR = [
@@ -53,7 +54,7 @@ function init() {
     document.getElementById('fExcerpt').value = existing.excerpt;
     document.getElementById('fBody').innerHTML = existing.content;
     document.getElementById('fCover').value = existing.coverImage;
-    document.getElementById('coverPreview').src = existing.coverImage;
+    document.getElementById('coverPreview').src = toAdminAsset(existing.coverImage);
     document.getElementById('fCategory').value = existing.categoryId;
     document.getElementById('fTags').value = existing.tags.join(', ');
     document.getElementById('fAuthor').value = existing.authorId;
@@ -78,7 +79,7 @@ function save(status, existing) {
   const title = document.getElementById('fTitle').value.trim();
   const excerpt = document.getElementById('fExcerpt').value.trim();
   const content = document.getElementById('fBody').innerHTML.trim();
-  const coverImage = document.getElementById('fCover').value.trim() || '/images/cover-1.jpg';
+  const coverImage = document.getElementById('fCover').value.trim() || 'images/cover-1.jpg';
   const categoryId = document.getElementById('fCategory').value;
   const tags = document.getElementById('fTags').value.split(',').map((t) => t.trim()).filter(Boolean);
   const authorId = document.getElementById('fAuthor').value;
@@ -94,5 +95,5 @@ function save(status, existing) {
     store.createPost({ title, excerpt, content, coverImage, categoryId, tags, authorId, status });
   }
   toast(status === 'published' ? 'Story published' : 'Draft saved');
-  setTimeout(() => (window.location.href = '/admin/posts.html'), 500);
+  setTimeout(() => (window.location.href = 'posts.html'), 500);
 }

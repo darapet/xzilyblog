@@ -1,7 +1,7 @@
 import { mountLayout } from './common.js';
 import { USERS } from './data.js';
 
-mountLayout('/about.html');
+mountLayout('about.html');
 
 document.getElementById('teamGrid').innerHTML = USERS.map((u) => `
   <div class="team-card">
