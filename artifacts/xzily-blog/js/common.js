@@ -52,7 +52,9 @@ export function getCatColor(slug) {
     lifestyle: '#008a00',
     health: '#e65c00',
     culture: '#6c00a2',
-    travel: '#009999'
+    travel: '#009999',
+    education: '#a35a00',
+    sports: '#1a7a3c'
   };
   return colors[slug] || '#ba1818';
 }

@@ -14,6 +14,8 @@ export const CATEGORIES = [
   { id: 'c4', slug: 'health', name: 'Health', icon: 'checkCircle', description: 'Science-backed insight on longevity and wellness.' },
   { id: 'c5', slug: 'culture', name: 'Culture', icon: 'flag', description: 'Arts, society, and the zeitgeist.' },
   { id: 'c6', slug: 'travel', name: 'Travel', icon: 'mapPin', description: 'Dispatches from around the globe.' },
+  { id: 'c7', slug: 'education', name: 'Education', icon: 'checkCircle', description: 'Learning, teaching, and practical knowledge for every stage of life.' },
+  { id: 'c8', slug: 'sports', name: 'Sports', icon: 'trendingUp', description: 'Performance, competition, and the games that move us.' },
 ];
 
 export const POSTS = [
@@ -96,6 +98,22 @@ export const POSTS = [
     content: `<h2>Beyond Caloric Deficits</h2><p>"Calories in, calories out" is technically true but practically useless — it ignores the complex hormonal responses triggered by different foods.</p><h2>Metabolic Flexibility</h2><p>The goal is metabolic flexibility: the ability to seamlessly switch between burning glucose and burning fat, achieved through fasting periods, fewer processed carbohydrates, and consistent physical exertion.</p>`,
     coverImage: 'images/cover-10.jpg', authorId: 'u4', categoryId: 'c4', tags: ['Health', 'Nutrition', 'Science'],
     status: 'published', createdAt: daysAgo(35), readingTime: 6, views: 7800, likes: 560, featured: false, popular: false,
+  },
+  {
+    id: 'p11', slug: 'rethinking-how-we-learn-in-a-self-paced-world',
+    title: 'Rethinking How We Learn in a Self-Paced World',
+    excerpt: 'Classrooms built for the industrial age are giving way to self-directed, project-based learning. Here is what actually helps knowledge stick.',
+    content: `<h2>The End of One-Size-Fits-All</h2><p>For a century, education was built around a single pace for every student in the room. That model is breaking down as tools for self-directed, project-based learning become mainstream.</p><h2>What Actually Builds Retention</h2><p>Research keeps pointing to the same fundamentals: spaced repetition, active recall, and teaching what you've just learned to someone else. Technology hasn't changed those mechanics — it has just made them easier to practice consistently.</p><blockquote>The best learning tool is still a curious question, asked at the right moment.</blockquote><p>Institutions that combine flexible pacing with strong feedback loops are seeing the biggest gains in both engagement and outcomes.</p>`,
+    coverImage: 'images/cover-11.jpg', authorId: 'u3', categoryId: 'c7', tags: ['Education', 'Learning', 'Teaching'],
+    status: 'published', createdAt: daysAgo(3), readingTime: 5, views: 6200, likes: 410, featured: false, popular: true,
+  },
+  {
+    id: 'p12', slug: 'the-quiet-science-behind-elite-endurance',
+    title: 'The Quiet Science Behind Elite Endurance',
+    excerpt: 'Behind every record-breaking sprint is years of unglamorous, data-driven training. A look at how modern athletes actually get faster.',
+    content: `<h2>Marginal Gains, Compounded</h2><p>Elite performance rarely comes from a single breakthrough. It comes from dozens of small, measurable improvements — sleep, recovery, biomechanics, nutrition — compounded over years.</p><h2>Data as a Coach</h2><p>Wearable sensors and video analysis now let coaches spot inefficiencies that used to be invisible to the naked eye, turning training into an iterative feedback loop rather than guesswork.</p><p>The athletes who improve fastest aren't always the most talented — they're the ones with the tightest loop between training, data, and adjustment.</p>`,
+    coverImage: 'images/cover-12.jpg', authorId: 'u2', categoryId: 'c8', tags: ['Sports', 'Performance', 'Training'],
+    status: 'published', createdAt: daysAgo(6), readingTime: 5, views: 5400, likes: 375, featured: false, popular: false,
   },
 ];
 
