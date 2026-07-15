@@ -5,9 +5,6 @@ import { CATEGORIES, USERS } from './data.js';
 import { store } from './store.js';
 import { toAdminAsset } from './asset.js';
 
-const session = await mountAdmin('editor.html', 'New Story', 'Write a rich-text story.');
-if (session) await init();
-
 const TOOLBAR = [
   ['blockFormat'],
   ['fontSize'],
@@ -49,6 +46,9 @@ const FONT_SIZES = [
 ];
 
 let coverImageUrl = '';
+
+const session = await mountAdmin('editor.html', 'New Story', 'Write a rich-text story.');
+if (session) await init();
 
 async function init() {
   const editId = qs('id');
