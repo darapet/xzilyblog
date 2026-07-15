@@ -99,13 +99,32 @@ h1, h2, h3, h4, h5, h6 {
 }
 .ticker-marquee {
   flex: 1;
+  min-width: 0;
   padding: 0 20px;
+  overflow: hidden;
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
   white-space: nowrap;
+  gap: 60px;
+  animation: ticker-scroll 22s linear infinite;
+}
+.ticker-track span { padding-right: 60px; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 .ticker-date {
   font-weight: 500;
   padding-left: 20px;
   flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .ticker-date { display: none; }
+  .ticker-marquee { padding: 0 12px; }
+  .ticker-label { padding: 0 10px; font-size: 12px; }
 }
 
 /* ---------------- Magazine Header ---------------- */

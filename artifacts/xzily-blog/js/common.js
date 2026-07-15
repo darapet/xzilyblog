@@ -78,7 +78,12 @@ export function renderNavbar(activePath = '') {
     <div class="container">
       <div class="ticker-content">
         <div class="ticker-label">Flash News</div>
-        <div class="ticker-marquee"><marquee behavior="scroll" direction="left" scrollamount="5">${topPosts}</marquee></div>
+        <div class="ticker-marquee">
+          <div class="ticker-track">
+            <span>${topPosts}</span>
+            <span aria-hidden="true">${topPosts}</span>
+          </div>
+        </div>
       </div>
       <div class="ticker-date" id="liveDateDisplay"></div>
     </div>
