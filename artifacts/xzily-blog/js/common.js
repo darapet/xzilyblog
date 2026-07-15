@@ -59,10 +59,14 @@ export function getCatColor(slug) {
   return colors[slug] || '#ba1818';
 }
 
-export function renderNavbar(activePath = '') {
-  const session = store.getSession();
-  const bookmarkCount = store.getBookmarkedPosts().length;
-  
+export async function renderNavbar(activePath = '') {
+  const [session, bookmarks, posts] = await Promise.all([
+    store.getSession(),
+    store.getBookmarkedPosts(),
+    store.getPosts({ status: 'published' }),
+  ]);
+  const bookmarkCount = bookmarks.length;
+
   const mainLinks = [
     ['index.html', 'Home'],
     ['about.html', 'About'],
@@ -73,7 +77,7 @@ export function renderNavbar(activePath = '') {
     ? `<a href="#" id="logoutBtn" class="nav-auth-link">${icon('logOut', 15)} ${escapeHtml(session.name.split(' ')[0])}</a>`
     : `<a href="login.html" class="nav-auth-link">SIGN IN</a>`;
 
-  const topPosts = store.getPosts({ status: 'published' }).slice(0, 5).map(p => p.title).join(' &nbsp; &bull; &nbsp; ');
+  const topPosts = posts.slice(0, 5).map(p => p.title).join(' &nbsp; &bull; &nbsp; ');
 
   return `
   <div class="top-ticker">
@@ -189,10 +193,10 @@ export function renderFooter() {
   </footer>`;
 }
 
-export function mountLayout(activePath) {
+export async function mountLayout(activePath) {
   const navSlot = document.getElementById('site-navbar');
   const footSlot = document.getElementById('site-footer');
-  if (navSlot) navSlot.outerHTML = renderNavbar(activePath);
+  if (navSlot) navSlot.outerHTML = await renderNavbar(activePath);
   if (footSlot) footSlot.outerHTML = renderFooter();
   wireLayoutEvents();
   initReveal();
@@ -225,9 +229,9 @@ function wireLayoutEvents() {
   }
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
+    logoutBtn.addEventListener('click', async (e) => {
       e.preventDefault();
-      store.logout();
+      await store.logout();
       toast('Signed out');
       setTimeout(() => window.location.href = 'index.html', 500);
     });
@@ -239,13 +243,17 @@ export function wireNewsletterForms() {
   document.querySelectorAll('.newsletter-form').forEach((form) => {
     if (form._wired) return;
     form._wired = true;
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const input = form.querySelector('input[type="email"]');
       if (input && input.value) {
-        store.addSubscriber(input.value.trim());
-        toast('Subscribed! Welcome to The Educative Blog.');
-        input.value = '';
+        try {
+          await store.addSubscriber(input.value.trim());
+          toast('Subscribed! Welcome to The Educative Blog.');
+          input.value = '';
+        } catch {
+          toast('Could not subscribe — try again.');
+        }
       }
     });
   });

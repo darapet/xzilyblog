@@ -2,8 +2,8 @@ import { icon } from './icons.js';
 import { store } from './store.js';
 
 // Auth guard -- redirect to admin login if not signed in as admin.
-export function requireAdmin() {
-  const session = store.getSession();
+export async function requireAdmin() {
+  const session = await store.getSession();
   if (!session || !session.isAdmin) {
     const inAdmin = location.pathname.includes('/admin/');
     window.location.href = inAdmin ? 'login.html' : 'admin/login.html';
@@ -40,17 +40,17 @@ export function renderAdminShell(active, session) {
     </aside>`;
 }
 
-export function mountAdmin(active, topbarTitle, topbarSub) {
-  const session = requireAdmin();
+export async function mountAdmin(active, topbarTitle, topbarSub) {
+  const session = await requireAdmin();
   if (!session) return null;
   document.getElementById('admin-sidebar-slot').outerHTML = renderAdminShell(active, session);
   const title = document.getElementById('adminTitle');
   const sub = document.getElementById('adminSub');
   if (title) title.textContent = topbarTitle;
   if (sub) sub.textContent = topbarSub || '';
-  document.getElementById('adminLogoutBtn').addEventListener('click', (e) => {
+  document.getElementById('adminLogoutBtn').addEventListener('click', async (e) => {
     e.preventDefault();
-    store.logout();
+    await store.logout();
     window.location.href = 'login.html';
   });
   return session;

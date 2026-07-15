@@ -5,8 +5,8 @@ import { CATEGORIES, USERS } from './data.js';
 import { store } from './store.js';
 import { toAdminAsset } from './asset.js';
 
-const session = mountAdmin('editor.html', 'New Story', 'Write a lightweight rich-text story.');
-if (session) init();
+const session = await mountAdmin('editor.html', 'New Story', 'Write a lightweight rich-text story.');
+if (session) await init();
 
 const TOOLBAR = [
   ['bold', 'bold', 'Bold'],
@@ -23,9 +23,9 @@ const TOOLBAR = [
   ['redo', 'redo', 'Redo'],
 ];
 
-function init() {
+async function init() {
   const editId = qs('id');
-  const existing = editId ? store.getPostById(editId) : null;
+  const existing = editId ? await store.getPostById(editId) : null;
 
   document.getElementById('editorToolbar').innerHTML = TOOLBAR.map((t) =>
     t[0] === 'divider' ? '<div class="divider"></div>' : `<button type="button" data-cmd="${t[0]}" title="${t[2]}">${icon(t[1], 16)}</button>`
@@ -75,7 +75,7 @@ function init() {
   });
 }
 
-function save(status, existing) {
+async function save(status, existing) {
   const title = document.getElementById('fTitle').value.trim();
   const excerpt = document.getElementById('fExcerpt').value.trim();
   const content = document.getElementById('fBody').innerHTML.trim();
@@ -89,11 +89,15 @@ function save(status, existing) {
     return;
   }
 
-  if (existing) {
-    store.updatePost(existing.id, { title, excerpt, content, coverImage, categoryId, tags, authorId, status });
-  } else {
-    store.createPost({ title, excerpt, content, coverImage, categoryId, tags, authorId, status });
+  try {
+    if (existing) {
+      await store.updatePost(existing.id, { title, excerpt, content, coverImage, categoryId, tags, authorId, status });
+    } else {
+      await store.createPost({ title, excerpt, content, coverImage, categoryId, tags, authorId, status });
+    }
+    toast(status === 'published' ? 'Story published' : 'Draft saved');
+    setTimeout(() => (window.location.href = 'posts.html'), 500);
+  } catch (err) {
+    toast('Could not save story');
   }
-  toast(status === 'published' ? 'Story published' : 'Draft saved');
-  setTimeout(() => (window.location.href = 'posts.html'), 500);
 }

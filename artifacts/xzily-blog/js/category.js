@@ -3,10 +3,11 @@ import { icon } from './icons.js';
 import { categoryBySlug, userById, CATEGORIES } from './data.js';
 import { store } from './store.js';
 
-mountLayout('category.html');
+await mountLayout('category.html');
 
 const slug = qs('slug');
 const cat = categoryBySlug(slug);
+const allPublished = await store.getPosts({ status: 'published' });
 
 if (!cat) {
   document.getElementById('catTitle').textContent = 'Category not found';
@@ -17,7 +18,7 @@ if (!cat) {
   document.getElementById('catTitle').textContent = cat.name;
   document.getElementById('catDesc').textContent = cat.description;
 
-  const posts = store.getPosts({ status: 'published' }).filter((p) => p.categoryId === cat.id)
+  const posts = allPublished.filter((p) => p.categoryId === cat.id)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   document.getElementById('catGrid').innerHTML = posts.map((p, i) => cardHtml(p, i, cat)).join('');
@@ -31,7 +32,7 @@ if (!cat) {
   }
 }
 
-document.getElementById('catSidebar').innerHTML = sidebarHtml();
+document.getElementById('catSidebar').innerHTML = sidebarHtml(allPublished);
 
 function cardHtml(p, i, cat) {
   const author = userById(p.authorId);
@@ -53,8 +54,8 @@ function cardHtml(p, i, cat) {
     </div>`;
 }
 
-function sidebarHtml() {
-  const trending = [...store.getPosts({ status: 'published' })].sort((a, b) => b.views - a.views).slice(0, 5);
+function sidebarHtml(posts) {
+  const trending = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
   return `
     <div class="widget">
       <h3 class="widget-title">Trending Now</h3>
@@ -75,7 +76,7 @@ function sidebarHtml() {
         ${CATEGORIES.map((c) => `
           <a class="cat-list-item" href="category.html?slug=${c.slug}">
             <span class="cat-name">${c.name}</span>
-            <span class="cat-count">${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length}</span>
+            <span class="cat-count">${posts.filter((p) => p.categoryId === c.id).length}</span>
           </a>`).join('')}
       </div>
     </div>

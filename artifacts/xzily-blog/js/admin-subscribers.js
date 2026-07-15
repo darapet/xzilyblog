@@ -3,14 +3,14 @@ import { icon } from './icons.js';
 import { formatDate, toast } from './common.js';
 import { store } from './store.js';
 
-const session = mountAdmin('subscribers.html', 'Subscribers', 'Manage the Xzily newsletter list.');
+const session = await mountAdmin('subscribers.html', 'Subscribers', 'Manage the Xzily newsletter list.');
 if (session) {
-  render();
+  await render();
   document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
 }
 
-function render() {
-  const subs = store.getSubscribers().sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt));
+async function render() {
+  const subs = (await store.getSubscribers()).sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt));
   document.getElementById('subsTableBody').innerHTML = subs.map((s) => `
     <tr>
       <td>${s.email}</td>
@@ -23,16 +23,16 @@ function render() {
     : '';
 
   document.querySelectorAll('[data-remove]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      store.removeSubscriber(btn.dataset.remove);
+    btn.addEventListener('click', async () => {
+      await store.removeSubscriber(btn.dataset.remove);
       toast('Subscriber removed');
-      render();
+      await render();
     });
   });
 }
 
-function exportCsv() {
-  const subs = store.getSubscribers();
+async function exportCsv() {
+  const subs = await store.getSubscribers();
   if (subs.length === 0) {
     toast('No subscribers to export');
     return;

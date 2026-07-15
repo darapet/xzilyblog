@@ -1,19 +1,19 @@
 import { mountLayout, formatDate, timeAgo, formatCount, qs, escapeHtml, toast, getCatColor } from './common.js';
 import { icon } from './icons.js';
 import { userById, categoryById } from './data.js';
-import { store } from './store.js';
+import { store, AuthRequiredError } from './store.js';
 
-mountLayout('article.html');
+await mountLayout('article.html');
 
 const slug = qs('slug');
-const post = slug ? store.getPostBySlug(slug) : null;
+const post = slug ? await store.getPostBySlug(slug) : null;
 
 if (!post) {
   document.getElementById('articleRoot').innerHTML = notFoundHtml();
   document.getElementById('articleSidebar').innerHTML = '';
 } else {
-  store.incrementViews(post.id);
-  render(post);
+  await store.incrementViews(post.id);
+  await render(post);
 }
 
 function notFoundHtml() {
@@ -26,11 +26,13 @@ function notFoundHtml() {
     </div>`;
 }
 
-function render(p) {
+async function render(p) {
   const author = userById(p.authorId);
   const cat = categoryById(p.categoryId);
   document.getElementById('pageTitle').textContent = `${p.title} — The Educative Blog`;
   document.getElementById('pageDesc').setAttribute('content', p.excerpt);
+
+  const [liked, bookmarked] = await Promise.all([store.isLiked(p.id), store.isBookmarked(p.id)]);
 
   document.getElementById('articleRoot').innerHTML = `
     <div class="article-header">
@@ -69,8 +71,8 @@ function render(p) {
     </div>
     
     <div class="engage-bar">
-      <button class="icon-btn ${store.isLiked(p.id) ? 'is-active' : ''}" id="likeBtn">${icon('heart', 18)} <span id="likeCount">${formatCount(p.likes)}</span></button>
-      <button class="icon-btn ${store.isBookmarked(p.id) ? 'is-active' : ''}" id="bookmarkBtn">${icon('bookmark', 18)} Save</button>
+      <button class="icon-btn ${liked ? 'is-active' : ''}" id="likeBtn">${icon('heart', 18)} <span id="likeCount">${formatCount(p.likes)}</span></button>
+      <button class="icon-btn ${bookmarked ? 'is-active' : ''}" id="bookmarkBtn">${icon('bookmark', 18)} Save</button>
     </div>
     
     <div class="author-box">
@@ -84,19 +86,28 @@ function render(p) {
     <section class="comments-section" id="commentsSection"></section>
   `;
 
-  document.getElementById('articleSidebar').innerHTML = sidebarHtml(p);
+  document.getElementById('articleSidebar').innerHTML = await sidebarHtml(p);
 
-  document.getElementById('likeBtn').addEventListener('click', () => {
-    const liked = store.toggleLike(p.id);
-    const btn = document.getElementById('likeBtn');
-    btn.classList.toggle('is-active', liked);
-    document.getElementById('likeCount').textContent = formatCount(store.getPostById(p.id).likes);
-    toast(liked ? 'Added to your likes' : 'Removed from likes', 'heart');
+  document.getElementById('likeBtn').addEventListener('click', async () => {
+    try {
+      const nowLiked = await store.toggleLike(p.id);
+      const btn = document.getElementById('likeBtn');
+      btn.classList.toggle('is-active', nowLiked);
+      const fresh = await store.getPostById(p.id);
+      document.getElementById('likeCount').textContent = formatCount(fresh.likes);
+      toast(nowLiked ? 'Added to your likes' : 'Removed from likes', 'heart');
+    } catch (err) {
+      handleAuthError(err, 'Sign in to like stories');
+    }
   });
-  document.getElementById('bookmarkBtn').addEventListener('click', () => {
-    const marked = store.toggleBookmark(p.id);
-    document.getElementById('bookmarkBtn').classList.toggle('is-active', marked);
-    toast(marked ? 'Saved to bookmarks' : 'Removed from bookmarks', 'bookmark');
+  document.getElementById('bookmarkBtn').addEventListener('click', async () => {
+    try {
+      const marked = await store.toggleBookmark(p.id);
+      document.getElementById('bookmarkBtn').classList.toggle('is-active', marked);
+      toast(marked ? 'Saved to bookmarks' : 'Removed from bookmarks', 'bookmark');
+    } catch (err) {
+      handleAuthError(err, 'Sign in to save stories');
+    }
   });
   document.getElementById('copyLinkBtn').addEventListener('click', async () => {
     try {
@@ -107,8 +118,17 @@ function render(p) {
     }
   });
 
-  renderComments(p.id);
+  await renderComments(p.id);
   initReadingProgress();
+}
+
+function handleAuthError(err, message) {
+  if (err instanceof AuthRequiredError) {
+    toast(message);
+    setTimeout(() => (window.location.href = 'login.html'), 900);
+  } else {
+    toast('Something went wrong');
+  }
 }
 
 function initReadingProgress() {
@@ -128,8 +148,8 @@ function shareUrl(p) {
   return `${window.location.origin}/article.html?slug=${p.slug}`;
 }
 
-function sidebarHtml(p) {
-  const related = store.getPosts({ status: 'published' }).filter((x) => x.categoryId === p.categoryId && x.id !== p.id).slice(0, 5);
+async function sidebarHtml(p) {
+  const related = (await store.getPosts({ status: 'published' })).filter((x) => x.categoryId === p.categoryId && x.id !== p.id).slice(0, 5);
   return `
     <div class="widget">
       <h3 class="widget-title">Related News</h3>
@@ -154,9 +174,9 @@ function sidebarHtml(p) {
     </div>`;
 }
 
-function renderComments(postId) {
+async function renderComments(postId) {
   const section = document.getElementById('commentsSection');
-  const comments = store.getCommentsForPost(postId);
+  const comments = await store.getCommentsForPost(postId);
   const total = comments.reduce((sum, c) => sum + 1 + c.replies.length, 0);
   section.innerHTML = `
     <h3 class="comments-header">${total} Comments</h3>
@@ -168,28 +188,41 @@ function renderComments(postId) {
     </div>
     <div id="commentList"></div>`;
 
-  renderCommentList(postId);
+  await renderCommentList(postId);
 
-  document.getElementById('postCommentBtn').addEventListener('click', () => {
+  document.getElementById('postCommentBtn').addEventListener('click', async () => {
     const input = document.getElementById('commentInput');
     if (!input.value.trim()) return;
-    store.addComment(postId, input.value.trim());
-    input.value = '';
-    renderCommentList(postId);
-    toast('Comment posted');
+    try {
+      await store.addComment(postId, input.value.trim());
+      input.value = '';
+      await renderCommentList(postId);
+      toast('Comment posted');
+    } catch (err) {
+      handleAuthError(err, 'Sign in to leave a comment');
+    }
   });
 }
 
-function renderCommentList(postId) {
+async function renderCommentList(postId) {
   const list = document.getElementById('commentList');
-  const comments = store.getCommentsForPost(postId);
-  list.innerHTML = comments.map((c) => commentHtml(c)).join('') || '<p style="color:var(--text-muted);font-size:14px;padding:20px 0;">Be the first to comment.</p>';
+  const [comments, likedIds, session] = await Promise.all([
+    store.getCommentsForPost(postId),
+    store.likedCommentIdsForPost(postId),
+    store.getSession(),
+  ]);
+  list.innerHTML = comments.map((c) => commentHtml(c, likedIds, session)).join('') || '<p style="color:var(--text-muted);font-size:14px;padding:20px 0;">Be the first to comment.</p>';
 
   list.querySelectorAll('[data-like]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const liked = store.toggleCommentLike(btn.dataset.like);
-      btn.classList.toggle('liked', liked);
-      btn.querySelector('span').textContent = formatCount(commentCount(btn.dataset.like));
+    btn.addEventListener('click', async () => {
+      try {
+        const liked = await store.toggleCommentLike(btn.dataset.like);
+        btn.classList.toggle('liked', liked);
+        const count = await commentCount(btn.dataset.like);
+        btn.querySelector('span').textContent = formatCount(count);
+      } catch (err) {
+        handleAuthError(err, 'Sign in to like comments');
+      }
     });
   });
   list.querySelectorAll('[data-reply-toggle]').forEach((btn) => {
@@ -199,52 +232,57 @@ function renderCommentList(postId) {
     });
   });
   list.querySelectorAll('[data-reply-submit]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const parentId = btn.dataset.replySubmit;
       const input = document.getElementById('reply-input-' + parentId);
       if (!input.value.trim()) return;
-      store.addComment(postId, input.value.trim(), parentId);
-      renderCommentList(postId);
-      toast('Reply posted');
+      try {
+        await store.addComment(postId, input.value.trim(), parentId);
+        await renderCommentList(postId);
+        toast('Reply posted');
+      } catch (err) {
+        handleAuthError(err, 'Sign in to reply');
+      }
     });
   });
   list.querySelectorAll('[data-delete]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      store.deleteComment(btn.dataset.delete);
-      renderCommentList(postId);
+    btn.addEventListener('click', async () => {
+      await store.deleteComment(btn.dataset.delete);
+      await renderCommentList(postId);
       toast('Comment deleted');
     });
   });
 }
 
-function commentCount(id) {
-  const all = store.allComments();
+async function commentCount(id) {
+  const all = await store.allComments();
   const c = all.find((x) => x.id === id);
   return c ? c.likes : 0;
 }
 
-function commentHtml(c) {
-  const author = store.userById(c.authorId) || { name: c.authorName || 'Guest Reader', avatar: 'images/avatar-1.jpg' };
-  const liked = store.getState().likedComments.includes(c.id);
+function commentHtml(c, likedIds, session) {
+  const authorName = c.authorName || 'Guest Reader';
+  const liked = likedIds.has(c.id);
+  const canDelete = !!session && (session.id === c.authorId || session.isAdmin);
   return `
     <div class="comment">
-      <img src="${author.avatar}" alt="${author.name}" />
+      <img src="images/avatar-1.jpg" alt="${escapeHtml(authorName)}" />
       <div class="comment-content">
         <div class="comment-meta">
-          <span class="name">${escapeHtml(author.name || c.authorName || 'Guest Reader')}</span>
+          <span class="name">${escapeHtml(authorName)}</span>
           <span class="date">${timeAgo(c.createdAt)}</span>
         </div>
         <p class="comment-text">${escapeHtml(c.content)}</p>
         <div class="comment-actions">
           <button data-like="${c.id}" class="${liked ? 'liked' : ''}">${icon('heart', 14)} <span>${formatCount(c.likes)}</span></button>
           <button data-reply-toggle="${c.id}">${icon('messageCircle', 14)} Reply</button>
-          <button data-delete="${c.id}">${icon('trash', 14)} Delete</button>
+          ${canDelete ? `<button data-delete="${c.id}">${icon('trash', 14)} Delete</button>` : ''}
         </div>
         <div class="reply-form" id="reply-${c.id}">
           <textarea id="reply-input-${c.id}" placeholder="Write a reply..."></textarea>
           <button class="btn btn-outline" data-reply-submit="${c.id}">Post Reply</button>
         </div>
-        ${c.replies.length ? `<div class="comment-replies">${c.replies.map((r) => commentHtml(r)).join('')}</div>` : ''}
+        ${c.replies.length ? `<div class="comment-replies">${c.replies.map((r) => commentHtml(r, likedIds, session)).join('')}</div>` : ''}
       </div>
     </div>`;
 }

@@ -3,25 +3,29 @@ import { icon } from './icons.js';
 import { CATEGORIES, userById, categoryById } from './data.js';
 import { store } from './store.js';
 
-mountLayout('index.html');
+await mountLayout('index.html');
 
-const posts = store.getPosts({ status: 'published' }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+const posts = (await store.getPosts({ status: 'published' })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 const featured = posts.find((p) => p.featured) || posts[0];
-const otherFeatured = posts.filter(p => p.id !== featured.id).slice(0, 4);
 
-document.getElementById('heroGrid').innerHTML = `
-  <div class="hero-lead">
-    ${featureCardHtml(featured, true)}
-  </div>
-  <div class="hero-secondary">
-    ${otherFeatured.map(p => featureCardHtml(p, false)).join('')}
-  </div>
-`;
+if (!featured) {
+  document.getElementById('heroGrid').innerHTML = '<p style="padding:60px 0;color:var(--text-muted);">No published stories yet. Sign in as an editor to publish the first one.</p>';
+} else {
+  const otherFeatured = posts.filter((p) => p.id !== featured.id).slice(0, 4);
+  document.getElementById('heroGrid').innerHTML = `
+    <div class="hero-lead">
+      ${featureCardHtml(featured, true)}
+    </div>
+    <div class="hero-secondary">
+      ${otherFeatured.map(p => featureCardHtml(p, false)).join('')}
+    </div>
+  `;
+}
 
 document.getElementById('catGrid').innerHTML = CATEGORIES.map((c) => `
   <a class="cat-list-item" href="category.html?slug=${c.slug}">
     <span class="cat-name">${c.name}</span>
-    <span class="cat-count">${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length}</span>
+    <span class="cat-count">${posts.filter((p) => p.categoryId === c.id).length}</span>
   </a>`).join('');
 
 document.getElementById('latestGrid').innerHTML = posts.slice(0, 8).map((p, i) => cardHtml(p, i)).join('');
@@ -29,10 +33,10 @@ document.getElementById('latestGrid').innerHTML = posts.slice(0, 8).map((p, i) =
 const trending = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
 document.getElementById('trendingList').innerHTML = trending.map((p, i) => rowCardHtml(p, i + 1)).join('');
 
-renderBookmarks();
+await renderBookmarks();
 
-function renderBookmarks() {
-  const bookmarked = store.getBookmarkedPosts();
+async function renderBookmarks() {
+  const bookmarked = await store.getBookmarkedPosts();
   const header = document.getElementById('bookmarksHeader');
   const grid = document.getElementById('bookmarkGrid');
   if (bookmarked.length === 0) {

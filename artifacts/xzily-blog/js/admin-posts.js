@@ -5,23 +5,23 @@ import { categoryById } from './data.js';
 import { store } from './store.js';
 import { toAdminAsset } from './asset.js';
 
-const session = mountAdmin('posts.html', 'Manage Posts', 'Edit, publish, or delete stories.');
+const session = await mountAdmin('posts.html', 'Manage Posts', 'Edit, publish, or delete stories.');
 let currentStatus = 'all';
 
 if (session) {
-  render();
+  await render();
   document.querySelectorAll('#statusTabs button').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('#statusTabs button').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       currentStatus = btn.dataset.status;
-      render();
+      await render();
     });
   });
 }
 
-function render() {
-  const posts = store.getPosts({ status: currentStatus }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+async function render() {
+  const posts = (await store.getPosts({ status: currentStatus })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   document.getElementById('postsTableBody').innerHTML = posts.map((p) => {
     const cat = categoryById(p.categoryId);
     return `
@@ -52,19 +52,19 @@ function render() {
     </div>` : '';
 
   document.querySelectorAll('[data-toggle]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const p = store.getPostById(btn.dataset.toggle);
-      store.updatePost(p.id, { status: p.status === 'published' ? 'draft' : 'published' });
+    btn.addEventListener('click', async () => {
+      const p = await store.getPostById(btn.dataset.toggle);
+      await store.updatePost(p.id, { status: p.status === 'published' ? 'draft' : 'published' });
       toast('Status updated');
-      render();
+      await render();
     });
   });
   document.querySelectorAll('[data-delete]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (!confirm('Delete this story permanently?')) return;
-      store.deletePost(btn.dataset.delete);
+      await store.deletePost(btn.dataset.delete);
       toast('Story deleted');
-      render();
+      await render();
     });
   });
 }

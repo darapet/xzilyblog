@@ -3,15 +3,17 @@ import { icon } from './icons.js';
 import { userById, categoryById, CATEGORIES } from './data.js';
 import { store } from './store.js';
 
-mountLayout('search.html');
+await mountLayout('search.html');
 
 const input = document.getElementById('searchInput');
 const form = document.getElementById('searchForm');
 const initial = qs('q') || '';
 input.value = initial;
-runSearch(initial);
 
-document.getElementById('searchSidebar').innerHTML = sidebarHtml();
+const allPosts = await store.getPosts({ status: 'published' });
+
+runSearch(initial);
+document.getElementById('searchSidebar').innerHTML = sidebarHtml(allPosts);
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -24,14 +26,13 @@ form.addEventListener('submit', (e) => {
 
 function runSearch(query) {
   const q = query.trim().toLowerCase();
-  const posts = store.getPosts({ status: 'published' });
   const results = q
-    ? posts.filter((p) =>
+    ? allPosts.filter((p) =>
         p.title.toLowerCase().includes(q) ||
         p.excerpt.toLowerCase().includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q)) ||
         (categoryById(p.categoryId)?.name || '').toLowerCase().includes(q))
-    : posts;
+    : allPosts;
 
   document.getElementById('resultCount').textContent = q
     ? `${results.length} result${results.length === 1 ? '' : 's'} for "${query}"`
@@ -67,8 +68,8 @@ function cardHtml(p, i) {
     </div>`;
 }
 
-function sidebarHtml() {
-  const trending = [...store.getPosts({ status: 'published' })].sort((a, b) => b.views - a.views).slice(0, 5);
+function sidebarHtml(posts) {
+  const trending = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
   return `
     <div class="widget">
       <h3 class="widget-title">Trending Now</h3>
@@ -89,7 +90,7 @@ function sidebarHtml() {
         ${CATEGORIES.map((c) => `
           <a class="cat-list-item" href="category.html?slug=${c.slug}">
             <span class="cat-name">${c.name}</span>
-            <span class="cat-count">${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length}</span>
+            <span class="cat-count">${posts.filter((p) => p.categoryId === c.id).length}</span>
           </a>`).join('')}
       </div>
     </div>`;
