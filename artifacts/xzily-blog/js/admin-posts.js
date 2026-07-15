@@ -37,6 +37,7 @@ async function render() {
       <td>
         <div class="row-actions">
           <a class="icon-btn" href="editor.html?id=${p.id}" title="Edit">${icon('edit', 15)}</a>
+          <a class="icon-btn" href="../article.html?slug=${p.slug}&preview=1" target="_blank" rel="noopener" title="Preview">${icon('eye', 15)}</a>
           <button class="icon-btn" data-toggle="${p.id}" title="Toggle publish">${icon(p.status === 'published' ? 'bellOff' : 'checkCircle', 15)}</button>
           <button class="icon-btn" data-delete="${p.id}" title="Delete">${icon('trash', 15)}</button>
         </div>

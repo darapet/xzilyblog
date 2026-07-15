@@ -1052,6 +1052,17 @@ h1, h2, h3, h4, h5, h6 {
 #coverEmptyHint p { margin: 0 0 4px; font-size: 14px; color: var(--text-main); }
 #coverEmptyHint span { font-size: 12px; }
 
+/* ---- Draft / admin preview banner ---- */
+.preview-banner {
+  position: sticky; top: 0; z-index: 500;
+  background: var(--dark-bg); color: var(--white);
+  padding: 12px 20px; display: flex; align-items: center; justify-content: center;
+  gap: 16px; flex-wrap: wrap; font-size: 13.5px; text-align: center;
+}
+.preview-banner span { display: inline-flex; align-items: center; gap: 8px; }
+.preview-banner strong { text-transform: uppercase; color: #ffb74d; }
+.btn-sm { padding: 6px 14px; font-size: 12.5px; }
+
 /* ---- Comments / subscribers admin ---- */
 #commentsTableBody td, #subsTableBody td { font-size: 13.5px; }
 

@@ -6,14 +6,27 @@ import { store, AuthRequiredError } from './store.js';
 await mountLayout('article.html');
 
 const slug = qs('slug');
+const isPreview = qs('preview') === '1';
 const post = slug ? await store.getPostBySlug(slug) : null;
+
+if (isPreview) renderPreviewBanner(post);
 
 if (!post) {
   document.getElementById('articleRoot').innerHTML = notFoundHtml();
   document.getElementById('articleSidebar').innerHTML = '';
 } else {
-  await store.incrementViews(post.id);
+  if (!isPreview) await store.incrementViews(post.id);
   await render(post);
+}
+
+function renderPreviewBanner(p) {
+  const bar = document.createElement('div');
+  bar.className = 'preview-banner';
+  const statusNote = p && p.status !== 'published' ? `This story is still a <strong>${p.status}</strong> — only admins can see this link.` : "You're previewing this published story as an admin.";
+  bar.innerHTML = `
+    <span>${icon('eye', 15)} ${statusNote}</span>
+    ${p ? `<a class="btn btn-outline btn-sm" href="admin/editor.html?id=${p.id}">${icon('edit', 14)} Edit story</a>` : ''}`;
+  document.body.prepend(bar);
 }
 
 function notFoundHtml() {

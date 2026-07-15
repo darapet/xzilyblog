@@ -68,6 +68,7 @@ async function init() {
     document.getElementById('fAuthor').value = existing.authorId;
   }
 
+  document.getElementById('previewBtn').addEventListener('click', () => openPreview(existing));
   document.getElementById('saveDraftBtn').addEventListener('click', () => save('draft', existing));
   document.getElementById('publishBtn').addEventListener('click', () => save('published', existing));
 
@@ -178,6 +179,21 @@ function setCoverPreview(url) {
     img.style.display = 'none';
     if (empty) empty.style.display = '';
   }
+}
+
+function openPreview(existing) {
+  const draft = {
+    title: document.getElementById('fTitle').value.trim(),
+    excerpt: document.getElementById('fExcerpt').value.trim(),
+    content: document.getElementById('fBody').innerHTML.trim(),
+    coverImage: coverImageUrl || (existing ? existing.coverImage : '') || 'images/cover-1.jpg',
+    categoryId: document.getElementById('fCategory').value,
+    tags: document.getElementById('fTags').value.split(',').map((t) => t.trim()).filter(Boolean),
+    authorId: document.getElementById('fAuthor').value,
+    readingTime: Math.max(1, Math.round(document.getElementById('fBody').innerText.trim().split(/\s+/).length / 200)),
+  };
+  sessionStorage.setItem('xzily_preview_draft', JSON.stringify(draft));
+  window.open('../preview.html', '_blank');
 }
 
 async function save(status, existing) {

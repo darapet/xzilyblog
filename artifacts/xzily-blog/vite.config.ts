@@ -43,6 +43,7 @@ export default defineConfig({
         login: path.resolve(import.meta.dirname, 'login.html'),
         register: path.resolve(import.meta.dirname, 'register.html'),
         article: path.resolve(import.meta.dirname, 'article.html'),
+        preview: path.resolve(import.meta.dirname, 'preview.html'),
         category: path.resolve(import.meta.dirname, 'category.html'),
         search: path.resolve(import.meta.dirname, 'search.html'),
         adminLogin: path.resolve(import.meta.dirname, 'admin/login.html'),
