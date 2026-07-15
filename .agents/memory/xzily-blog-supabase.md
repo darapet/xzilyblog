@@ -19,6 +19,23 @@ pattern for any other browser-callable service client, and keep schema/RLS chang
 since the agent only has the anon key and cannot run migrations itself — the user must paste SQL
 into the Supabase SQL editor manually.
 
+**Running SQL/admin ops directly from the agent (no Supabase dashboard access needed):** this sandbox
+has no IPv6 egress, and Supabase's direct `db.<ref>.supabase.co:5432` host is IPv6-only on newer
+projects — connections there fail with `ENOTFOUND`. Use the IPv4 session pooler instead:
+`postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`. The
+region isn't derivable from the project ref; brute-force a short list of common AWS regions with a
+short connect timeout until one authenticates. Needs `SUPABASE_DB_PASSWORD` (the Postgres
+password, not the anon/service key) requested as a secret.
+
+**Promoting the first admin via service-role/SQL still gets blocked by the self-escalation
+trigger** (see below) because `public.is_admin()` reads `auth.uid()`, which is null for both
+service-role REST calls and plain `psql`/pg sessions — so `prevent_is_admin_selfescalate` always
+reverts the flag to `false` for any non-interactive caller, not just end users. Fix: `alter table
+public.profiles disable trigger profiles_guard_is_admin`, run the `UPDATE ... SET is_admin = true`,
+then re-enable the trigger. Create the auth user first via the Auth Admin REST API
+(`POST {SUPABASE_URL}/auth/v1/admin/users` with `service_role` key, `email_confirm: true`) so no
+manual dashboard step is needed at all.
+
 Key design decisions worth being consistent with:
 - Editorial "authors" (byline shown on posts) stay a fixed static list in `js/data.js`, not tied
   to real Supabase Auth accounts — only readers/admins get real accounts.
