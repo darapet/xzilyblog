@@ -45,38 +45,65 @@ export function toast(message, iconName = 'checkCircle') {
   el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-// ---------------- Navbar ----------------
+export function getCatColor(slug) {
+  const colors = {
+    technology: '#ba1818',
+    business: '#0055a4',
+    lifestyle: '#008a00',
+    health: '#e65c00',
+    culture: '#6c00a2',
+    travel: '#009999'
+  };
+  return colors[slug] || '#ba1818';
+}
+
 export function renderNavbar(activePath = '') {
   const session = store.getSession();
   const bookmarkCount = store.getBookmarkedPosts().length;
-  const links = [
+  
+  const mainLinks = [
     ['index.html', 'Home'],
-    ['category.html?slug=technology', 'Technology'],
-    ['category.html?slug=business', 'Business'],
-    ['category.html?slug=lifestyle', 'Lifestyle'],
-    ['category.html?slug=health', 'Health'],
     ['about.html', 'About'],
+    ['contact.html', 'Contact']
   ];
-  const navLinks = links
-    .map(([href, label]) => `<a href="${href}" class="${isActive(href, activePath) ? 'active' : ''}">${label}</a>`)
-    .join('');
-
+  
   const authArea = session
-    ? `<a href="#" id="logoutBtn" class="btn btn-outline btn-sm">${icon('logOut', 15)} ${escapeHtml(session.name.split(' ')[0])}</a>`
-    : `<a href="login.html" class="btn btn-primary btn-sm">Sign in</a>`;
+    ? `<a href="#" id="logoutBtn" class="nav-auth-link">${icon('logOut', 15)} ${escapeHtml(session.name.split(' ')[0])}</a>`
+    : `<a href="login.html" class="nav-auth-link">SIGN IN</a>`;
+
+  const topPosts = store.getPosts({ status: 'published' }).slice(0, 5).map(p => p.title).join(' &nbsp; &bull; &nbsp; ');
 
   return `
-  <div class="notice-bar">Frontend preview build &mdash; <strong>Xzily</strong> data lives in your browser only, no backend yet.</div>
-  <header class="navbar">
+  <div class="top-ticker">
     <div class="container">
-      <a href="index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
-      <nav class="nav-links">${navLinks}</nav>
+      <div class="ticker-content">
+        <div class="ticker-label">Flash News</div>
+        <div class="ticker-marquee"><marquee behavior="scroll" direction="left" scrollamount="5">${topPosts}</marquee></div>
+      </div>
+      <div class="ticker-date" id="liveDateDisplay"></div>
+    </div>
+  </div>
+
+  <header class="magazine-header">
+    <div class="container">
+      <a href="index.html" class="brand">XZILY<span class="dot">.</span></a>
+      <div class="header-banner">
+        <span>Advertisement 728x90</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="main-nav">
+    <div class="container nav-container">
+      <div class="nav-links">
+        ${mainLinks.map(([href, label]) => `<a href="${href}" class="${isActive(href, activePath) ? 'active' : ''}">${label.toUpperCase()}</a>`).join('')}
+      </div>
       <div class="nav-actions">
         <form class="nav-search-form" action="search.html" method="get">
-          ${icon('search', 16)}
-          <input type="search" name="q" placeholder="Search articles&hellip;" aria-label="Search articles" />
+          <input type="search" name="q" placeholder="Search..." aria-label="Search articles" />
+          <button type="submit" class="search-btn">${icon('search', 16)}</button>
         </form>
-        <a href="index.html#bookmarks" class="icon-btn" id="bookmarkNavBtn" title="Bookmarks">
+        <a href="index.html#bookmarksHeader" class="icon-link" id="bookmarkNavBtn" title="Bookmarks">
           ${icon('bookmark', 18)}
           ${bookmarkCount ? `<span class="count-badge">${bookmarkCount}</span>` : ''}
         </a>
@@ -84,11 +111,21 @@ export function renderNavbar(activePath = '') {
         <button class="icon-btn nav-toggle" id="mobileMenuBtn" aria-label="Open menu">${icon('menu', 18)}</button>
       </div>
     </div>
-  </header>
+  </nav>
+
+  <nav class="cat-nav">
+    <div class="container">
+      <div class="cat-links">
+        ${CATEGORIES.map(c => `<a href="category.html?slug=${c.slug}" class="${activePath.includes('category.html') && qs('slug') === c.slug ? 'active' : ''}">${c.name.toUpperCase()}</a>`).join('')}
+      </div>
+    </div>
+  </nav>
+  
   <div class="mobile-drawer" id="mobileDrawer">
     <div class="mobile-drawer-panel">
       <button class="icon-btn mobile-drawer-close" id="mobileMenuClose" aria-label="Close menu">${icon('close', 18)}</button>
-      ${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}
+      ${mainLinks.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}
+      ${CATEGORIES.map(c => `<a href="category.html?slug=${c.slug}">${c.name}</a>`).join('')}
       ${session ? '' : '<a href="login.html">Sign in</a><a href="register.html">Create account</a>'}
     </div>
   </div>`;
@@ -96,7 +133,7 @@ export function renderNavbar(activePath = '') {
 
 function isActive(href, activePath) {
   const path = href.split('?')[0];
-  return activePath === path;
+  return activePath === path || (activePath === '' && path === 'index.html');
 }
 
 export function renderFooter() {
@@ -105,12 +142,12 @@ export function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="index.html" class="brand"><span class="brand-mark">X</span>zily<span class="dot">.</span></a>
-          <p>Independent editorial covering technology, business, culture, health, and travel &mdash; built for readers who want substance over noise.</p>
+          <a href="index.html" class="brand">XZILY<span class="dot">.</span></a>
+          <p>Independent editorial covering technology, business, culture, health, and travel.</p>
           <div class="footer-social">
-            <a class="icon-btn" href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
-            <a class="icon-btn" href="#" aria-label="Facebook">${icon('facebook', 16)}</a>
-            <a class="icon-btn" href="#" aria-label="LinkedIn">${icon('linkedin', 16)}</a>
+            <a href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
+            <a href="#" aria-label="Facebook">${icon('facebook', 16)}</a>
+            <a href="#" aria-label="LinkedIn">${icon('linkedin', 16)}</a>
           </div>
         </div>
         <div>
@@ -139,7 +176,7 @@ export function renderFooter() {
       </div>
       <div class="footer-bottom">
         <span>&copy; ${new Date().getFullYear()} Xzily. All rights reserved.</span>
-        <span>Built as a frontend-only preview.</span>
+        <span>Frontend Preview Build</span>
       </div>
     </div>
   </footer>`;
@@ -155,6 +192,16 @@ export function mountLayout(activePath) {
 }
 
 function wireLayoutEvents() {
+  const d = document.getElementById('liveDateDisplay');
+  if (d) {
+    const updateTime = () => {
+      const now = new Date();
+      d.textContent = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
+    updateTime();
+    setInterval(updateTime, 60000);
+  }
+
   const menuBtn = document.getElementById('mobileMenuBtn');
   const drawer = document.getElementById('mobileDrawer');
   const closeBtn = document.getElementById('mobileMenuClose');
@@ -217,7 +264,6 @@ export function initReveal() {
   targets.forEach((t) => io.observe(t));
 }
 
-// ---------------- Notification opt-in (real Notification API, simulated push) ----------------
 export function initNotificationPrompt() {
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'default') return;
@@ -230,8 +276,8 @@ export function initNotificationPrompt() {
     <h4>Stay in the loop</h4>
     <p>Get a real browser notification when Xzily publishes a new story.</p>
     <div class="actions">
-      <button class="btn btn-primary btn-sm" id="notifAllow">Allow</button>
-      <button class="btn btn-ghost btn-sm" id="notifDismiss">Not now</button>
+      <button class="btn btn-primary" id="notifAllow">Allow</button>
+      <button class="btn btn-outline" id="notifDismiss">Not now</button>
     </div>`;
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));

@@ -3,13 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Xzily — Independent Editorial on Technology, Business &amp; Culture</title>
-    <meta name="description" content="Xzily is an independent editorial covering technology, business, lifestyle, health, culture, and travel." />
-    <meta name="robots" content="index, follow" />
+    <title>Xzily — FreeNews Edition</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -17,89 +13,44 @@
     <div id="site-navbar"></div>
 
     <main id="main">
-      <section class="hero">
-        <div class="container hero-grid">
-          <div class="reveal is-visible">
-            <span class="hero-kicker">Est. 2024 &middot; Independent Editorial</span>
-            <h1>Stories that <em>sharpen</em><br />how you see the world.</h1>
-            <p class="lede">Xzily covers technology, business, lifestyle, health, culture, and travel &mdash; reported and written for readers who want depth, not noise.</p>
-            <div class="hero-actions">
-              <a href="#latest" class="btn btn-primary">Start reading</a>
-              <a href="about.html" class="btn btn-outline">About Xzily</a>
-            </div>
-            <div class="hero-stats">
-              <div class="stat"><b id="statPosts">10</b><span>Stories</span></div>
-              <div class="stat"><b id="statCategories">6</b><span>Sections</span></div>
-              <div class="stat"><b id="statReaders">85k</b><span>Monthly readers</span></div>
-            </div>
+      <section class="magazine-hero">
+        <div class="container">
+          <div class="magazine-hero-layout" id="heroGrid">
+            <!-- populated by home.js -->
           </div>
-          <div class="hero-feature-card reveal is-visible" id="heroFeature"></div>
         </div>
       </section>
 
-      <section class="section" id="categories">
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <span class="eyebrow">Browse by section</span>
-              <h2>Find your beat</h2>
-            </div>
-          </div>
-          <div class="cat-grid reveal" id="catGrid"></div>
-        </div>
-      </section>
+      <div class="container magazine-layout">
+        <div class="main-column">
+          <div class="block-header"><h2>Latest News</h2></div>
+          <div class="grid grid-2" id="latestGrid"></div>
 
-      <section class="section section-soft" id="latest">
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <span class="eyebrow">Just published</span>
-              <h2>Latest stories</h2>
-            </div>
-            <a class="section-link" href="search.html">All stories &rarr;</a>
-          </div>
-          <div class="grid grid-3 stagger reveal" id="latestGrid"></div>
+          <div class="block-header" style="margin-top: 40px;" id="bookmarksHeader"><h2>Saved for Later</h2></div>
+          <div class="grid grid-2" id="bookmarkGrid"></div>
         </div>
-      </section>
 
-      <section class="section" id="trending">
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <span class="eyebrow">Reader favorites</span>
-              <h2>Trending this week</h2>
-            </div>
+        <aside class="sidebar-column">
+          <div class="widget">
+            <h3 class="widget-title">Trending Now</h3>
+            <div class="trending-list" id="trendingList"></div>
           </div>
-          <div id="trendingList" class="reveal"></div>
-        </div>
-      </section>
-
-      <section class="section section-soft" id="bookmarks">
-        <div class="container">
-          <div class="section-head reveal">
-            <div>
-              <span class="eyebrow">Saved for later</span>
-              <h2>Your bookmarks</h2>
-            </div>
+          
+          <div class="widget">
+            <h3 class="widget-title">Categories</h3>
+            <div class="cat-list-widget" id="catGrid"></div>
           </div>
-          <div class="grid grid-3 stagger reveal" id="bookmarkGrid"></div>
-        </div>
-      </section>
 
-      <section class="section">
-        <div class="container">
-          <div class="newsletter reveal">
-            <div>
-              <h2>Never miss a story.</h2>
-              <p>One email a week. No spam, ever.</p>
-            </div>
-            <form class="newsletter-form">
-              <input type="email" placeholder="you@email.com" required />
-              <button class="btn btn-primary" type="submit">Subscribe</button>
+          <div class="widget newsletter-widget">
+            <h3 class="widget-title">Subscribe</h3>
+            <p>Never miss a story. Get our weekly newsletter.</p>
+            <form class="newsletter-form" style="margin-top: 15px;">
+              <input type="email" placeholder="Email address" required />
+              <button class="btn btn-primary btn-block" type="submit" style="margin-top: 10px;">Sign Up</button>
             </form>
           </div>
-        </div>
-      </section>
+        </aside>
+      </div>
     </main>
 
     <div id="site-footer"></div>

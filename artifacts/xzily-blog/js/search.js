@@ -1,15 +1,17 @@
-import { mountLayout, formatDate, qs } from './common.js';
+import { mountLayout, formatDate, qs, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { userById, categoryById } from './data.js';
+import { userById, categoryById, CATEGORIES } from './data.js';
 import { store } from './store.js';
 
-mountLayout('');
+mountLayout('search.html');
 
 const input = document.getElementById('searchInput');
 const form = document.getElementById('searchForm');
 const initial = qs('q') || '';
 input.value = initial;
 runSearch(initial);
+
+document.getElementById('searchSidebar').innerHTML = sidebarHtml();
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -48,20 +50,47 @@ function cardHtml(p, i) {
   const author = userById(p.authorId);
   const cat = categoryById(p.categoryId);
   return `
-    <div class="card" style="--i:${i}">
-      <a class="card-media" href="article.html?slug=${p.slug}">
-        <span class="card-cat">${cat ? cat.name : ''}</span>
+    <div class="mag-card">
+      <a class="mag-card-media" href="article.html?slug=${p.slug}">
         <img src="${p.coverImage}" alt="${p.title}" loading="lazy" />
+        <span class="cat-pill absolute-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
       </a>
-      <div class="card-body">
-        <h3><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
-        <p class="card-excerpt">${p.excerpt}</p>
-        <div class="card-meta">
-          <img class="avatar" src="${author.avatar}" alt="${author.name}" />
-          <span>${author.name}</span>
-          <span class="sep"></span>
-          <span>${formatDate(p.createdAt)}</span>
+      <div class="mag-card-body">
+        <h3 class="mag-card-title"><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
+        <p class="mag-card-excerpt">${p.excerpt}</p>
+        <div class="mag-card-meta">
+          <span class="author-name">${author.name}</span>
+          <span class="sep">-</span>
+          <span class="date">${formatDate(p.createdAt)}</span>
         </div>
+      </div>
+    </div>`;
+}
+
+function sidebarHtml() {
+  const trending = [...store.getPosts({ status: 'published' })].sort((a, b) => b.views - a.views).slice(0, 5);
+  return `
+    <div class="widget">
+      <h3 class="widget-title">Trending Now</h3>
+      <div class="trending-list">
+        ${trending.map((r, i) => `
+          <a class="trending-item" href="article.html?slug=${r.slug}">
+            <span class="trending-rank">${i + 1}</span>
+            <div class="trending-info">
+              <h4>${r.title}</h4>
+              <div class="trending-meta">${formatDate(r.createdAt)}</div>
+            </div>
+          </a>`).join('')}
+      </div>
+    </div>
+    <div class="widget">
+      <h3 class="widget-title">Categories</h3>
+      <div class="cat-list-widget">
+        ${CATEGORIES.map((c) => `
+          <a class="cat-list-item" href="category.html?slug=${c.slug}">
+            <span class="cat-name">${c.name}</span>
+            <span class="cat-count">${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length}</span>
+          </a>`).join('')}
       </div>
     </div>`;
 }

@@ -6,9 +6,7 @@
     <title id="pageTitle">Xzily</title>
     <meta name="description" id="pageDesc" content="Xzily article" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -16,11 +14,13 @@
     <div class="reading-progress" id="readingProgress"></div>
     <div id="site-navbar"></div>
     <main id="main">
-      <div class="container article-layout">
-        <article class="article-head" id="articleRoot">
-          <!-- populated by js/article.js -->
-        </article>
-        <aside class="article-sidebar" id="articleSidebar"></aside>
+      <div class="container magazine-layout">
+        <div class="main-column">
+          <article class="article-content" id="articleRoot">
+            <!-- populated by js/article.js -->
+          </article>
+        </div>
+        <aside class="sidebar-column" id="articleSidebar"></aside>
       </div>
     </main>
     <div id="site-footer"></div>

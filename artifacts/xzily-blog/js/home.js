@@ -1,4 +1,4 @@
-import { mountLayout, formatDate, formatCount, initNotificationPrompt } from './common.js';
+import { mountLayout, formatDate, formatCount, initNotificationPrompt, getCatColor } from './common.js';
 import { icon } from './icons.js';
 import { CATEGORIES, userById, categoryById } from './data.js';
 import { store } from './store.js';
@@ -7,19 +7,24 @@ mountLayout('index.html');
 
 const posts = store.getPosts({ status: 'published' }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 const featured = posts.find((p) => p.featured) || posts[0];
+const otherFeatured = posts.filter(p => p.id !== featured.id).slice(0, 4);
 
-document.getElementById('heroFeature').innerHTML = featured ? featureCardHtml(featured) : '';
-document.getElementById('statPosts').textContent = posts.length;
-document.getElementById('statCategories').textContent = CATEGORIES.length;
+document.getElementById('heroGrid').innerHTML = `
+  <div class="hero-lead">
+    ${featureCardHtml(featured, true)}
+  </div>
+  <div class="hero-secondary">
+    ${otherFeatured.map(p => featureCardHtml(p, false)).join('')}
+  </div>
+`;
 
 document.getElementById('catGrid').innerHTML = CATEGORIES.map((c) => `
-  <a class="cat-chip" href="category.html?slug=${c.slug}">
-    ${icon(c.icon, 26)}
-    <h4>${c.name}</h4>
-    <span>${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length} stories</span>
+  <a class="cat-list-item" href="category.html?slug=${c.slug}">
+    <span class="cat-name">${c.name}</span>
+    <span class="cat-count">${store.getPosts({ status: 'published' }).filter((p) => p.categoryId === c.id).length}</span>
   </a>`).join('');
 
-document.getElementById('latestGrid').innerHTML = posts.slice(0, 6).map((p, i) => cardHtml(p, i)).join('');
+document.getElementById('latestGrid').innerHTML = posts.slice(0, 8).map((p, i) => cardHtml(p, i)).join('');
 
 const trending = [...posts].sort((a, b) => b.views - a.views).slice(0, 5);
 document.getElementById('trendingList').innerHTML = trending.map((p, i) => rowCardHtml(p, i + 1)).join('');
@@ -28,30 +33,31 @@ renderBookmarks();
 
 function renderBookmarks() {
   const bookmarked = store.getBookmarkedPosts();
-  const section = document.getElementById('bookmarks');
+  const header = document.getElementById('bookmarksHeader');
   const grid = document.getElementById('bookmarkGrid');
   if (bookmarked.length === 0) {
-    section.style.display = 'none';
+    header.style.display = 'none';
+    grid.style.display = 'none';
     return;
   }
-  section.style.display = '';
+  header.style.display = '';
+  grid.style.display = 'grid'; // because it uses flex or grid
   grid.innerHTML = bookmarked.map((p, i) => cardHtml(p, i)).join('');
 }
 
-function featureCardHtml(p) {
+function featureCardHtml(p, isLead) {
   const cat = categoryById(p.categoryId);
   const author = userById(p.authorId);
   return `
-    <a href="article.html?slug=${p.slug}" style="display:block;height:100%;">
+    <a href="article.html?slug=${p.slug}" class="hero-card ${isLead ? 'hero-card-lead' : 'hero-card-sm'}">
       <img src="${p.coverImage}" alt="${escAttr(p.title)}" />
-      <div class="overlay">
-        <span class="tag-pill">${cat ? cat.name : ''}</span>
+      <div class="hero-overlay">
+        <span class="cat-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
         <h3>${p.title}</h3>
-        <div class="meta">
-          <img class="avatar" src="${author.avatar}" alt="${escAttr(author.name)}" style="width:22px;height:22px;" />
+        <div class="hero-meta">
           <span>${author.name}</span>
           <span>&middot;</span>
-          <span>${p.readingTime} min read</span>
+          <span>${formatDate(p.createdAt)}</span>
         </div>
       </div>
     </a>`;
@@ -61,41 +67,30 @@ function cardHtml(p, i) {
   const cat = categoryById(p.categoryId);
   const author = userById(p.authorId);
   return `
-    <div class="card" style="--i:${i}">
-      <a class="card-media" href="article.html?slug=${p.slug}">
-        <span class="card-cat">${cat ? cat.name : ''}</span>
+    <div class="mag-card">
+      <a class="mag-card-media" href="article.html?slug=${p.slug}">
         <img src="${p.coverImage}" alt="${escAttr(p.title)}" loading="lazy" />
+        <span class="cat-pill absolute-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
       </a>
-      <div class="card-body">
-        <h3><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
-        <p class="card-excerpt">${p.excerpt}</p>
-        <div class="card-meta">
-          <img class="avatar" src="${author.avatar}" alt="${escAttr(author.name)}" />
-          <span>${author.name}</span>
-          <span class="sep"></span>
-          <span>${formatDate(p.createdAt)}</span>
-          <span class="sep"></span>
-          <span>${icon('clock', 14)} ${p.readingTime}m</span>
+      <div class="mag-card-body">
+        <h3 class="mag-card-title"><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
+        <p class="mag-card-excerpt">${p.excerpt}</p>
+        <div class="mag-card-meta">
+          <span class="author-name">${author.name}</span>
+          <span class="sep">-</span>
+          <span class="date">${formatDate(p.createdAt)}</span>
         </div>
       </div>
     </div>`;
 }
 
 function rowCardHtml(p, rank) {
-  const author = userById(p.authorId);
   return `
-    <a class="row-card" href="article.html?slug=${p.slug}">
-      <span class="rank">${rank}</span>
-      <span class="thumb"><img src="${p.coverImage}" alt="${escAttr(p.title)}" /></span>
-      <div class="info">
+    <a class="trending-item" href="article.html?slug=${p.slug}">
+      <span class="trending-rank">${rank}</span>
+      <div class="trending-info">
         <h4>${p.title}</h4>
-        <div class="meta-line">
-          <span>${author.name}</span>
-          <span>&middot;</span>
-          <span>${icon('eye', 13)} ${formatCount(p.views)}</span>
-          <span>&middot;</span>
-          <span>${icon('heart', 13)} ${formatCount(p.likes)}</span>
-        </div>
+        <div class="trending-meta">${formatDate(p.createdAt)}</div>
       </div>
     </a>`;
 }

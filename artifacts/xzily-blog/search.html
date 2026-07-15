@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Search — Xzily</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -16,24 +14,22 @@
     <main id="main">
       <div class="page-header">
         <div class="container">
-          <div class="breadcrumb"><a href="index.html">Home</a> / <span>Search</span></div>
-          <h1>Search Xzily</h1>
-          <form id="searchForm" style="margin-top:20px;max-width:480px;">
-            <div class="nav-search-form" style="width:100%;padding:12px 16px;">
-              <span></span>
-              <input type="search" id="searchInput" placeholder="Search by title, tag, or topic&hellip;" />
-              <button class="icon-btn" type="submit" style="border:none;background:none;">Go</button>
-            </div>
+          <div class="breadcrumb"><a href="index.html">HOME</a> / <span>SEARCH</span></div>
+          <h1>Search Results</h1>
+          <form id="searchForm" style="margin-top:20px;max-width:480px;display:flex;gap:10px;">
+            <input type="search" id="searchInput" placeholder="Search by title, tag, or topic&hellip;" style="flex:1;padding:12px;border:none;outline:none;" />
+            <button class="btn btn-primary" type="submit">SEARCH</button>
           </form>
         </div>
       </div>
-      <section class="section">
-        <div class="container">
-          <p id="resultCount" style="color:var(--ink-400);font-size:14px;margin-bottom:24px;"></p>
-          <div class="grid grid-3 stagger reveal" id="resultsGrid"></div>
+      <div class="container magazine-layout">
+        <div class="main-column">
+          <p id="resultCount" style="color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:20px;"></p>
+          <div class="grid grid-2" id="resultsGrid"></div>
           <div id="resultsEmpty"></div>
         </div>
-      </section>
+        <aside class="sidebar-column" id="searchSidebar"></aside>
+      </div>
     </main>
     <div id="site-footer"></div>
     <script type="module" src="js/search.js"></script>
