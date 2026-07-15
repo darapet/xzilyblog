@@ -9,12 +9,20 @@ const session = await mountAdmin('editor.html', 'New Story', 'Write a rich-text 
 if (session) await init();
 
 const TOOLBAR = [
+  ['blockFormat'],
+  ['fontSize'],
+  ['divider'],
   ['bold', 'bold', 'Bold'],
   ['italic', 'italic', 'Italic'],
   ['underline', 'underline', 'Underline'],
+  ['strikeThrough', 'strikethrough', 'Strikethrough'],
   ['divider'],
-  ['blockFormat'],
-  ['fontSize'],
+  ['textColor'],
+  ['highlightColor'],
+  ['divider'],
+  ['justifyLeft', 'alignLeft', 'Align left'],
+  ['justifyCenter', 'alignCenter', 'Align center'],
+  ['justifyRight', 'alignRight', 'Align right'],
   ['divider'],
   ['insertUnorderedList', 'listBullets', 'Bulleted list'],
   ['insertOrderedList', 'listNumbers', 'Numbered list'],
@@ -87,6 +95,12 @@ function renderToolbar() {
     if (t[0] === 'fontSize') {
       return `<select id="fmtSize" title="Font size">${FONT_SIZES.map(([v, l]) => `<option value="${v}" ${v === '3' ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
     }
+    if (t[0] === 'textColor') {
+      return `<label class="color-swatch-btn" title="Text color">${icon('palette', 16)}<input type="color" id="fmtTextColor" value="#111111" /></label>`;
+    }
+    if (t[0] === 'highlightColor') {
+      return `<label class="color-swatch-btn" title="Highlight">${icon('highlighter', 16)}<input type="color" id="fmtHighlight" value="#fff59d" /></label>`;
+    }
     return `<button type="button" data-cmd="${t[0]}" title="${t[2]}">${icon(t[1], 16)}</button>`;
   }).join('');
   document.getElementById('editorToolbar').innerHTML = html;
@@ -117,6 +131,14 @@ function wireToolbar() {
   document.getElementById('fmtSize').addEventListener('change', (e) => {
     body.focus();
     document.execCommand('fontSize', false, e.target.value);
+  });
+  document.getElementById('fmtTextColor').addEventListener('input', (e) => {
+    body.focus();
+    document.execCommand('foreColor', false, e.target.value);
+  });
+  document.getElementById('fmtHighlight').addEventListener('input', (e) => {
+    body.focus();
+    document.execCommand('hiliteColor', false, e.target.value);
   });
 }
 

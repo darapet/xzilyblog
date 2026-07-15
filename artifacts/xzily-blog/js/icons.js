@@ -63,6 +63,12 @@ export const ICONS = {
   moreHorizontal: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
   flag: '<path d="M5 21V4"/><path d="M5 4h13l-3 4 3 4H5"/>',
   sparkle: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/>',
+  strikethrough: '<path d="M5 12h14"/><path d="M16 6.5C15.3 5 13.8 4 12 4c-2.2 0-4 1.3-4 3.2 0 1.4.9 2.3 2.2 2.8"/><path d="M8 17.5C8.7 19 10.2 20 12 20c2.2 0 4-1.3 4-3.2 0-1.4-.9-2.3-2.2-2.8"/>',
+  alignLeft: '<path d="M4 6h16M4 12h10M4 18h13"/>',
+  alignCenter: '<path d="M4 6h16M7 12h10M5.5 18h13"/>',
+  alignRight: '<path d="M4 6h16M10 12h10M7 18h13"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.1-1.8-.3-.6-.1-1.3.5-1.6.4-.2.9-.2 1.3 0 1 .5 2.1-.2 2.1-1.3V13a5 5 0 0 0-5-5"/><circle cx="7.5" cy="10.5" r="1.1"/><circle cx="12" cy="7.5" r="1.1"/><circle cx="16.5" cy="10.5" r="1.1"/><circle cx="8" cy="15.5" r="1.1"/>',
+  highlighter: '<path d="m9 11 6-6 4 4-6 6-4-4Z"/><path d="m11 13-6 6H2v-3l6-6"/>',
 };
 
 export function icon(name, size = 18, className = '') {
