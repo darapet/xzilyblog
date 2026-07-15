@@ -29,7 +29,7 @@ function notFoundHtml() {
 function render(p) {
   const author = userById(p.authorId);
   const cat = categoryById(p.categoryId);
-  document.getElementById('pageTitle').textContent = `${p.title} — Xzily`;
+  document.getElementById('pageTitle').textContent = `${p.title} — The Educative Blog`;
   document.getElementById('pageDesc').setAttribute('content', p.excerpt);
 
   document.getElementById('articleRoot').innerHTML = `

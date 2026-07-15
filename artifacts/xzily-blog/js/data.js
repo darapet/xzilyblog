@@ -1,7 +1,7 @@
-// Seed content for Xzily. Plain JS module -- no build step required.
+// Seed content for The Educative Blog. Plain JS module -- no build step required.
 
 export const USERS = [
-  { id: 'u1', name: 'Elena Rostova', email: 'elena@xzily.com', avatar: 'images/avatar-1.jpg', bio: 'Editor-in-chief at Xzily. Exploring the intersection of design, technology, and culture.' },
+  { id: 'u1', name: 'Elena Rostova', email: 'elena@xzily.com', avatar: 'images/avatar-1.jpg', bio: 'Editor-in-chief at The Educative Blog. Exploring the intersection of design, technology, and culture.' },
   { id: 'u2', name: 'Marcus Chen', email: 'marcus@xzily.com', avatar: 'images/avatar-2.jpg', bio: 'Senior tech correspondent, writing about the future of software and decentralized systems.' },
   { id: 'u3', name: 'Julian Hayes', email: 'julian@xzily.com', avatar: 'images/avatar-3.jpg', bio: 'Culture critic and essayist, documenting the shifting landscapes of modern life.' },
   { id: 'u4', name: 'Sarah Jenkins', email: 'sarah@xzily.com', avatar: 'images/avatar-4.jpg', bio: 'Health and science writer, distilling complex research into actionable insight.' },

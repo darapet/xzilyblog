@@ -12,7 +12,7 @@ if (!cat) {
   document.getElementById('catTitle').textContent = 'Category not found';
   document.getElementById('catGrid').innerHTML = '';
 } else {
-  document.getElementById('pageTitle').textContent = `${cat.name} — Xzily`;
+  document.getElementById('pageTitle').textContent = `${cat.name} — The Educative Blog`;
   document.getElementById('catCrumb').textContent = cat.name;
   document.getElementById('catTitle').textContent = cat.name;
   document.getElementById('catDesc').textContent = cat.description;

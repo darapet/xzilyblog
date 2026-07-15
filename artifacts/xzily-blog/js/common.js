@@ -91,7 +91,7 @@ export function renderNavbar(activePath = '') {
 
   <header class="magazine-header">
     <div class="container">
-      <a href="index.html" class="brand">XZILY<span class="dot">.</span></a>
+      <a href="index.html" class="brand">THE EDUCATIVE BLOG<span class="dot">.</span></a>
       <div class="header-banner">
         <span>Advertisement 728x90</span>
       </div>
@@ -147,7 +147,7 @@ export function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="index.html" class="brand">XZILY<span class="dot">.</span></a>
+          <a href="index.html" class="brand">THE EDUCATIVE BLOG<span class="dot">.</span></a>
           <p>Independent editorial covering technology, business, culture, health, and travel.</p>
           <div class="footer-social">
             <a href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
@@ -164,7 +164,7 @@ export function renderFooter() {
         <div>
           <h5>Company</h5>
           <ul>
-            <li><a href="about.html">About Xzily</a></li>
+            <li><a href="about.html">About The Educative Blog</a></li>
             <li><a href="contact.html">Contact</a></li>
             <li><a href="admin/login.html">Editor Login</a></li>
           </ul>
@@ -180,7 +180,7 @@ export function renderFooter() {
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; ${new Date().getFullYear()} Xzily. All rights reserved.</span>
+        <span>&copy; ${new Date().getFullYear()} The Educative Blog. All rights reserved.</span>
         <span>Frontend Preview Build</span>
       </div>
     </div>
@@ -242,7 +242,7 @@ export function wireNewsletterForms() {
       const input = form.querySelector('input[type="email"]');
       if (input && input.value) {
         store.addSubscriber(input.value.trim());
-        toast('Subscribed! Welcome to Xzily.');
+        toast('Subscribed! Welcome to The Educative Blog.');
         input.value = '';
       }
     });
@@ -279,7 +279,7 @@ export function initNotificationPrompt() {
   el.innerHTML = `
     <div class="icon-wrap">${icon('bell', 18)}</div>
     <h4>Stay in the loop</h4>
-    <p>Get a real browser notification when Xzily publishes a new story.</p>
+    <p>Get a real browser notification when The Educative Blog publishes a new story.</p>
     <div class="actions">
       <button class="btn btn-primary" id="notifAllow">Allow</button>
       <button class="btn btn-outline" id="notifDismiss">Not now</button>
@@ -296,7 +296,7 @@ export function initNotificationPrompt() {
     const perm = await Notification.requestPermission();
     if (perm === 'granted') {
       store.setNotificationOptIn(true);
-      new Notification('Xzily', { body: "You're subscribed to new-story alerts.", icon: 'favicon.svg' });
+      new Notification('The Educative Blog', { body: "You're subscribed to new-story alerts.", icon: 'favicon.svg' });
       toast('Notifications enabled');
     }
     el.classList.remove('show');
