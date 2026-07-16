@@ -100,6 +100,7 @@ export async function renderNavbar(activePath = '', cats = [], siteSettings = {}
   <header class="magazine-header">
     <div class="container">
       <a href="index.html" class="brand">${brandHtml}</a>
+      <div class="header-banner" id="headerAdSlot"></div>
     </div>
   </header>
 
@@ -221,6 +222,7 @@ export async function mountLayout(activePath) {
   applyFavicon(siteSettings.faviconUrl);
   wireLayoutEvents();
   initReveal();
+  mountHeaderAds().catch(() => {});
   return siteSettings; // let callers reuse the already-fetched object
 }
 
@@ -273,6 +275,69 @@ function wireLayoutEvents() {
     });
   }
   wireNewsletterForms();
+}
+
+
+// ── Rotating header banner ads ────────────────────────────────────────────────
+async function mountHeaderAds() {
+  const slot = document.getElementById('headerAdSlot');
+  if (!slot) return;
+  let ads = [];
+  try { ads = await store.getActiveAds('sidebar'); } catch (_) { return; }
+  if (!ads.length) { slot.style.display = 'none'; return; }
+
+  let current = 0;
+
+  function buildSlide(ad) {
+    const wrap = document.createElement('div');
+    wrap.className = 'had-slide';
+    const dest = ad.linkUrl || null;
+
+    if (ad.videoUrl) {
+      const vid = document.createElement('video');
+      vid.src = ad.videoUrl; vid.autoplay = true; vid.muted = true;
+      vid.loop = true; vid.playsInline = true;
+      vid.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      wrap.appendChild(vid);
+    } else if (ad.imageUrl) {
+      const img = document.createElement('img');
+      img.src = ad.imageUrl; img.alt = ad.title || '';
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      wrap.appendChild(img);
+    } else {
+      // Text-only — scrolling marquee
+      wrap.classList.add('had-text');
+      const inner = document.createElement('div');
+      inner.className = 'had-text-inner';
+      const t = document.createElement('strong');
+      t.textContent = ad.title || '';
+      inner.appendChild(t);
+      if (ad.body) {
+        const b = document.createElement('span');
+        b.textContent = ' — ' + ad.body;
+        inner.appendChild(b);
+      }
+      wrap.appendChild(inner);
+    }
+
+    if (dest) {
+      wrap.style.cursor = 'pointer';
+      wrap.addEventListener('click', () => window.open(dest, '_blank', 'noopener'));
+    }
+    return wrap;
+  }
+
+  function showSlide(idx) {
+    const next = buildSlide(ads[idx]);
+    next.classList.add('had-enter');
+    const old = slot.querySelector('.had-slide');
+    if (old) { old.classList.add('had-exit'); setTimeout(() => old.remove(), 420); }
+    slot.appendChild(next);
+    requestAnimationFrame(() => requestAnimationFrame(() => next.classList.remove('had-enter')));
+  }
+
+  showSlide(0);
+  if (ads.length > 1) setInterval(() => { current = (current + 1) % ads.length; showSlide(current); }, 6000);
 }
 
 export function wireNewsletterForms() {
