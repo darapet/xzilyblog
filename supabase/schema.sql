@@ -311,7 +311,13 @@ create table if not exists public.site_settings (
   stats_readers         text not null default '85k+',
   stats_stories         text not null default '10+',
   stats_sections        text not null default '6',
-  stats_writers         text not null default '4'
+  stats_writers         text not null default '4',
+  -- Phase 2: branding & theme
+  logo_url              text not null default '',
+  favicon_url           text not null default '',
+  theme_accent          text not null default '#ba1818',
+  theme_bg              text not null default '#f5f0eb',
+  theme_ink             text not null default '#1a1a1a'
 );
 insert into public.site_settings (id) values (true) on conflict (id) do nothing;
 

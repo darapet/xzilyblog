@@ -58,12 +58,15 @@ export function getCatColor(slug) {
   return colors[slug] || '#ba1818';
 }
 
-export async function renderNavbar(activePath = '', cats = []) {
+export async function renderNavbar(activePath = '', cats = [], siteSettings = {}) {
   const [session, bookmarks, posts] = await Promise.all([
     store.getSession(),
     store.getBookmarkedPosts(),
     store.getPosts({ status: 'published' }),
   ]);
+  const brandHtml = siteSettings.logoUrl
+    ? `<img src="${siteSettings.logoUrl}" class="brand-logo" alt="${escapeHtml(siteSettings.siteName || 'Home')}" />`
+    : `${escapeHtml(siteSettings.siteName || 'THE EDUCATIVE BLOG')}<span class="dot">.</span>`;
   const bookmarkCount = bookmarks.length;
 
   const mainLinks = [
@@ -96,10 +99,7 @@ export async function renderNavbar(activePath = '', cats = []) {
 
   <header class="magazine-header">
     <div class="container">
-      <a href="index.html" class="brand">THE EDUCATIVE BLOG<span class="dot">.</span></a>
-      <div class="header-banner">
-        <span>Advertisement 728x90</span>
-      </div>
+      <a href="index.html" class="brand">${brandHtml}</a>
     </div>
   </header>
 
@@ -147,8 +147,11 @@ function isActive(href, activePath) {
 }
 
 export function renderFooter(s = {}, cats = []) {
-  const name   = s.siteName     || 'The Educative Blog';
-  const credit = s.footerCredit || 'Built by Darapet Technology plc';
+  const name    = s.siteName     || 'The Educative Blog';
+  const credit  = s.footerCredit || 'Built by Darapet Technology plc';
+  const brandHtml = s.logoUrl
+    ? `<img src="${s.logoUrl}" class="brand-logo" alt="${escapeHtml(name)}" />`
+    : `${escapeHtml(name.toUpperCase())}<span class="dot">.</span>`;
   const socials = [
     s.twitterUrl         && `<a href="${s.twitterUrl}" target="_blank" rel="noopener" aria-label="X / Twitter">${icon('x', 16)}</a>`,
     s.fbUrl              && `<a href="${s.fbUrl}" target="_blank" rel="noopener" aria-label="Facebook">${icon('facebook', 16)}</a>`,
@@ -166,7 +169,7 @@ export function renderFooter(s = {}, cats = []) {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="index.html" class="brand">${name.toUpperCase()}<span class="dot">.</span></a>
+          <a href="index.html" class="brand">${brandHtml}</a>
           <p>Your trusted source for insightful stories, practical knowledge, and fresh perspectives on education, technology, business, lifestyle, health, travel, culture, and more.</p>
           <div class="footer-social">${socials}</div>
         </div>
@@ -212,11 +215,27 @@ export async function mountLayout(activePath) {
     store.getSettings().catch(() => ({})),
     store.getCategories().catch(() => []),
   ]);
-  if (navSlot) navSlot.outerHTML = await renderNavbar(activePath, cats);
+  if (navSlot) navSlot.outerHTML = await renderNavbar(activePath, cats, siteSettings);
   if (footSlot) footSlot.outerHTML = renderFooter(siteSettings, cats);
+  applyTheme(siteSettings);
+  applyFavicon(siteSettings.faviconUrl);
   wireLayoutEvents();
   initReveal();
   return siteSettings; // let callers reuse the already-fetched object
+}
+
+function applyTheme(s = {}) {
+  const root = document.documentElement;
+  if (s.themeAccent) { root.style.setProperty('--primary',       s.themeAccent); root.style.setProperty('--primary-hover', s.themeAccent); }
+  if (s.themeBg)     root.style.setProperty('--light-bg',    s.themeBg);
+  if (s.themeInk)    root.style.setProperty('--text-main',   s.themeInk);
+}
+
+function applyFavicon(url) {
+  if (!url) return;
+  let link = document.querySelector('link[rel~="icon"]');
+  if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+  link.href = url;
 }
 
 function wireLayoutEvents() {

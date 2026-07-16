@@ -153,6 +153,13 @@ function mapSettings(row) {
     statsStories:  row?.stats_stories  || '10+',
     statsSections: row?.stats_sections || '6',
     statsWriters:  row?.stats_writers  || '4',
+    // Branding
+    logoUrl:   row?.logo_url   || '',
+    faviconUrl: row?.favicon_url || '',
+    // Theme colours (CSS hex values)
+    themeAccent:  row?.theme_accent  || '#ba1818',
+    themeBg:      row?.theme_bg      || '#f5f0eb',
+    themeInk:     row?.theme_ink     || '#1a1a1a',
   };
 }
 
@@ -438,6 +445,11 @@ export const store = {
     strField('statsStories',       'stats_stories');
     strField('statsSections',      'stats_sections');
     strField('statsWriters',       'stats_writers');
+    strField('logoUrl',            'logo_url');
+    strField('faviconUrl',         'favicon_url');
+    strField('themeAccent',        'theme_accent');
+    strField('themeBg',            'theme_bg');
+    strField('themeInk',           'theme_ink');
     record.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from('site_settings').update(record).eq('id', true).select().single();
     if (error) throw error;

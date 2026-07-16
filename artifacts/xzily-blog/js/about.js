@@ -27,15 +27,8 @@ if (settings) {
   }
 }
 
-// Team — loaded from Supabase authors table (Phase 2) for now falls back to
-// static data so the page keeps working.
-let teamMembers = [];
-try {
-  teamMembers = await store.getAuthors();
-} catch (_) {
-  const { USERS } = await import('./data.js');
-  teamMembers = USERS;
-}
+// Team — loaded from the authors table managed in the admin.
+const teamMembers = await store.getAuthors().catch(() => []);
 document.getElementById('teamGrid').innerHTML = teamMembers.map((u) => `
   <div class="team-card">
     <img src="${u.avatar || u.avatarUrl || 'images/avatar-1.jpg'}" alt="${u.name}" />

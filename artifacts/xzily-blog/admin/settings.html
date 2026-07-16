@@ -27,6 +27,65 @@
             <div class="field"><label for="fSiteName">Site name</label><input id="fSiteName" placeholder="The Educative Blog" /></div>
             <div class="field"><label for="fFooterCredit">Footer credit line</label><input id="fFooterCredit" placeholder="Built by Darapet Technology plc" /></div>
           </div>
+          <div class="admin-grid-2" style="margin-top:16px;">
+            <div class="field">
+              <label>Site logo</label>
+              <div class="upload-zone compact" id="logoZone">
+                <div class="upload-zone-inner">
+                  <img id="logoPreview" src="" alt="" style="display:none;max-height:60px;max-width:200px;object-fit:contain;" />
+                  <span id="logoPlaceholder">Click to upload logo image</span>
+                </div>
+                <input type="file" id="fLogoFile" accept="image/*" style="display:none;" />
+              </div>
+              <p class="settings-hint" style="margin-top:6px;">Shown in the header & footer instead of the site name text.</p>
+            </div>
+            <div class="field">
+              <label>Favicon</label>
+              <div class="upload-zone compact" id="faviconZone">
+                <div class="upload-zone-inner">
+                  <img id="faviconPreview" src="" alt="" style="display:none;max-height:48px;max-width:48px;object-fit:contain;" />
+                  <span id="faviconPlaceholder">Click to upload favicon (square, ≥32px)</span>
+                </div>
+                <input type="file" id="fFaviconFile" accept="image/*" style="display:none;" />
+              </div>
+              <p class="settings-hint" style="margin-top:6px;">Replaces the browser tab icon on all pages.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colour theme -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>Colour theme</h3></div>
+          <p class="settings-hint">Change the primary accent, page background, and body text colour across the whole site.</p>
+          <div class="settings-key-grid">
+            <div class="field color-field">
+              <label for="fThemeAccent">Accent colour</label>
+              <div class="color-pick-row">
+                <input type="color" id="fThemeAccent" value="#ba1818" />
+                <input type="text"  id="fThemeAccentHex" placeholder="#ba1818" maxlength="7" />
+              </div>
+              <p class="settings-hint">Used for buttons, links, and category labels.</p>
+            </div>
+            <div class="field color-field">
+              <label for="fThemeBg">Page background</label>
+              <div class="color-pick-row">
+                <input type="color" id="fThemeBg" value="#f5f0eb" />
+                <input type="text"  id="fThemeBgHex" placeholder="#f5f0eb" maxlength="7" />
+              </div>
+              <p class="settings-hint">Main off-white background of every page.</p>
+            </div>
+            <div class="field color-field">
+              <label for="fThemeInk">Body text colour</label>
+              <div class="color-pick-row">
+                <input type="color" id="fThemeInk" value="#1a1a1a" />
+                <input type="text"  id="fThemeInkHex" placeholder="#1a1a1a" maxlength="7" />
+              </div>
+              <p class="settings-hint">Default colour for paragraph text.</p>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <button type="button" class="btn btn-outline btn-sm" id="resetThemeBtn">Reset to defaults</button>
+          </div>
         </div>
 
         <!-- Contact details -->

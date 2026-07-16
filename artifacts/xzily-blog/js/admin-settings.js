@@ -5,6 +5,10 @@ import { store } from './store.js';
 const session = await mountAdmin('settings.html', 'Settings', 'Manage site identity, contact info, socials, and integrations.');
 if (session) await init();
 
+// Tracks URLs for logo/favicon that have already been uploaded this session
+let pendingLogoUrl    = '';
+let pendingFaviconUrl = '';
+
 async function init() {
   // Build Groq key grid
   const grid = document.getElementById('groqKeyGrid');
@@ -17,8 +21,44 @@ async function init() {
   const settings = await store.getSettings();
 
   // Site identity
-  document.getElementById('fSiteName').value    = settings.siteName;
+  document.getElementById('fSiteName').value     = settings.siteName;
   document.getElementById('fFooterCredit').value = settings.footerCredit;
+
+  // Logo / favicon previews
+  setLogoPreview(settings.logoUrl);
+  setFaviconPreview(settings.faviconUrl);
+  pendingLogoUrl    = settings.logoUrl;
+  pendingFaviconUrl = settings.faviconUrl;
+
+  // Logo upload zone
+  const logoZone    = document.getElementById('logoZone');
+  const logoInput   = document.getElementById('fLogoFile');
+  logoZone.addEventListener('click', () => logoInput.click());
+  logoInput.addEventListener('change', async () => {
+    const file = logoInput.files[0];
+    if (!file) return;
+    toast('Uploading logo…');
+    try {
+      pendingLogoUrl = await store.uploadImage(file, 'logos');
+      setLogoPreview(pendingLogoUrl);
+      toast('Logo uploaded — click Save to apply');
+    } catch (e) { toast('Upload failed: ' + e.message); }
+  });
+
+  // Favicon upload zone
+  const faviconZone  = document.getElementById('faviconZone');
+  const faviconInput = document.getElementById('fFaviconFile');
+  faviconZone.addEventListener('click', () => faviconInput.click());
+  faviconInput.addEventListener('change', async () => {
+    const file = faviconInput.files[0];
+    if (!file) return;
+    toast('Uploading favicon…');
+    try {
+      pendingFaviconUrl = await store.uploadImage(file, 'favicons');
+      setFaviconPreview(pendingFaviconUrl);
+      toast('Favicon uploaded — click Save to apply');
+    } catch (e) { toast('Upload failed: ' + e.message); }
+  });
 
   // Contact
   document.getElementById('fContactEmail').value   = settings.contactEmail;
@@ -39,6 +79,19 @@ async function init() {
   document.getElementById('fStatsSections').value = settings.statsSections;
   document.getElementById('fStatsWriters').value  = settings.statsWriters;
 
+  // Theme colours
+  setColorField('fThemeAccent',  'fThemeAccentHex',  settings.themeAccent  || '#ba1818');
+  setColorField('fThemeBg',      'fThemeBgHex',      settings.themeBg      || '#f5f0eb');
+  setColorField('fThemeInk',     'fThemeInkHex',     settings.themeInk     || '#1a1a1a');
+  wireColorSync('fThemeAccent',  'fThemeAccentHex');
+  wireColorSync('fThemeBg',      'fThemeBgHex');
+  wireColorSync('fThemeInk',     'fThemeInkHex');
+  document.getElementById('resetThemeBtn').addEventListener('click', () => {
+    setColorField('fThemeAccent', 'fThemeAccentHex', '#ba1818');
+    setColorField('fThemeBg',     'fThemeBgHex',     '#f5f0eb');
+    setColorField('fThemeInk',    'fThemeInkHex',    '#1a1a1a');
+  });
+
   // Cloudinary
   document.getElementById('fCloudName').value    = settings.cloudinaryCloudName;
   document.getElementById('fUploadPreset').value = settings.cloudinaryUploadPreset;
@@ -54,6 +107,8 @@ async function init() {
     const patch = {
       siteName:    document.getElementById('fSiteName').value,
       footerCredit: document.getElementById('fFooterCredit').value,
+      logoUrl:   pendingLogoUrl,
+      faviconUrl: pendingFaviconUrl,
       contactEmail:   document.getElementById('fContactEmail').value,
       contactPhone:   document.getElementById('fContactPhone').value,
       contactAddress: document.getElementById('fContactAddress').value,
@@ -67,6 +122,9 @@ async function init() {
       statsStories:  document.getElementById('fStatsStories').value,
       statsSections: document.getElementById('fStatsSections').value,
       statsWriters:  document.getElementById('fStatsWriters').value,
+      themeAccent:  document.getElementById('fThemeAccentHex').value || document.getElementById('fThemeAccent').value,
+      themeBg:      document.getElementById('fThemeBgHex').value     || document.getElementById('fThemeBg').value,
+      themeInk:     document.getElementById('fThemeInkHex').value    || document.getElementById('fThemeInk').value,
       cloudinaryCloudName:    document.getElementById('fCloudName').value,
       cloudinaryUploadPreset: document.getElementById('fUploadPreset').value,
     };
@@ -80,6 +138,32 @@ async function init() {
     } catch (err) {
       toast('Could not save settings — ' + (err.message || 'unknown error'));
     }
+  });
+}
+
+function setLogoPreview(url) {
+  const img = document.getElementById('logoPreview');
+  const ph  = document.getElementById('logoPlaceholder');
+  if (url) { img.src = url; img.style.display = ''; ph.style.display = 'none'; }
+  else      { img.style.display = 'none'; ph.style.display = ''; }
+}
+function setFaviconPreview(url) {
+  const img = document.getElementById('faviconPreview');
+  const ph  = document.getElementById('faviconPlaceholder');
+  if (url) { img.src = url; img.style.display = ''; ph.style.display = 'none'; }
+  else      { img.style.display = 'none'; ph.style.display = ''; }
+}
+
+function setColorField(pickerId, hexId, value) {
+  document.getElementById(pickerId).value = value;
+  document.getElementById(hexId).value    = value;
+}
+function wireColorSync(pickerId, hexId) {
+  const picker = document.getElementById(pickerId);
+  const hex    = document.getElementById(hexId);
+  picker.addEventListener('input', () => { hex.value = picker.value; });
+  hex.addEventListener('input', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value;
   });
 }
 
