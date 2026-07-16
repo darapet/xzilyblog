@@ -161,7 +161,10 @@ function initReadingProgress() {
 }
 
 function shareUrl(p) {
-  return `${window.location.origin}/article.html?slug=${p.slug}`;
+  // Preserve the GitHub Pages subpath (e.g. /xzilyblog/) so shared links
+  // don't drop the repo name and 404. Works on any host or subpath.
+  const base = window.location.href.split('?')[0].replace(/[^/]+$/, '');
+  return `${base}article.html?slug=${p.slug}`;
 }
 
 async function sidebarHtml(p) {
