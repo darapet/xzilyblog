@@ -1176,6 +1176,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   padding: 0 20px;
+  overflow: hidden;
 }
 .had-text-inner {
   width: 100%;
@@ -1193,6 +1194,55 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes hadScroll {
   0%   { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
+}
+
+/* Image + text combo ad */
+.had-slide.had-combo {
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(135deg, var(--light-bg, #f5f0eb) 0%, #ede8e2 100%);
+  border: 1px solid var(--border, #e0d8ce);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.had-combo-img {
+  width: 90px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.had-combo-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.had-combo-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 16px;
+  overflow: hidden;
+}
+.had-combo-text strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary, #ba1818);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.had-combo-text p {
+  font-size: 12px;
+  color: var(--text-main, #1a1a1a);
+  margin: 3px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: hadScroll 14s linear infinite;
+  animation-delay: 0.5s;
+  opacity: 0.85;
 }
 
 @media (max-width: 1024px) {
