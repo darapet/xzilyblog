@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Suspended — Xzily</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .suspended-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg,#f5f0eb); padding:24px; }
+      .suspended-card { background:#fff; border-radius:16px; padding:40px 44px; max-width:600px; width:100%; box-shadow:0 4px 24px rgba(0,0,0,.08); }
+      .suspended-icon { width:56px; height:56px; background:#fff0f0; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+      .suspended-icon svg { width:28px; height:28px; stroke:var(--primary,#ba1818); fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+      .suspended-card h1 { font-family:'Fraunces',serif; font-size:1.7rem; margin:0 0 6px; }
+      .suspended-card .reason-box { background:#faf8f5; border-left:3px solid var(--primary,#ba1818); border-radius:6px; padding:14px 16px; margin:18px 0; font-size:14px; line-height:1.6; }
+      .req-form .req-field { margin-bottom:16px; }
+      .req-form label { font-size:13px; font-weight:600; display:block; margin-bottom:6px; }
+      .req-form input[type=text], .req-form input[type=number], .req-form input[type=date], .req-form textarea { width:100%; padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-size:14px; font-family:inherit; }
+      .req-form textarea { resize:vertical; min-height:80px; }
+      .upload-zone { border:2px dashed #ddd; border-radius:10px; padding:20px; text-align:center; cursor:pointer; font-size:13px; color:var(--text-muted,#888); transition:border-color .2s; }
+      .upload-zone:hover { border-color:var(--primary,#ba1818); }
+      .upload-zone .file-name { margin-top:8px; font-weight:600; color:#333; }
+      .already-submitted { background:#f0f8f0; border:1px solid #b6d9b6; border-radius:10px; padding:16px 18px; font-size:14px; color:#2a6a2a; }
+    </style>
+  </head>
+  <body>
+    <div class="suspended-wrap">
+      <div class="suspended-card">
+        <div class="suspended-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <h1>Your account has been suspended</h1>
+        <p style="color:var(--text-muted,#888);margin:0 0 4px;">You cannot access your writer dashboard while your account is suspended.</p>
+
+        <div id="suspensionReason" style="display:none;">
+          <div style="font-weight:600;font-size:13.5px;margin-top:18px;">Reason provided by admin:</div>
+          <div class="reason-box" id="reasonText"></div>
+        </div>
+
+        <div id="reviewSection" style="margin-top:24px;"></div>
+
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #eee;display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-outline" id="logoutBtn">Sign out</button>
+          <a href="../index.html" class="btn btn-outline">Back to site</a>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="../js/writer-suspended.js"></script>
+  </body>
+</html>
