@@ -22,6 +22,7 @@ export const ICONS = {
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
   whatsapp: '<path d="M3 21l1.4-4.2A8.5 8.5 0 1 1 8.2 20L3 21Z"/><path d="M8.5 8.7c.2-.5.6-1.4 1-1.4.4 0 .8 0 1 .1.3.1.5.6.7 1 .2.4.3.7.1 1.1-.1.3-.4.6-.6.9-.2.2-.4.4-.2.8.4.7 1.7 2.2 3 2.7.4.2.6.1.9-.1l.7-.8c.3-.3.6-.3 1-.1l1.5.8c.3.2.5.3.5.7 0 .8-.9 1.7-1.6 1.8-1.4.3-3.2-.3-5.3-2.2-1.7-1.6-2.6-3.1-2.7-4.3-.1-.5 0-.9.3-1.2Z" fill="currentColor" stroke="none"/>',
   facebook: '<path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1Z"/>',
+  instagram: '<rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>',
   telegram: '<path d="m3 11 17-7-4 17-6-5-3 3v-5Z"/><path d="M20 4 10 14"/>',
   linkedin: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7.5 10v7M7.5 7v.01M12 17v-4.5a2.5 2.5 0 0 1 5 0V17M12 12.5V17"/>',
   x: '<path d="m4 4 16 16M20 4 4 20"/>',

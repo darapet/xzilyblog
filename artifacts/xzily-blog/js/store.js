@@ -116,13 +116,32 @@ function slugify(str) {
 
 function mapSettings(row) {
   return {
-    cloudinaryCloudName: row?.cloudinary_cloud_name || '',
+    cloudinaryCloudName:   row?.cloudinary_cloud_name   || '',
     cloudinaryUploadPreset: row?.cloudinary_upload_preset || '',
     groqApiKey1: row?.groq_api_key_1 || '',
     groqApiKey2: row?.groq_api_key_2 || '',
     groqApiKey3: row?.groq_api_key_3 || '',
     groqApiKey4: row?.groq_api_key_4 || '',
     groqApiKey5: row?.groq_api_key_5 || '',
+    // Site identity
+    siteName:     row?.site_name     || 'The Educative Blog',
+    footerCredit: row?.footer_credit || 'Built by Darapet Technology plc',
+    // Contact
+    contactEmail:   row?.contact_email   || '',
+    contactPhone:   row?.contact_phone   || '',
+    contactAddress: row?.contact_address || '',
+    // Socials
+    fbUrl:               row?.fb_url                || '',
+    twitterUrl:          row?.twitter_url           || '',
+    instagramUrl:        row?.instagram_url         || '',
+    whatsappNumber:      row?.whatsapp_number       || '',
+    whatsappChannelUrl:  row?.whatsapp_channel_url  || '',
+    // About page
+    aboutText:     row?.about_text     || '',
+    statsReaders:  row?.stats_readers  || '85k+',
+    statsStories:  row?.stats_stories  || '10+',
+    statsSections: row?.stats_sections || '6',
+    statsWriters:  row?.stats_writers  || '4',
   };
 }
 
@@ -389,12 +408,25 @@ export const store = {
   },
   async saveSettings(patch) {
     const record = {};
-    if ('cloudinaryCloudName' in patch) record.cloudinary_cloud_name = patch.cloudinaryCloudName.trim();
-    if ('cloudinaryUploadPreset' in patch) record.cloudinary_upload_preset = patch.cloudinaryUploadPreset.trim();
-    for (let i = 1; i <= 5; i++) {
-      const key = `groqApiKey${i}`;
-      if (key in patch) record[`groq_api_key_${i}`] = (patch[key] || '').trim();
-    }
+    const strField = (src, dst) => { if (src in patch) record[dst] = (patch[src] || '').trim(); };
+    strField('cloudinaryCloudName',   'cloudinary_cloud_name');
+    strField('cloudinaryUploadPreset','cloudinary_upload_preset');
+    for (let i = 1; i <= 5; i++) strField(`groqApiKey${i}`, `groq_api_key_${i}`);
+    strField('siteName',           'site_name');
+    strField('footerCredit',       'footer_credit');
+    strField('contactEmail',       'contact_email');
+    strField('contactPhone',       'contact_phone');
+    strField('contactAddress',     'contact_address');
+    strField('fbUrl',              'fb_url');
+    strField('twitterUrl',         'twitter_url');
+    strField('instagramUrl',       'instagram_url');
+    strField('whatsappNumber',     'whatsapp_number');
+    strField('whatsappChannelUrl', 'whatsapp_channel_url');
+    strField('aboutText',          'about_text');
+    strField('statsReaders',       'stats_readers');
+    strField('statsStories',       'stats_stories');
+    strField('statsSections',      'stats_sections');
+    strField('statsWriters',       'stats_writers');
     record.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from('site_settings').update(record).eq('id', true).select().single();
     if (error) throw error;
@@ -454,5 +486,11 @@ export const store = {
   // fixed staff list, not tied to reader/admin auth accounts.
   userById(id) {
     return USERS.find((u) => u.id === id) || null;
+  },
+
+  // Placeholder until Phase 2 brings DB-backed authors. Falls back to the
+  // static USERS list so about.js and the editor keep working.
+  async getAuthors() {
+    return USERS;
   },
 };

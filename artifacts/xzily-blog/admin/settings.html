@@ -17,31 +17,78 @@
       <main class="admin-main">
         <div class="admin-topbar">
           <div><h1 id="adminTitle">Settings</h1><p id="adminSub"></p></div>
-          <button class="btn btn-primary" id="saveSettingsBtn">Save changes</button>
+          <button class="btn btn-primary" id="saveSettingsBtn">Save all changes</button>
         </div>
 
+        <!-- Site identity -->
         <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h3>Cloudinary — image storage</h3>
+          <div class="admin-panel-head"><h3>Site identity</h3></div>
+          <div class="admin-grid-2">
+            <div class="field"><label for="fSiteName">Site name</label><input id="fSiteName" placeholder="The Educative Blog" /></div>
+            <div class="field"><label for="fFooterCredit">Footer credit line</label><input id="fFooterCredit" placeholder="Built by Darapet Technology plc" /></div>
           </div>
+        </div>
+
+        <!-- Contact details -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>Contact details</h3></div>
+          <p class="settings-hint">Shown on the public Contact page.</p>
+          <div class="admin-grid-2">
+            <div class="field"><label for="fContactEmail">Email address</label><input id="fContactEmail" type="email" placeholder="hello@yourdomain.com" /></div>
+            <div class="field"><label for="fContactPhone">Phone number</label><input id="fContactPhone" placeholder="+1 (555) 000-0000" /></div>
+          </div>
+          <div class="field"><label for="fContactAddress">Address / location</label><input id="fContactAddress" placeholder="Addis Ababa, Ethiopia" /></div>
+        </div>
+
+        <!-- Social media -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>Social media</h3></div>
+          <p class="settings-hint">Paste the full URL for each platform you use. Leave blank to hide it in the footer.</p>
+          <div class="settings-key-grid">
+            <div class="field"><label for="fTwitterUrl">X / Twitter URL</label><input id="fTwitterUrl" placeholder="https://x.com/yourhandle" /></div>
+            <div class="field"><label for="fFbUrl">Facebook URL</label><input id="fFbUrl" placeholder="https://facebook.com/yourpage" /></div>
+            <div class="field"><label for="fInstagramUrl">Instagram URL</label><input id="fInstagramUrl" placeholder="https://instagram.com/yourhandle" /></div>
+            <div class="field"><label for="fWhatsappNumber">WhatsApp number</label><input id="fWhatsappNumber" placeholder="2519XXXXXXXX (country code, no +)" /></div>
+            <div class="field"><label for="fWhatsappChannelUrl">WhatsApp Channel URL</label><input id="fWhatsappChannelUrl" placeholder="https://whatsapp.com/channel/..." /></div>
+          </div>
+        </div>
+
+        <!-- About page -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>About page</h3></div>
+          <p class="settings-hint">The text shown on the About page under the header. Use a blank line between paragraphs.</p>
+          <div class="field"><label for="fAboutText">About text</label><textarea id="fAboutText" rows="6" placeholder="Founded in 2024, we set out to..."></textarea></div>
+          <div class="admin-panel-head" style="margin-top:18px;"><h3>Stats counters</h3></div>
+          <p class="settings-hint">The four numbers shown on the About page (e.g. 85k+, 10+, 6, 4).</p>
+          <div class="settings-key-grid">
+            <div class="field"><label for="fStatsReaders">Monthly readers</label><input id="fStatsReaders" placeholder="85k+" /></div>
+            <div class="field"><label for="fStatsStories">Stories published</label><input id="fStatsStories" placeholder="10+" /></div>
+            <div class="field"><label for="fStatsSections">Editorial sections</label><input id="fStatsSections" placeholder="6" /></div>
+            <div class="field"><label for="fStatsWriters">Staff writers</label><input id="fStatsWriters" placeholder="4" /></div>
+          </div>
+        </div>
+
+        <!-- Cloudinary -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>Cloudinary — image storage</h3></div>
           <p class="settings-hint">
-            Create a free Cloudinary account, then in Settings → Upload, add an
-            <strong>unsigned</strong> upload preset. Paste the cloud name and preset name below —
-            no API secret is ever needed for this, so nothing sensitive is stored here.
+            Create a free <a href="https://cloudinary.com" target="_blank" rel="noopener">Cloudinary</a> account, then in Settings → Upload add an
+            <strong>unsigned</strong> upload preset. Paste the Cloud name and preset name below —
+            no API secret is ever needed.
           </p>
-          <div class="field"><label for="fCloudName">Cloud name</label><input id="fCloudName" placeholder="e.g. dxy1abc23" /></div>
-          <div class="field"><label for="fUploadPreset">Unsigned upload preset</label><input id="fUploadPreset" placeholder="e.g. xzily_unsigned" /></div>
+          <div class="admin-grid-2">
+            <div class="field"><label for="fCloudName">Cloud name</label><input id="fCloudName" placeholder="e.g. dxy1abc23" /></div>
+            <div class="field"><label for="fUploadPreset">Unsigned upload preset</label><input id="fUploadPreset" placeholder="e.g. xzily_unsigned" /></div>
+          </div>
           <p class="settings-status" id="cloudinaryStatus"></p>
         </div>
 
+        <!-- Groq -->
         <div class="admin-panel">
-          <div class="admin-panel-head">
-            <h3>Groq — AI Write</h3>
-          </div>
+          <div class="admin-panel-head"><h3>Groq — AI Write</h3></div>
           <p class="settings-hint">
             Paste up to 5 Groq API keys (from <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>).
-            The AI Write button in the story editor tries them in order, so if one hits its rate
-            limit the next one keeps working.
+            If one hits its rate limit the editor automatically tries the next one.
           </p>
           <div class="settings-key-grid" id="groqKeyGrid"></div>
           <p class="settings-status" id="groqStatus"></p>

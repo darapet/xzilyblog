@@ -286,7 +286,32 @@ create table if not exists public.site_settings (
   groq_api_key_4 text not null default '',
   groq_api_key_5 text not null default '',
   updated_at timestamptz not null default now(),
-  constraint site_settings_singleton check (id)
+  constraint site_settings_singleton check (id),
+  -- Phase 1: site identity, contact, socials, about, stats
+  -- These columns added via ALTER TABLE in production; listed here for
+  -- fresh-project reproducibility.
+  cloudinary_cloud_name text not null default '',
+  cloudinary_upload_preset text not null default '',
+  groq_api_key_1 text not null default '',
+  groq_api_key_2 text not null default '',
+  groq_api_key_3 text not null default '',
+  groq_api_key_4 text not null default '',
+  groq_api_key_5 text not null default '',
+  site_name             text not null default 'The Educative Blog',
+  footer_credit         text not null default 'Built by Darapet Technology plc',
+  contact_email         text not null default '',
+  contact_phone         text not null default '',
+  contact_address       text not null default '',
+  fb_url                text not null default '',
+  twitter_url           text not null default '',
+  instagram_url         text not null default '',
+  whatsapp_number       text not null default '',
+  whatsapp_channel_url  text not null default '',
+  about_text            text not null default '',
+  stats_readers         text not null default '85k+',
+  stats_stories         text not null default '10+',
+  stats_sections        text not null default '6',
+  stats_writers         text not null default '4'
 );
 insert into public.site_settings (id) values (true) on conflict (id) do nothing;
 

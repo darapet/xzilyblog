@@ -147,19 +147,29 @@ function isActive(href, activePath) {
   return activePath === path || (activePath === '' && path === 'index.html');
 }
 
-export function renderFooter() {
+export function renderFooter(s = {}) {
+  const name   = s.siteName     || 'The Educative Blog';
+  const credit = s.footerCredit || 'Built by Darapet Technology plc';
+  const socials = [
+    s.twitterUrl         && `<a href="${s.twitterUrl}" target="_blank" rel="noopener" aria-label="X / Twitter">${icon('x', 16)}</a>`,
+    s.fbUrl              && `<a href="${s.fbUrl}" target="_blank" rel="noopener" aria-label="Facebook">${icon('facebook', 16)}</a>`,
+    s.instagramUrl       && `<a href="${s.instagramUrl}" target="_blank" rel="noopener" aria-label="Instagram">${icon('instagram', 16)}</a>`,
+    s.whatsappNumber     && `<a href="https://wa.me/${s.whatsappNumber.replace(/\D/g,'')}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('whatsapp', 16)}</a>`,
+    s.whatsappChannelUrl && `<a href="${s.whatsappChannelUrl}" target="_blank" rel="noopener" aria-label="WhatsApp Channel">${icon('whatsapp', 16)}<sup style="font-size:9px;margin-left:1px;">ch</sup></a>`,
+  ].filter(Boolean).join('') || [
+    `<a href="#" aria-label="X / Twitter">${icon('x', 16)}</a>`,
+    `<a href="#" aria-label="Facebook">${icon('facebook', 16)}</a>`,
+    `<a href="#" aria-label="Instagram">${icon('instagram', 16)}</a>`,
+  ].join('');
+
   return `
   <footer class="footer">
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="index.html" class="brand">THE EDUCATIVE BLOG<span class="dot">.</span></a>
+          <a href="index.html" class="brand">${name.toUpperCase()}<span class="dot">.</span></a>
           <p>Your trusted source for insightful stories, practical knowledge, and fresh perspectives on education, technology, business, lifestyle, health, travel, culture, and more.</p>
-          <div class="footer-social">
-            <a href="#" aria-label="X / Twitter">${icon('x', 16)}</a>
-            <a href="#" aria-label="Facebook">${icon('facebook', 16)}</a>
-            <a href="#" aria-label="LinkedIn">${icon('linkedin', 16)}</a>
-          </div>
+          <div class="footer-social">${socials}</div>
         </div>
         <div>
           <h5>Sections</h5>
@@ -170,7 +180,7 @@ export function renderFooter() {
         <div>
           <h5>Company</h5>
           <ul>
-            <li><a href="about.html">About The Educative Blog</a></li>
+            <li><a href="about.html">About ${name}</a></li>
             <li><a href="contact.html">Contact</a></li>
             <li><a href="admin/login.html">Editor Login</a></li>
           </ul>
@@ -186,8 +196,8 @@ export function renderFooter() {
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; ${new Date().getFullYear()} The Educative Blog. All rights reserved.</span>
-        <span>Frontend Preview Build</span>
+        <span>&copy; ${new Date().getFullYear()} ${name}. All rights reserved.</span>
+        <span>${credit}</span>
       </div>
     </div>
   </footer>`;
@@ -196,10 +206,16 @@ export function renderFooter() {
 export async function mountLayout(activePath) {
   const navSlot = document.getElementById('site-navbar');
   const footSlot = document.getElementById('site-footer');
+  // Fetch site settings so footer socials/credit/name come from the DB.
+  // Use a short-lived module-level cache so multiple calls per page don't
+  // re-fetch (about.js needs them too and calls getSettings separately).
+  let siteSettings = {};
+  try { siteSettings = await store.getSettings(); } catch (_) {}
   if (navSlot) navSlot.outerHTML = await renderNavbar(activePath);
-  if (footSlot) footSlot.outerHTML = renderFooter();
+  if (footSlot) footSlot.outerHTML = renderFooter(siteSettings);
   wireLayoutEvents();
   initReveal();
+  return siteSettings; // let callers reuse the already-fetched object
 }
 
 function wireLayoutEvents() {

@@ -2,16 +2,21 @@ import { mountLayout, toast } from './common.js';
 import { icon } from './icons.js';
 import { store } from './store.js';
 
-await mountLayout('contact.html');
+const settings = await mountLayout('contact.html');
 
-document.getElementById('iconMail').innerHTML = icon('mail', 18);
+document.getElementById('iconMail').innerHTML  = icon('mail', 18);
 document.getElementById('iconPhone').innerHTML = icon('phone', 18);
-document.getElementById('iconMap').innerHTML = icon('mapPin', 18);
+document.getElementById('iconMap').innerHTML   = icon('mapPin', 18);
+
+// Populate contact details from settings (falls back to hardcoded HTML if empty)
+if (settings?.contactEmail)   document.getElementById('contactEmail').textContent   = settings.contactEmail;
+if (settings?.contactPhone)   document.getElementById('contactPhone').textContent   = settings.contactPhone;
+if (settings?.contactAddress) document.getElementById('contactAddress').textContent = settings.contactAddress;
 
 document.getElementById('contactForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const name = document.getElementById('cName').value.trim();
-  const email = document.getElementById('cEmail').value.trim();
+  const name    = document.getElementById('cName').value.trim();
+  const email   = document.getElementById('cEmail').value.trim();
   const subject = document.getElementById('cSubject').value.trim();
   const message = document.getElementById('cMessage').value.trim();
   const msg = document.getElementById('contactMsg');

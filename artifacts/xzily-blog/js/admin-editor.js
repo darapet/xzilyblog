@@ -129,8 +129,10 @@ function openAiWriteModal() {
       toast('AI draft generated — review and edit before publishing');
       close();
     } catch (err) {
-      errEl.textContent = err.message || 'Could not generate a draft.';
-      errEl.style.display = '';
+      const msg = err?.message || 'Could not generate a draft.';
+      errEl.textContent = msg;
+      errEl.style.cssText = 'display:block;color:#c62828;font-size:12.5px;margin-top:10px;';
+      toast(msg);
       btn.disabled = false;
       btn.textContent = 'Generate';
     }
