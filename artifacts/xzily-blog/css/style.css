@@ -1137,3 +1137,64 @@ h1, h2, h3, h4, h5, h6 {
   .admin-main { padding: 24px 18px 50px; }
 }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
+/* ── Header ad rotator ───────────────────────────────────────────────────────── */
+.header-banner {
+  flex: 1;
+  max-width: 640px;
+  height: 90px;
+  margin-left: 32px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+/* Individual slides */
+.had-slide {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 1;
+  transform: translateY(0);
+}
+.had-slide.had-enter {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.had-slide.had-exit {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+/* Text-only ad */
+.had-slide.had-text {
+  background: linear-gradient(135deg, var(--light-bg, #f5f0eb) 0%, #ede8e2 100%);
+  border: 1px solid var(--border, #e0d8ce);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+.had-text-inner {
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--text-main, #1a1a1a);
+  animation: hadScroll 12s linear infinite;
+}
+.had-text-inner strong {
+  font-weight: 700;
+  color: var(--primary, #ba1818);
+  margin-right: 4px;
+}
+@keyframes hadScroll {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@media (max-width: 1024px) {
+  .header-banner { display: none; }
+}
