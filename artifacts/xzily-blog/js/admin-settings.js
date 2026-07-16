@@ -2,12 +2,12 @@ import { mountAdmin } from './admin-common.js';
 import { toast } from './common.js';
 import { store } from './store.js';
 
-const session = await mountAdmin('settings.html', 'Settings', 'Manage site identity, contact info, socials, and integrations.');
-if (session) await init();
-
-// Tracks URLs for logo/favicon that have already been uploaded this session
+// Declare BEFORE init() is called — avoids Temporal Dead Zone errors
 let pendingLogoUrl    = '';
 let pendingFaviconUrl = '';
+
+const session = await mountAdmin('settings.html', 'Settings', 'Manage site identity, contact info, socials, and integrations.');
+if (session) await init();
 
 async function init() {
   // Build Groq key grid first (synchronous — always succeeds)
@@ -30,7 +30,6 @@ async function init() {
   }
 
   if (!settings) {
-    // Provide safe defaults so the form is usable even if load failed
     settings = {
       siteName: '', footerCredit: '', logoUrl: '', faviconUrl: '',
       contactEmail: '', contactPhone: '', contactAddress: '',
@@ -53,8 +52,8 @@ async function init() {
   pendingFaviconUrl = settings.faviconUrl;
 
   // Logo upload zone
-  const logoZone    = document.getElementById('logoZone');
-  const logoInput   = document.getElementById('fLogoFile');
+  const logoZone  = document.getElementById('logoZone');
+  const logoInput = document.getElementById('fLogoFile');
   logoZone.addEventListener('click', () => logoInput.click());
   logoInput.addEventListener('change', async () => {
     const file = logoInput.files[0];
@@ -102,12 +101,12 @@ async function init() {
   document.getElementById('fStatsWriters').value  = settings.statsWriters;
 
   // Theme colours
-  setColorField('fThemeAccent',  'fThemeAccentHex',  settings.themeAccent  || '#ba1818');
-  setColorField('fThemeBg',      'fThemeBgHex',      settings.themeBg      || '#f5f0eb');
-  setColorField('fThemeInk',     'fThemeInkHex',     settings.themeInk     || '#1a1a1a');
-  wireColorSync('fThemeAccent',  'fThemeAccentHex');
-  wireColorSync('fThemeBg',      'fThemeBgHex');
-  wireColorSync('fThemeInk',     'fThemeInkHex');
+  setColorField('fThemeAccent', 'fThemeAccentHex', settings.themeAccent || '#ba1818');
+  setColorField('fThemeBg',     'fThemeBgHex',     settings.themeBg     || '#f5f0eb');
+  setColorField('fThemeInk',    'fThemeInkHex',    settings.themeInk    || '#1a1a1a');
+  wireColorSync('fThemeAccent', 'fThemeAccentHex');
+  wireColorSync('fThemeBg',     'fThemeBgHex');
+  wireColorSync('fThemeInk',    'fThemeInkHex');
   document.getElementById('resetThemeBtn').addEventListener('click', () => {
     setColorField('fThemeAccent', 'fThemeAccentHex', '#ba1818');
     setColorField('fThemeBg',     'fThemeBgHex',     '#f5f0eb');
@@ -132,7 +131,7 @@ function wireSaveButton() {
     const patch = {
       siteName:    document.getElementById('fSiteName').value,
       footerCredit: document.getElementById('fFooterCredit').value,
-      logoUrl:   pendingLogoUrl,
+      logoUrl:    pendingLogoUrl,
       faviconUrl: pendingFaviconUrl,
       contactEmail:   document.getElementById('fContactEmail').value,
       contactPhone:   document.getElementById('fContactPhone').value,
@@ -170,15 +169,12 @@ function wireSaveButton() {
     } catch (err) {
       btn.textContent = 'Save all changes';
       btn.disabled = false;
-      const msg = err.message || 'Unknown error';
-      showSaveError('Save failed: ' + msg);
-      // Also scroll the error into view
+      showSaveError('Save failed: ' + (err.message || 'Unknown error'));
       document.getElementById('saveErrorMsg')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   });
 }
 
-// ── Persistent error banner near the save button ──────────────────────────────
 function showSaveError(msg) {
   let el = document.getElementById('saveErrorMsg');
   if (!el) {
