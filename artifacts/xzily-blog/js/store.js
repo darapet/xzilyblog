@@ -653,4 +653,137 @@ export const store = {
   userById(id) {
     return USERS.find((u) => u.id === id) || null;
   },
+
+  // ── Writer Management (admin) ─────────────────────────────────────────────
+
+  async getWriters() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, email, role, status, created_at')
+      .eq('role', 'writer')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async suspendWriter(profileId, reason, requirements) {
+    // 1. Update status via security-definer RPC
+    const { error: rpcErr } = await supabase.rpc('admin_set_writer_status', {
+      p_profile_id: profileId,
+      p_status: 'suspended',
+    });
+    if (rpcErr) throw rpcErr;
+    // 2. Create suspension case
+    const { error: caseErr } = await supabase.from('suspension_cases').insert({
+      profile_id: profileId,
+      reason,
+      requirements: requirements || [],
+      status: 'active',
+    });
+    if (caseErr) throw caseErr;
+  },
+
+  async restrictWriter(profileId, reason) {
+    const { error } = await supabase.rpc('admin_set_writer_status', {
+      p_profile_id: profileId,
+      p_status: 'restricted',
+    });
+    if (error) throw error;
+    // Store restriction as a case with empty requirements for record-keeping
+    await supabase.from('suspension_cases').insert({
+      profile_id: profileId,
+      reason: reason || '',
+      requirements: [],
+      status: 'active',
+    });
+  },
+
+  async restoreWriter(profileId) {
+    const { error } = await supabase.rpc('admin_set_writer_status', {
+      p_profile_id: profileId,
+      p_status: 'active',
+    });
+    if (error) throw error;
+    // Close any active suspension/restriction cases
+    await supabase
+      .from('suspension_cases')
+      .update({ status: 'resolved' })
+      .eq('profile_id', profileId)
+      .eq('status', 'active');
+  },
+
+  async getMySuspensionCase() {
+    const session = await this.getSession();
+    if (!session) return null;
+    const { data } = await supabase
+      .from('suspension_cases')
+      .select('*')
+      .eq('profile_id', session.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data || null;
+  },
+
+  async getMyPendingReview(suspensionCaseId) {
+    const { data } = await supabase
+      .from('suspension_reviews')
+      .select('*')
+      .eq('suspension_case_id', suspensionCaseId)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data || null;
+  },
+
+  async submitReview(suspensionCaseId, responses) {
+    const { data, error } = await supabase
+      .from('suspension_reviews')
+      .insert({ suspension_case_id: suspensionCaseId, responses, status: 'pending' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getReviewRequests() {
+    const { data, error } = await supabase
+      .from('suspension_reviews')
+      .select('*, suspension_cases(id, profile_id, reason, requirements, profiles(name, email))')
+      .order('submitted_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async approveReview(reviewId, suspensionCaseId, profileId) {
+    const now = new Date().toISOString();
+    await supabase
+      .from('suspension_reviews')
+      .update({ status: 'approved', reviewed_at: now })
+      .eq('id', reviewId);
+    await supabase
+      .from('suspension_cases')
+      .update({ status: 'resolved' })
+      .eq('id', suspensionCaseId);
+    const { error } = await supabase.rpc('admin_set_writer_status', {
+      p_profile_id: profileId,
+      p_status: 'active',
+    });
+    if (error) throw error;
+  },
+
+  async rejectReview(reviewId) {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('suspension_reviews')
+      .update({ status: 'rejected', reviewed_at: now })
+      .eq('id', reviewId);
+    if (error) throw error;
+  },
+
+  // Editorial author lookup (sync compat wrapper — prefer authorById() for fresh data)
+  userById(id) {
+    return USERS.find((u) => u.id === id) || null;
+  },
 };
