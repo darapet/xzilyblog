@@ -786,4 +786,97 @@ export const store = {
   userById(id) {
     return USERS.find((u) => u.id === id) || null;
   },
+
+  // ── Advertisements ────────────────────────────────────────────────────────
+
+  _mapAd(row) {
+    return {
+      id:        row.id,
+      title:     row.title     || '',
+      body:      row.body      || '',
+      imageUrl:  row.image_url || '',
+      videoUrl:  row.video_url || '',
+      linkUrl:   row.link_url  || '',
+      position:  row.position  || 'both',
+      isActive:  row.is_active,
+      sortOrder: row.sort_order || 0,
+      createdAt: row.created_at,
+    };
+  },
+
+  async getAds() {
+    const { data, error } = await supabase
+      .from('ads')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((r) => this._mapAd(r));
+  },
+
+  async getActiveAds(position) {
+    let q = supabase.from('ads').select('*').eq('is_active', true);
+    if (position) q = q.in('position', [position, 'both']);
+    const { data, error } = await q.order('sort_order').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((r) => this._mapAd(r));
+  },
+
+  async createAd(payload) {
+    const { data, error } = await supabase
+      .from('ads')
+      .insert({
+        title:      payload.title     || '',
+        body:       payload.body      || '',
+        image_url:  payload.imageUrl  || '',
+        video_url:  payload.videoUrl  || '',
+        link_url:   payload.linkUrl   || '',
+        position:   payload.position  || 'both',
+        is_active:  payload.isActive  ?? true,
+        sort_order: payload.sortOrder || 0,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return this._mapAd(data);
+  },
+
+  async updateAd(id, payload) {
+    const record = { updated_at: new Date().toISOString() };
+    if ('title'     in payload) record.title      = payload.title     || '';
+    if ('body'      in payload) record.body       = payload.body      || '';
+    if ('imageUrl'  in payload) record.image_url  = payload.imageUrl  || '';
+    if ('videoUrl'  in payload) record.video_url  = payload.videoUrl  || '';
+    if ('linkUrl'   in payload) record.link_url   = payload.linkUrl   || '';
+    if ('position'  in payload) record.position   = payload.position  || 'both';
+    if ('isActive'  in payload) record.is_active  = payload.isActive;
+    if ('sortOrder' in payload) record.sort_order = payload.sortOrder || 0;
+    const { data, error } = await supabase
+      .from('ads').update(record).eq('id', id).select().single();
+    if (error) throw error;
+    return this._mapAd(data);
+  },
+
+  async deleteAd(id) {
+    const { error } = await supabase.from('ads').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  async uploadAdVideo(file) {
+    // Upload to Supabase Storage bucket "ad-videos"
+    const ext  = file.name.split('.').pop() || 'mp4';
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from('ad-videos').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from('ad-videos').getPublicUrl(path);
+    return data.publicUrl;
+  },
+
+  // Editorial author lookup (sync compat wrapper)
+  userById(id) {
+    return USERS.find((u) => u.id === id) || null;
+  },
 };
