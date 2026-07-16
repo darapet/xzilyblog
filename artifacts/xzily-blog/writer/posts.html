@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Stories — Xzily Writer</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="writer-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="writerTitle">My Stories</h1><p id="writerSub">Everything you have written</p></div>
+          <a class="btn btn-primary" href="editor.html">+ New Story</a>
+        </div>
+
+        <div class="admin-panel">
+          <div id="statusTabs" class="tab-bar" style="margin-bottom:16px;">
+            <button class="active" data-status="all">All</button>
+            <button data-status="published">Published</button>
+            <button data-status="draft">Drafts</button>
+          </div>
+          <div id="postsEmpty"></div>
+          <table class="admin-table" id="postsTable" style="display:none;">
+            <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Views</th><th>Date</th><th></th></tr></thead>
+            <tbody id="postsTableBody"></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="../js/writer-posts.js"></script>
+  </body>
+</html>

@@ -23,14 +23,29 @@ async function loadSession() {
   }
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, is_admin')
+    .select('name, is_admin, role, status')
     .eq('id', user.id)
     .maybeSingle();
+
+  // For writers: find their author table row (used to scope posts)
+  let writerAuthorId = null;
+  if (profile?.role === 'writer') {
+    const { data: authorRow } = await supabase
+      .from('authors')
+      .select('id')
+      .eq('profile_id', user.id)
+      .maybeSingle();
+    writerAuthorId = authorRow?.id ? String(authorRow.id) : null;
+  }
+
   cachedSession = {
     id: user.id,
     email: user.email,
     name: profile?.name || (user.email || '').split('@')[0],
     isAdmin: !!profile?.is_admin,
+    role: profile?.role || 'reader',
+    status: profile?.status || 'active',
+    writerAuthorId,
   };
   return cachedSession;
 }
@@ -416,6 +431,43 @@ export const store = {
     if (error) throw error;
     const { data } = supabase.storage.from('post-images').getPublicUrl(path);
     return data.publicUrl;
+  },
+
+  // ---------------- Writer registration ----------------
+  async registerWriter({ firstName, middleName, lastName, authorName, address, phone, email, password }) {
+    const { data: auth, error: signUpErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name: `${firstName} ${lastName}`.trim() } },
+    });
+    if (signUpErr) throw signUpErr;
+    if (!auth.user) throw new Error('Sign-up failed — please check your email for a confirmation link.');
+    // Short delay so the trigger has time to create the profile row
+    await new Promise(r => setTimeout(r, 800));
+    const { data: authorId, error: rpcErr } = await supabase.rpc('register_writer', {
+      p_first_name:  firstName,
+      p_middle_name: middleName || '',
+      p_last_name:   lastName,
+      p_author_name: authorName || `${firstName} ${lastName}`.trim(),
+      p_phone:       phone || '',
+      p_address:     address || '',
+    });
+    if (rpcErr) throw rpcErr;
+    cachedSession = undefined; // force reload
+    return authorId;
+  },
+
+  // ---------------- Writer: my posts ----------------
+  async getMyPosts() {
+    const session = await this.getSession();
+    if (!session?.writerAuthorId) return [];
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('author_id', session.writerAuthorId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapPost);
   },
 
   // ---------------- Site settings (admin only: Cloudinary + Groq) ----------------
