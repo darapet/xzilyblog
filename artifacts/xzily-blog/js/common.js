@@ -292,14 +292,39 @@ async function mountHeaderAds() {
     const wrap = document.createElement('div');
     wrap.className = 'had-slide';
     const dest = ad.linkUrl || null;
+    const hasText = ad.title || ad.body;
 
     if (ad.videoUrl) {
+      // Video — full banner
       const vid = document.createElement('video');
       vid.src = ad.videoUrl; vid.autoplay = true; vid.muted = true;
       vid.loop = true; vid.playsInline = true;
       vid.style.cssText = 'width:100%;height:100%;object-fit:cover;';
       wrap.appendChild(vid);
+    } else if (ad.imageUrl && hasText) {
+      // Image + text side by side
+      wrap.classList.add('had-combo');
+      const imgBox = document.createElement('div');
+      imgBox.className = 'had-combo-img';
+      const img = document.createElement('img');
+      img.src = ad.imageUrl; img.alt = ad.title || '';
+      imgBox.appendChild(img);
+      const textBox = document.createElement('div');
+      textBox.className = 'had-combo-text';
+      if (ad.title) {
+        const t = document.createElement('strong');
+        t.textContent = ad.title;
+        textBox.appendChild(t);
+      }
+      if (ad.body) {
+        const b = document.createElement('p');
+        b.textContent = ad.body;
+        textBox.appendChild(b);
+      }
+      wrap.appendChild(imgBox);
+      wrap.appendChild(textBox);
     } else if (ad.imageUrl) {
+      // Image only — full banner
       const img = document.createElement('img');
       img.src = ad.imageUrl; img.alt = ad.title || '';
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
