@@ -38,6 +38,7 @@ async function init() {
       themeAccent: '#ba1818', themeBg: '#f5f0eb', themeInk: '#1a1a1a',
       cloudinaryCloudName: '', cloudinaryUploadPreset: '',
       groqApiKey1: '', groqApiKey2: '', groqApiKey3: '', groqApiKey4: '', groqApiKey5: '',
+      externalNewsEnabled: true,
     };
   }
 
@@ -122,6 +123,15 @@ async function init() {
     document.getElementById(`fGroqKey${i}`).value = settings[`groqApiKey${i}`];
   }
 
+  // External news toggle
+  const toggle = document.getElementById('fExternalNews');
+  const toggleLabel = document.getElementById('externalNewsLabel');
+  toggle.checked = settings.externalNewsEnabled !== false;
+  toggleLabel.textContent = toggle.checked ? 'External news is ON' : 'External news is OFF';
+  toggle.addEventListener('change', () => {
+    toggleLabel.textContent = toggle.checked ? 'External news is ON' : 'External news is OFF';
+  });
+
   updateStatus(settings);
 }
 
@@ -151,6 +161,7 @@ function wireSaveButton() {
       themeInk:     document.getElementById('fThemeInkHex').value    || document.getElementById('fThemeInk').value,
       cloudinaryCloudName:    document.getElementById('fCloudName').value,
       cloudinaryUploadPreset: document.getElementById('fUploadPreset').value,
+      externalNewsEnabled:    document.getElementById('fExternalNews').checked,
     };
     for (let i = 1; i <= 5; i++) {
       patch[`groqApiKey${i}`] = document.getElementById(`fGroqKey${i}`).value;

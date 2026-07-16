@@ -10,6 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .toggle-switch { position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0; }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:28px; transition:.3s; }
+    .toggle-slider:before { content:''; position:absolute; width:22px; height:22px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent, #ba1818); }
+    .toggle-switch input:checked + .toggle-slider:before { transform:translateX(24px); }
+  </style>
   </head>
   <body>
     <div class="admin-shell">
@@ -151,6 +159,24 @@
           </p>
           <div class="settings-key-grid" id="groqKeyGrid"></div>
           <p class="settings-status" id="groqStatus"></p>
+        </div>
+
+        <!-- External News Feed -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>External News Feed</h3></div>
+          <p class="settings-hint">
+            When enabled, headlines from BBC, Al Jazeera, CNN, Guardian and Reuters are
+            automatically imported every hour and shown alongside your own stories.
+            Turn this <strong>OFF</strong> to show only your own posts.
+          </p>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:14px;">
+            <label class="toggle-switch" for="fExternalNews">
+              <input type="checkbox" id="fExternalNews" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="externalNewsLabel" style="font-weight:600;font-size:15px;">External news is ON</span>
+          </div>
+          <p class="settings-status" id="externalNewsStatus" style="margin-top:10px;"></p>
         </div>
       </main>
     </div>

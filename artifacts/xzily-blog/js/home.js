@@ -4,15 +4,37 @@ import { store } from './store.js';
 
 await mountLayout('index.html');
 
-const [posts, CATEGORIES, AUTHORS] = await Promise.all([
+const [allPosts, CATEGORIES, AUTHORS, settings] = await Promise.all([
   store.getPosts({ status: 'published' }),
   store.getCategories(),
   store.getAuthors(),
+  store.getSettings(),
 ]);
-posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+// Own posts (written by admins/writers) always appear first.
+// Auto-imported news (author_id === 'news-bot') follows — or is hidden if
+// the admin toggled external news off in Settings.
+const ownPosts  = allPosts.filter(p => p.authorId !== 'news-bot');
+const newsPosts = settings.externalNewsEnabled
+  ? allPosts.filter(p => p.authorId === 'news-bot')
+  : [];
+
+ownPosts.sort((a, b)  => new Date(b.createdAt) - new Date(a.createdAt));
+newsPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+// Merge: 1 own post then 2 news posts, repeat — so your posts always lead.
+const posts = [];
+let oi = 0, ni = 0;
+while (oi < ownPosts.length || ni < newsPosts.length) {
+  if (oi < ownPosts.length)  posts.push(ownPosts[oi++]);
+  if (ni < newsPosts.length) posts.push(newsPosts[ni++]);
+  if (ni < newsPosts.length) posts.push(newsPosts[ni++]);
+}
+
 const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || null;
 const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer', avatar: 'images/avatar-1.jpg', avatarUrl: 'images/avatar-1.jpg' };
-const featured = posts.find((p) => p.featured) || posts[0];
+// Featured hero: prefer a manually-marked own post, then first own post, then any post.
+const featured = ownPosts.find(p => p.featured) || ownPosts[0] || posts[0];
 
 if (!featured) {
   document.getElementById('heroGrid').innerHTML = '<p style="padding:60px 0;color:var(--text-muted);">No published stories yet. Sign in as an editor to publish the first one.</p>';
