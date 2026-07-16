@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Restricted — Xzily</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .restricted-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg,#f5f0eb); padding:24px; }
+      .restricted-card { background:#fff; border-radius:16px; padding:40px 44px; max-width:520px; width:100%; box-shadow:0 4px 24px rgba(0,0,0,.08); }
+      .restricted-icon { width:56px; height:56px; background:#fff8e6; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+      .restricted-icon svg { width:28px; height:28px; stroke:#c07800; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+      .restricted-card h1 { font-family:'Fraunces',serif; font-size:1.7rem; margin:0 0 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="restricted-wrap">
+      <div class="restricted-card">
+        <div class="restricted-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s7-6.3 7-12a7 7 0 1 0-14 0c0 5.7 7 12 7 12Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        </div>
+        <h1>Your account is restricted</h1>
+        <p style="color:var(--text-muted,#888);line-height:1.6;">
+          Your writer account has been restricted by an administrator. You can still log in and view your existing posts, but you cannot create or publish new stories until the restriction is lifted.
+        </p>
+        <p style="font-size:13.5px;color:var(--text-muted,#888);margin-top:12px;">
+          If you believe this is a mistake, please contact the site administrator.
+        </p>
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #eee;display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="index.html" class="btn btn-primary">Go to my dashboard</a>
+          <button class="btn btn-outline" id="logoutBtn">Sign out</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="../js/writer-restricted.js"></script>
+  </body>
+</html>
