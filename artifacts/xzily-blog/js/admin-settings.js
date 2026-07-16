@@ -10,7 +10,7 @@ let pendingLogoUrl    = '';
 let pendingFaviconUrl = '';
 
 async function init() {
-  // Build Groq key grid
+  // Build Groq key grid first (synchronous — always succeeds)
   const grid = document.getElementById('groqKeyGrid');
   grid.innerHTML = [1, 2, 3, 4, 5].map((i) => `
     <div class="field">
@@ -18,7 +18,29 @@ async function init() {
       <input id="fGroqKey${i}" type="password" placeholder="gsk_..." autocomplete="off" />
     </div>`).join('');
 
-  const settings = await store.getSettings();
+  // Wire save button IMMEDIATELY — before any async work so it always works
+  wireSaveButton();
+
+  // Now load settings and populate fields
+  let settings = null;
+  try {
+    settings = await store.getSettings();
+  } catch (err) {
+    showSaveError('Could not load settings: ' + (err.message || 'unknown error') + '. You can still save changes.');
+  }
+
+  if (!settings) {
+    // Provide safe defaults so the form is usable even if load failed
+    settings = {
+      siteName: '', footerCredit: '', logoUrl: '', faviconUrl: '',
+      contactEmail: '', contactPhone: '', contactAddress: '',
+      twitterUrl: '', fbUrl: '', instagramUrl: '', whatsappNumber: '', whatsappChannelUrl: '',
+      aboutText: '', statsReaders: '85k+', statsStories: '10+', statsSections: '6', statsWriters: '4',
+      themeAccent: '#ba1818', themeBg: '#f5f0eb', themeInk: '#1a1a1a',
+      cloudinaryCloudName: '', cloudinaryUploadPreset: '',
+      groqApiKey1: '', groqApiKey2: '', groqApiKey3: '', groqApiKey4: '', groqApiKey5: '',
+    };
+  }
 
   // Site identity
   document.getElementById('fSiteName').value     = settings.siteName;
@@ -102,8 +124,11 @@ async function init() {
   }
 
   updateStatus(settings);
+}
 
-  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+function wireSaveButton() {
+  const btn = document.getElementById('saveSettingsBtn');
+  btn.addEventListener('click', async () => {
     const patch = {
       siteName:    document.getElementById('fSiteName').value,
       footerCredit: document.getElementById('fFooterCredit').value,
@@ -131,14 +156,44 @@ async function init() {
     for (let i = 1; i <= 5; i++) {
       patch[`groqApiKey${i}`] = document.getElementById(`fGroqKey${i}`).value;
     }
+
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+    hideSaveError();
+
     try {
       const saved = await store.saveSettings(patch);
       updateStatus(saved);
+      btn.textContent = 'Saved ✓';
+      setTimeout(() => { btn.textContent = 'Save all changes'; btn.disabled = false; }, 2000);
       toast('Settings saved');
     } catch (err) {
-      toast('Could not save settings — ' + (err.message || 'unknown error'));
+      btn.textContent = 'Save all changes';
+      btn.disabled = false;
+      const msg = err.message || 'Unknown error';
+      showSaveError('Save failed: ' + msg);
+      // Also scroll the error into view
+      document.getElementById('saveErrorMsg')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   });
+}
+
+// ── Persistent error banner near the save button ──────────────────────────────
+function showSaveError(msg) {
+  let el = document.getElementById('saveErrorMsg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'saveErrorMsg';
+    el.style.cssText = 'margin-top:10px;padding:12px 16px;background:#fff0f0;border:1px solid #f5c6c6;border-radius:8px;color:#b91c1c;font-size:13.5px;';
+    const topbar = document.querySelector('.admin-topbar');
+    if (topbar) topbar.insertAdjacentElement('afterend', el);
+  }
+  el.textContent = msg;
+  el.style.display = '';
+}
+function hideSaveError() {
+  const el = document.getElementById('saveErrorMsg');
+  if (el) el.style.display = 'none';
 }
 
 function setLogoPreview(url) {
