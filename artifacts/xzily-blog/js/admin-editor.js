@@ -1,7 +1,7 @@
 import { mountAdmin } from './admin-common.js';
 import { icon } from './icons.js';
 import { qs, toast } from './common.js';
-import { CATEGORIES, USERS } from './data.js';
+// CATEGORIES and AUTHORS loaded from DB in init() via store
 import { store } from './store.js';
 import { toAdminAsset } from './asset.js';
 
@@ -54,10 +54,12 @@ async function init() {
   const editId = qs('id');
   const existing = editId ? await store.getPostById(editId) : null;
 
+  const [CATEGORIES, AUTHORS] = await Promise.all([store.getCategories(), store.getAuthors()]);
+
   renderToolbar();
 
   document.getElementById('fCategory').innerHTML = CATEGORIES.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
-  document.getElementById('fAuthor').innerHTML = USERS.map((u) => `<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('fAuthor').innerHTML = AUTHORS.map((u) => `<option value="${u.id}">${u.name}</option>`).join('');
 
   wireToolbar();
   wireCoverUpload();

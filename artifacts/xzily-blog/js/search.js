@@ -1,6 +1,5 @@
 import { mountLayout, formatDate, qs, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { userById, categoryById, CATEGORIES } from './data.js';
 import { store } from './store.js';
 
 await mountLayout('search.html');
@@ -10,7 +9,13 @@ const form = document.getElementById('searchForm');
 const initial = qs('q') || '';
 input.value = initial;
 
-const allPosts = await store.getPosts({ status: 'published' });
+const [allPosts, CATEGORIES, AUTHORS] = await Promise.all([
+  store.getPosts({ status: 'published' }),
+  store.getCategories(),
+  store.getAuthors(),
+]);
+const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || null;
+const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer' };
 
 runSearch(initial);
 document.getElementById('searchSidebar').innerHTML = sidebarHtml(allPosts);

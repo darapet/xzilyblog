@@ -1,5 +1,4 @@
 import { icon } from './icons.js';
-import { CATEGORIES } from './data.js';
 import { store } from './store.js';
 
 export function qs(name) {
@@ -59,7 +58,7 @@ export function getCatColor(slug) {
   return colors[slug] || '#ba1818';
 }
 
-export async function renderNavbar(activePath = '') {
+export async function renderNavbar(activePath = '', cats = []) {
   const [session, bookmarks, posts] = await Promise.all([
     store.getSession(),
     store.getBookmarkedPosts(),
@@ -127,7 +126,7 @@ export async function renderNavbar(activePath = '') {
   <nav class="cat-nav">
     <div class="container">
       <div class="cat-links">
-        ${CATEGORIES.map(c => `<a href="category.html?slug=${c.slug}" class="${activePath.includes('category.html') && qs('slug') === c.slug ? 'active' : ''}">${c.name.toUpperCase()}</a>`).join('')}
+        ${cats.map(c => `<a href="category.html?slug=${c.slug}" class="${activePath.includes('category.html') && qs('slug') === c.slug ? 'active' : ''}">${c.name.toUpperCase()}</a>`).join('')}
       </div>
     </div>
   </nav>
@@ -136,7 +135,7 @@ export async function renderNavbar(activePath = '') {
     <div class="mobile-drawer-panel">
       <button class="icon-btn mobile-drawer-close" id="mobileMenuClose" aria-label="Close menu">${icon('close', 18)}</button>
       ${mainLinks.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}
-      ${CATEGORIES.map(c => `<a href="category.html?slug=${c.slug}">${c.name}</a>`).join('')}
+      ${cats.map(c => `<a href="category.html?slug=${c.slug}">${c.name}</a>`).join('')}
       ${session ? '' : '<a href="login.html">Sign in</a><a href="register.html">Create account</a>'}
     </div>
   </div>`;
@@ -147,7 +146,7 @@ function isActive(href, activePath) {
   return activePath === path || (activePath === '' && path === 'index.html');
 }
 
-export function renderFooter(s = {}) {
+export function renderFooter(s = {}, cats = []) {
   const name   = s.siteName     || 'The Educative Blog';
   const credit = s.footerCredit || 'Built by Darapet Technology plc';
   const socials = [
@@ -174,7 +173,7 @@ export function renderFooter(s = {}) {
         <div>
           <h5>Sections</h5>
           <ul>
-            ${CATEGORIES.map((c) => `<li><a href="category.html?slug=${c.slug}">${c.name}</a></li>`).join('')}
+            ${cats.map((c) => `<li><a href="category.html?slug=${c.slug}">${c.name}</a></li>`).join('')}
           </ul>
         </div>
         <div>
@@ -209,10 +208,12 @@ export async function mountLayout(activePath) {
   // Fetch site settings so footer socials/credit/name come from the DB.
   // Use a short-lived module-level cache so multiple calls per page don't
   // re-fetch (about.js needs them too and calls getSettings separately).
-  let siteSettings = {};
-  try { siteSettings = await store.getSettings(); } catch (_) {}
-  if (navSlot) navSlot.outerHTML = await renderNavbar(activePath);
-  if (footSlot) footSlot.outerHTML = renderFooter(siteSettings);
+  const [siteSettings, cats] = await Promise.all([
+    store.getSettings().catch(() => ({})),
+    store.getCategories().catch(() => []),
+  ]);
+  if (navSlot) navSlot.outerHTML = await renderNavbar(activePath, cats);
+  if (footSlot) footSlot.outerHTML = renderFooter(siteSettings, cats);
   wireLayoutEvents();
   initReveal();
   return siteSettings; // let callers reuse the already-fetched object

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authors — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Authors</h1><p id="adminSub"></p></div>
+          <button class="btn btn-primary" id="addAuthorBtn">+ Add author</button>
+        </div>
+        <div class="admin-panel">
+          <table class="data-table">
+            <thead><tr><th>Author</th><th>Role</th><th>Email</th><th></th></tr></thead>
+            <tbody id="authorTableBody"></tbody>
+          </table>
+          <div id="authorEmpty"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="ai-write-modal" id="authorModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:540px;">
+        <h3 id="authorModalTitle">Add author</h3>
+        <div class="field"><label for="mAName">Full name</label><input id="mAName" placeholder="e.g. Elena Rostova" /></div>
+        <div class="field"><label for="mARole">Role / title</label><input id="mARole" placeholder="e.g. Editor-in-chief" /></div>
+        <div class="field"><label for="mAEmail">Email</label><input id="mAEmail" type="email" placeholder="elena@yourdomain.com" /></div>
+        <div class="field"><label for="mABio">Bio</label><textarea id="mABio" rows="3" placeholder="Short bio shown on article pages and the About page"></textarea></div>
+        <div class="field">
+          <label>Photo</label>
+          <div class="cover-upload-zone" id="authorPhotoZone" style="max-width:220px;min-height:100px;">
+            <img id="authorPhotoPreview" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;" />
+            <div id="authorPhotoHint" style="padding:20px;text-align:center;font-size:13px;color:var(--text-muted);">Click to upload photo</div>
+          </div>
+          <input type="file" id="authorPhotoInput" accept="image/*" hidden />
+        </div>
+        <div class="error" id="authorModalError" style="display:none;"></div>
+        <div class="ai-write-actions">
+          <button class="btn btn-outline" id="authorModalCancel">Cancel</button>
+          <button class="btn btn-primary" id="authorModalSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/admin-authors.js"></script>
+  </body>
+</html>

@@ -4,9 +4,13 @@
 // by admin-editor.js right before it opens this tab.
 import { mountLayout, formatDate, escapeHtml, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { userById, categoryById } from './data.js';
+import { store } from './store.js';
 
 await mountLayout('preview.html');
+
+const [AUTHORS, CATEGORIES] = await Promise.all([store.getAuthors(), store.getCategories()]);
+const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer', avatar: 'images/avatar-1.jpg', bio: '' };
+const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || null;
 
 const raw = sessionStorage.getItem('xzily_preview_draft');
 const draft = raw ? JSON.parse(raw) : null;

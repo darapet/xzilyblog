@@ -114,6 +114,17 @@ function slugify(str) {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+// Module-level caches so category/author lists are only fetched once per page.
+let _catsCache = null;
+let _authorsCache = null;
+
+function mapCategory(row) {
+  return { id: row.id, slug: row.slug, name: row.name, icon: row.icon || 'sparkle', description: row.description || '' };
+}
+function mapAuthor(row) {
+  return { id: row.id, name: row.name, email: row.email || '', avatar: row.avatar_url || 'images/avatar-1.jpg', avatarUrl: row.avatar_url || 'images/avatar-1.jpg', role: row.role || '', bio: row.bio || '' };
+}
+
 function mapSettings(row) {
   return {
     cloudinaryCloudName:   row?.cloudinary_cloud_name   || '',
@@ -488,9 +499,94 @@ export const store = {
     return USERS.find((u) => u.id === id) || null;
   },
 
-  // Placeholder until Phase 2 brings DB-backed authors. Falls back to the
-  // static USERS list so about.js and the editor keep working.
+  // ---------------- Categories (DB-backed, cached per page load) ----------------
+  async getCategories() {
+    if (_catsCache) return _catsCache;
+    try {
+      const { data, error } = await supabase.from('categories').select('*').order('sort_order');
+      if (error) throw error;
+      _catsCache = (data || []).map(mapCategory);
+    } catch (_) {
+      _catsCache = CATEGORIES.map(mapCategory);
+    }
+    return _catsCache;
+  },
+  async categoryById(id) {
+    return (await store.getCategories()).find((c) => c.id === id) || null;
+  },
+  async categoryBySlug(slug) {
+    return (await store.getCategories()).find((c) => c.slug === slug) || null;
+  },
+  async createCategory(cat) {
+    const id = 'c' + Date.now().toString(36);
+    const record = { id, slug: cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: cat.name, icon: cat.icon || 'sparkle', description: cat.description || '', sort_order: cat.sortOrder || 0 };
+    const { data, error } = await supabase.from('categories').insert(record).select().single();
+    if (error) throw error;
+    _catsCache = null;
+    return mapCategory(data);
+  },
+  async updateCategory(id, patch) {
+    const record = {};
+    if (patch.name !== undefined) record.name = patch.name;
+    if (patch.slug !== undefined) record.slug = patch.slug;
+    if (patch.icon !== undefined) record.icon = patch.icon;
+    if (patch.description !== undefined) record.description = patch.description;
+    if (patch.sortOrder !== undefined) record.sort_order = patch.sortOrder;
+    const { data, error } = await supabase.from('categories').update(record).eq('id', id).select().single();
+    if (error) throw error;
+    _catsCache = null;
+    return mapCategory(data);
+  },
+  async deleteCategory(id) {
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) throw error;
+    _catsCache = null;
+  },
+
+  // ---------------- Authors (DB-backed, cached per page load) ----------------
   async getAuthors() {
-    return USERS;
+    if (_authorsCache) return _authorsCache;
+    try {
+      const { data, error } = await supabase.from('authors').select('*').order('sort_order');
+      if (error) throw error;
+      _authorsCache = (data || []).map(mapAuthor);
+    } catch (_) {
+      _authorsCache = USERS.map((u) => mapAuthor({ id: u.id, name: u.name, email: u.email, avatar_url: u.avatar, role: u.bio?.split('.')[0] || '', bio: u.bio }));
+    }
+    return _authorsCache;
+  },
+  async authorById(id) {
+    return (await store.getAuthors()).find((a) => a.id === id) || null;
+  },
+  async createAuthor(author) {
+    const id = 'u' + Date.now().toString(36);
+    const record = { id, name: author.name, email: author.email || '', avatar_url: author.avatarUrl || '', role: author.role || '', bio: author.bio || '', sort_order: author.sortOrder || 0 };
+    const { data, error } = await supabase.from('authors').insert(record).select().single();
+    if (error) throw error;
+    _authorsCache = null;
+    return mapAuthor(data);
+  },
+  async updateAuthor(id, patch) {
+    const record = {};
+    if (patch.name !== undefined) record.name = patch.name;
+    if (patch.email !== undefined) record.email = patch.email;
+    if (patch.avatarUrl !== undefined) record.avatar_url = patch.avatarUrl;
+    if (patch.role !== undefined) record.role = patch.role;
+    if (patch.bio !== undefined) record.bio = patch.bio;
+    if (patch.sortOrder !== undefined) record.sort_order = patch.sortOrder;
+    const { data, error } = await supabase.from('authors').update(record).eq('id', id).select().single();
+    if (error) throw error;
+    _authorsCache = null;
+    return mapAuthor(data);
+  },
+  async deleteAuthor(id) {
+    const { error } = await supabase.from('authors').delete().eq('id', id);
+    if (error) throw error;
+    _authorsCache = null;
+  },
+
+  // Editorial author lookup (sync compat wrapper — prefer authorById() for fresh data)
+  userById(id) {
+    return USERS.find((u) => u.id === id) || null;
   },
 };

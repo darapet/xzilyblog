@@ -19,6 +19,8 @@ export function renderAdminShell(active, session) {
     ['editor.html', 'plus', 'New Story'],
     ['comments.html', 'messageCircle', 'Comments'],
     ['subscribers.html', 'usersIcon', 'Subscribers'],
+    ['categories.html', 'folder', 'Categories'],
+    ['authors.html', 'user', 'Authors'],
     ['settings.html', 'settings', 'Settings'],
   ];
   return `

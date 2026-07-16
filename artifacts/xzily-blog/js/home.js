@@ -1,11 +1,17 @@
 import { mountLayout, formatDate, formatCount, initNotificationPrompt, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { CATEGORIES, userById, categoryById } from './data.js';
 import { store } from './store.js';
 
 await mountLayout('index.html');
 
-const posts = (await store.getPosts({ status: 'published' })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+const [posts, CATEGORIES, AUTHORS] = await Promise.all([
+  store.getPosts({ status: 'published' }),
+  store.getCategories(),
+  store.getAuthors(),
+]);
+posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || null;
+const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer', avatar: 'images/avatar-1.jpg', avatarUrl: 'images/avatar-1.jpg' };
 const featured = posts.find((p) => p.featured) || posts[0];
 
 if (!featured) {

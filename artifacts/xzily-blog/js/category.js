@@ -1,13 +1,18 @@
 import { mountLayout, formatDate, qs, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { categoryBySlug, userById, CATEGORIES } from './data.js';
 import { store } from './store.js';
 
 await mountLayout('category.html');
 
 const slug = qs('slug');
+const [allPublished, CATEGORIES, AUTHORS] = await Promise.all([
+  store.getPosts({ status: 'published' }),
+  store.getCategories(),
+  store.getAuthors(),
+]);
+const categoryBySlug = (s) => CATEGORIES.find((c) => c.slug === s) || null;
+const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer' };
 const cat = categoryBySlug(slug);
-const allPublished = await store.getPosts({ status: 'published' });
 
 if (!cat) {
   document.getElementById('catTitle').textContent = 'Category not found';

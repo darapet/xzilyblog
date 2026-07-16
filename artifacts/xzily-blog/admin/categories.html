@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categories — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Categories</h1><p id="adminSub"></p></div>
+          <button class="btn btn-primary" id="addCatBtn">+ Add category</button>
+        </div>
+        <div class="admin-panel">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Slug</th><th>Description</th><th></th></tr></thead>
+            <tbody id="catTableBody"></tbody>
+          </table>
+          <div id="catEmpty"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="ai-write-modal" id="catModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:500px;">
+        <h3 id="catModalTitle">Add category</h3>
+        <div class="field"><label for="mCatName">Name</label><input id="mCatName" placeholder="e.g. Science" /></div>
+        <div class="field"><label for="mCatSlug">Slug (URL-friendly, auto-filled)</label><input id="mCatSlug" placeholder="e.g. science" /></div>
+        <div class="field"><label for="mCatDesc">Description</label><input id="mCatDesc" placeholder="Short description shown in footer and category page" /></div>
+        <div class="error" id="catModalError" style="display:none;"></div>
+        <div class="ai-write-actions">
+          <button class="btn btn-outline" id="catModalCancel">Cancel</button>
+          <button class="btn btn-primary" id="catModalSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/admin-categories.js"></script>
+  </body>
+</html>

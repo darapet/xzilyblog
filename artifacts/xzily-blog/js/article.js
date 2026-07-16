@@ -1,9 +1,12 @@
 import { mountLayout, formatDate, timeAgo, formatCount, qs, escapeHtml, toast, getCatColor } from './common.js';
 import { icon } from './icons.js';
-import { userById, categoryById } from './data.js';
 import { store, AuthRequiredError } from './store.js';
 
 await mountLayout('article.html');
+
+const [AUTHORS, CATEGORIES] = await Promise.all([store.getAuthors(), store.getCategories()]);
+const userById = (id) => AUTHORS.find((u) => u.id === id) || { name: 'Staff Writer', avatar: 'images/avatar-1.jpg', avatarUrl: 'images/avatar-1.jpg', bio: '' };
+const categoryById = (id) => CATEGORIES.find((c) => c.id === id) || null;
 
 const slug = qs('slug');
 const isPreview = qs('preview') === '1';

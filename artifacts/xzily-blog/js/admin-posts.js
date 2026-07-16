@@ -1,7 +1,7 @@
 import { mountAdmin } from './admin-common.js';
 import { icon } from './icons.js';
 import { formatDate, formatCount, toast } from './common.js';
-import { categoryById } from './data.js';
+// categories loaded from DB inside render()
 import { store } from './store.js';
 import { toAdminAsset } from './asset.js';
 
@@ -21,7 +21,12 @@ if (session) {
 }
 
 async function render() {
-  const posts = (await store.getPosts({ status: currentStatus })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const [posts, cats] = await Promise.all([
+    store.getPosts({ status: currentStatus }),
+    store.getCategories(),
+  ]);
+  posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const categoryById = (id) => cats.find((c) => c.id === id) || null;
   document.getElementById('postsTableBody').innerHTML = posts.map((p) => {
     const cat = categoryById(p.categoryId);
     return `
