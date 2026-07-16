@@ -14,14 +14,17 @@ export async function requireAdmin() {
 
 export function renderAdminShell(active, session) {
   const nav = [
-    ['index.html', 'layoutDashboard', 'Dashboard'],
-    ['posts.html', 'fileText', 'Manage Posts'],
-    ['editor.html', 'plus', 'New Story'],
-    ['comments.html', 'messageCircle', 'Comments'],
-    ['subscribers.html', 'usersIcon', 'Subscribers'],
-    ['categories.html', 'folder', 'Categories'],
-    ['authors.html', 'user', 'Authors'],
-    ['settings.html', 'settings', 'Settings'],
+    ['index.html',          'layoutDashboard', 'Dashboard'],
+    ['posts.html',          'fileText',         'Manage Posts'],
+    ['editor.html',         'plus',             'New Story'],
+    ['comments.html',       'messageCircle',    'Comments'],
+    ['subscribers.html',    'usersIcon',        'Subscribers'],
+    ['categories.html',     'folder',           'Categories'],
+    ['authors.html',        'user',             'Authors'],
+    ['writers.html',        'edit',             'Writers'],
+    ['writer-reviews.html', 'checkCircle',      'Writer Reviews'],
+    ['ads.html',            'barChart',         'Advertisements'],
+    ['settings.html',       'settings',         'Settings'],
   ];
   return `
     <aside class="admin-sidebar" id="adminSidebar">
