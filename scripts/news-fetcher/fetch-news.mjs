@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 // ============================================================
-// Xzily Blog — Daily News Aggregator
-// Fetches RSS from BBC, Al Jazeera, CNN, Guardian, Reuters
-// Filters to articles published within the last 48 hours.
-// Fetches full article body from source page.
-// Upserts into Supabase posts table (stable URL-based slug).
-// Deletes auto-imported posts older than 7 days.
+// Xzily Blog — Daily News Aggregator  v3
+// Targets 50+ fresh articles per day from RSS.
+// Auto-deletes news-bot posts older than 3 days.
+// User-written posts are NEVER touched by this script.
 // ============================================================
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -19,56 +17,117 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 // Only import articles published within this many hours
 const MAX_AGE_HOURS = 48;
 
-// ── Category mapping ─────────────────────────────────────────
+// Max articles taken per feed per run (higher = more volume)
+const MAX_PER_FEED = 15;
+
+// Auto-delete news-bot posts older than this many days
+// User-written posts are NEVER deleted by this script.
+const NEWS_RETENTION_DAYS = 3;
+
+// ── Category IDs (must match your Supabase categories table) ─
+// c1=Technology  c2=Business  c3=Lifestyle  c4=Health
+// c5=Culture     c6=Travel    c7=Education  c8=Sports
+// Religion has no dedicated category → mapped to c5 (Culture)
 const CATEGORY_MAP = {
   technology: "c1",
   business:   "c2",
+  lifestyle:  "c3",
   health:     "c4",
   culture:    "c5",
+  religion:   "c5",   // closest match — Culture
+  travel:     "c6",
   education:  "c7",
+  sports:     "c8",
   world:      "c2",
-  sports:     "c5",
   africa:     "c2",
 };
 
-// ── RSS feeds ────────────────────────────────────────────────
+// ── RSS feeds ─────────────────────────────────────────────────
+// Priority topics (education, technology, sports, world) get
+// more feeds so they always hit the 50/day target even after
+// the 48-hour freshness filter.
 const FEEDS = [
-  // BBC
-  { url: "https://feeds.bbci.co.uk/news/world/rss.xml",                    source: "BBC News",    topic: "world"      },
-  { url: "https://feeds.bbci.co.uk/news/technology/rss.xml",               source: "BBC News",    topic: "technology" },
-  { url: "https://feeds.bbci.co.uk/news/health/rss.xml",                   source: "BBC News",    topic: "health"     },
-  { url: "https://feeds.bbci.co.uk/news/business/rss.xml",                 source: "BBC News",    topic: "business"   },
-  { url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",  source: "BBC News",    topic: "technology" },
-  { url: "https://feeds.bbci.co.uk/sport/rss.xml",                         source: "BBC Sport",   topic: "sports"     },
-  { url: "https://feeds.bbci.co.uk/news/africa/rss.xml",                   source: "BBC Africa",  topic: "africa"     },
 
-  // Al Jazeera
-  { url: "https://www.aljazeera.com/xml/rss/all.xml",                      source: "Al Jazeera",  topic: "world"      },
+  // ── WORLD NEWS ────────────────────────────────────────────
+  { url: "https://feeds.bbci.co.uk/news/world/rss.xml",                    source: "BBC News",     topic: "world"      },
+  { url: "https://www.aljazeera.com/xml/rss/all.xml",                      source: "Al Jazeera",   topic: "world"      },
+  { url: "https://www.theguardian.com/world/rss",                          source: "The Guardian", topic: "world"      },
+  { url: "https://feeds.reuters.com/reuters/topNews",                      source: "Reuters",      topic: "world"      },
+  { url: "http://rss.cnn.com/rss/edition.rss",                            source: "CNN",          topic: "world"      },
+  { url: "https://www.theguardian.com/world/africa/rss",                   source: "The Guardian", topic: "africa"     },
+  { url: "https://feeds.bbci.co.uk/news/africa/rss.xml",                   source: "BBC Africa",   topic: "africa"     },
+  { url: "https://rss.dw.com/rss/en-all",                                  source: "DW News",      topic: "world"      },
+  { url: "https://feeds.npr.org/1001/rss.xml",                             source: "NPR News",     topic: "world"      },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",         source: "NY Times",     topic: "world"      },
 
-  // The Guardian
-  { url: "https://www.theguardian.com/world/rss",                          source: "The Guardian", topic: "world"     },
-  { url: "https://www.theguardian.com/technology/rss",                     source: "The Guardian", topic: "technology"},
-  { url: "https://www.theguardian.com/sport/rss",                          source: "The Guardian", topic: "sports"    },
-  { url: "https://www.theguardian.com/society/rss",                        source: "The Guardian", topic: "health"    },
-  { url: "https://www.theguardian.com/education/rss",                      source: "The Guardian", topic: "education" },
-  { url: "https://www.theguardian.com/world/africa/rss",                   source: "The Guardian", topic: "africa"    },
+  // ── TECHNOLOGY ────────────────────────────────────────────
+  { url: "https://feeds.bbci.co.uk/news/technology/rss.xml",              source: "BBC News",      topic: "technology" },
+  { url: "https://www.theguardian.com/technology/rss",                    source: "The Guardian",  topic: "technology" },
+  { url: "https://feeds.reuters.com/reuters/technologyNews",              source: "Reuters",       topic: "technology" },
+  { url: "http://rss.cnn.com/rss/edition_technology.rss",                source: "CNN Tech",      topic: "technology" },
+  { url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", source: "BBC Science",   topic: "technology" },
+  { url: "https://www.wired.com/feed/rss",                                source: "Wired",         topic: "technology" },
+  { url: "https://techcrunch.com/feed/",                                  source: "TechCrunch",    topic: "technology" },
+  { url: "https://www.theverge.com/rss/index.xml",                        source: "The Verge",     topic: "technology" },
+  { url: "https://feeds.arstechnica.com/arstechnica/index",               source: "Ars Technica",  topic: "technology" },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",   source: "NY Times Tech", topic: "technology" },
 
-  // Reuters
-  { url: "https://feeds.reuters.com/reuters/topNews",                      source: "Reuters",     topic: "world"      },
-  { url: "https://feeds.reuters.com/reuters/businessNews",                 source: "Reuters",     topic: "business"   },
-  { url: "https://feeds.reuters.com/reuters/technologyNews",               source: "Reuters",     topic: "technology" },
-  { url: "https://feeds.reuters.com/reuters/healthNews",                   source: "Reuters",     topic: "health"     },
+  // ── EDUCATION ─────────────────────────────────────────────
+  { url: "https://www.theguardian.com/education/rss",                     source: "The Guardian",  topic: "education"  },
+  { url: "https://feeds.npr.org/1013/rss.xml",                            source: "NPR Education", topic: "education"  },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Education.xml",    source: "NY Times Edu",  topic: "education"  },
+  { url: "https://www.chronicle.com/syndication/feeds/rss",               source: "Chronicle HE",  topic: "education"  },
+  { url: "https://www.educationweek.org/rss",                             source: "Ed Week",       topic: "education"  },
+  { url: "https://hechingerreport.org/feed/",                             source: "Hechinger Rep", topic: "education"  },
+  { url: "https://edsurge.com/news.rss",                                  source: "EdSurge",       topic: "education"  },
+  { url: "https://www.insidehighered.com/rss.xml",                        source: "Inside HigherEd",topic: "education" },
 
-  // CNN (RSS)
-  { url: "http://rss.cnn.com/rss/edition.rss",                            source: "CNN",         topic: "world"      },
-  { url: "http://rss.cnn.com/rss/edition_technology.rss",                 source: "CNN",         topic: "technology" },
-  { url: "http://rss.cnn.com/rss/edition_sport.rss",                      source: "CNN Sport",   topic: "sports"     },
-  { url: "http://rss.cnn.com/rss/edition_health.rss",                     source: "CNN",         topic: "health"     },
-  { url: "http://rss.cnn.com/rss/edition_business.rss",                   source: "CNN Business",topic: "business"   },
-  { url: "http://rss.cnn.com/rss/edition_africa.rss",                     source: "CNN Africa",  topic: "africa"     },
+  // ── SPORTS ────────────────────────────────────────────────
+  { url: "https://feeds.bbci.co.uk/sport/rss.xml",                        source: "BBC Sport",     topic: "sports"     },
+  { url: "https://www.theguardian.com/sport/rss",                         source: "The Guardian",  topic: "sports"     },
+  { url: "http://rss.cnn.com/rss/edition_sport.rss",                     source: "CNN Sport",     topic: "sports"     },
+  { url: "https://www.espn.com/espn/rss/news",                            source: "ESPN",          topic: "sports"     },
+  { url: "https://www.cbssports.com/rss/headlines/",                      source: "CBS Sports",    topic: "sports"     },
+  { url: "https://sports.yahoo.com/rss/",                                 source: "Yahoo Sports",  topic: "sports"     },
+  { url: "https://theathletic.com/feed/rss",                              source: "The Athletic",  topic: "sports"     },
+  { url: "https://bleacherreport.com/articles/feed",                      source: "Bleacher Report",topic: "sports"    },
+
+  // ── HEALTH ────────────────────────────────────────────────
+  { url: "https://feeds.bbci.co.uk/news/health/rss.xml",                  source: "BBC Health",    topic: "health"     },
+  { url: "https://www.theguardian.com/society/rss",                       source: "The Guardian",  topic: "health"     },
+  { url: "https://feeds.reuters.com/reuters/healthNews",                  source: "Reuters",       topic: "health"     },
+  { url: "http://rss.cnn.com/rss/edition_health.rss",                    source: "CNN Health",    topic: "health"     },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml",       source: "NY Times Health",topic: "health"   },
+  { url: "https://feeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",     source: "WebMD",         topic: "health"     },
+
+  // ── BUSINESS ──────────────────────────────────────────────
+  { url: "https://feeds.bbci.co.uk/news/business/rss.xml",                source: "BBC Business",  topic: "business"   },
+  { url: "https://feeds.reuters.com/reuters/businessNews",                source: "Reuters Biz",   topic: "business"   },
+  { url: "http://rss.cnn.com/rss/edition_business.rss",                  source: "CNN Business",  topic: "business"   },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",     source: "NY Times Biz",  topic: "business"   },
+
+  // ── LIFESTYLE ─────────────────────────────────────────────
+  { url: "https://www.theguardian.com/lifeandstyle/rss",                  source: "The Guardian",  topic: "lifestyle"  },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/FashionandStyle.xml", source: "NY Times Style", topic: "lifestyle" },
+  { url: "https://feeds.huffpost.com/huffingtonpost/lifestyle",           source: "HuffPost",      topic: "lifestyle"  },
+  { url: "https://www.mindbodygreen.com/rss.xml",                         source: "MindBodyGreen", topic: "lifestyle"  },
+  { url: "https://www.goodhousekeeping.com/feed/rss/",                    source: "Good Housekeeping", topic: "lifestyle" },
+
+  // ── RELIGION ──────────────────────────────────────────────
+  { url: "https://www.vaticannews.va/en.rss.xml",                         source: "Vatican News",  topic: "religion"   },
+  { url: "https://religionnews.com/feed/",                                source: "Religion News", topic: "religion"   },
+  { url: "https://www.christianitytoday.com/ct/rss/",                     source: "Christianity Today", topic: "religion" },
+  { url: "https://www.catholicnewsagency.com/feed",                       source: "Catholic News Agency", topic: "religion" },
+  { url: "https://islamweb.net/en/rss/",                                  source: "IslamWeb",      topic: "religion"   },
+  { url: "https://www.churchtimes.co.uk/feed/rss",                        source: "Church Times",  topic: "religion"   },
+
+  // ── CULTURE ───────────────────────────────────────────────
+  { url: "https://www.theguardian.com/culture/rss",                       source: "The Guardian",  topic: "culture"    },
+  { url: "http://rss.cnn.com/rss/edition_entertainment.rss",             source: "CNN Culture",   topic: "culture"    },
+  { url: "https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml",         source: "NY Times Arts", topic: "culture"    },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
 
 function extractTag(xml, tag) {
   const patterns = [
@@ -101,27 +160,20 @@ function parseItems(xml) {
   return items;
 }
 
-/**
- * Returns true if the article is fresh enough to import.
- * Accepts articles up to MAX_AGE_HOURS old.
- */
+/** Returns true if the article was published within MAX_AGE_HOURS */
 function isFresh(pubDateStr) {
-  if (!pubDateStr) return true; // no date → assume fresh, let it through
+  if (!pubDateStr) return true; // no date → let through
   const pub = new Date(pubDateStr);
   if (isNaN(pub.getTime())) return true; // unparseable → let through
-  const ageMs = Date.now() - pub.getTime();
-  const ageHours = ageMs / (1000 * 60 * 60);
+  const ageHours = (Date.now() - pub.getTime()) / (1000 * 60 * 60);
   return ageHours <= MAX_AGE_HOURS;
 }
 
 /**
- * Generate a stable, URL-safe slug from the article URL.
- * Using the URL (not title+timestamp) means the same article
- * always gets the same slug, so Supabase's duplicate-ignore
- * actually works and we never import the same article twice.
+ * Stable slug built from the article URL.
+ * Same article always gets the same slug → real duplicate prevention.
  */
 function slugFromUrl(articleUrl) {
-  // Take the path segments of the URL, clean them up
   let path = "";
   try {
     path = new URL(articleUrl).pathname;
@@ -138,7 +190,7 @@ function slugFromUrl(articleUrl) {
   return `news-${clean}`;
 }
 
-/** Strip ALL HTML tags and decode common entities */
+/** Strip HTML tags and decode common entities */
 function stripHtml(html) {
   return (html || "")
     .replace(/<[^>]+>/g, " ")
@@ -148,25 +200,25 @@ function stripHtml(html) {
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&nbsp;/gi, " ")
-    .replace(/&[a-z]+;/gi, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-/** Estimate reading time (words / 200 wpm, min 1) */
+/** Estimate reading time */
 function readingTime(text) {
   return Math.max(1, Math.round((text || "").split(/\s+/).length / 200));
 }
 
 /**
- * Fetch the actual article page and extract paragraphs from the body.
- * Returns an array of paragraph strings, or [] on failure.
+ * Fetch the full article page and extract body paragraphs.
+ * Falls back to [] on any error.
  */
-async function fetchArticleBody(url, source) {
+async function fetchArticleBody(url) {
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; XzilyBlog-NewsBot/2.0)",
+        "User-Agent": "Mozilla/5.0 (compatible; XzilyBlog-NewsBot/3.0)",
         "Accept": "text/html,application/xhtml+xml",
       },
       signal: AbortSignal.timeout(12000),
@@ -175,47 +227,36 @@ async function fetchArticleBody(url, source) {
     if (!res.ok) return [];
 
     const html = await res.text();
-
-    // Extract paragraphs from common article containers
-    // Try multiple selector patterns (regex-based since we have no DOM)
     const paragraphs = [];
-
-    // Pattern: <p> tags inside common article body containers
-    // We look for <p> tags that have meaningful content (>40 chars)
     const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
     let m;
     while ((m = pRegex.exec(html)) !== null) {
       const text = stripHtml(m[1]).trim();
-      // Skip short/nav/footer paragraphs
-      if (text.length > 40 && !/cookie|subscribe|newsletter|sign.?up|follow us|copyright|terms|privacy/i.test(text)) {
+      if (
+        text.length > 50 &&
+        !/cookie|subscribe|newsletter|sign.?up|follow us|copyright|terms of use|privacy policy|all rights reserved/i.test(text)
+      ) {
         paragraphs.push(text);
       }
     }
-
-    return paragraphs.slice(0, 20); // max 20 paragraphs
-  } catch (err) {
-    console.warn(`   ⚠️  Could not fetch article body (${url.slice(0, 60)}...): ${err.message}`);
+    return paragraphs.slice(0, 25); // up to 25 paragraphs
+  } catch {
     return [];
   }
 }
 
-/**
- * Build rich HTML content for the post.
- * Uses scraped paragraphs when available, falls back to RSS description.
- */
+/** Build the HTML content stored in Supabase */
 function buildContent(paragraphs, rssSummary, articleUrl, source) {
-  const sourceLink = `<a href="${articleUrl}" target="_blank" rel="noopener noreferrer">${source}</a>`;
+  const link = `<a href="${articleUrl}" target="_blank" rel="noopener noreferrer">${source}</a>`;
+  const readMore = `<p><a href="${articleUrl}" target="_blank" rel="noopener noreferrer">👉 Read the original article on ${source}</a></p>`;
 
   if (paragraphs.length > 0) {
-    const bodyHtml = paragraphs
-      .map(p => `<p>${p}</p>`)
-      .join("\n");
-    return `<p><strong>Source: ${sourceLink}</strong></p>\n${bodyHtml}\n<p><a href="${articleUrl}" target="_blank" rel="noopener noreferrer">👉 Read the original article on ${source}</a></p>`;
+    const body = paragraphs.map(p => `<p>${p}</p>`).join("\n");
+    return `<p><strong>Source: ${link}</strong></p>\n${body}\n${readMore}`;
   }
 
-  // Fallback: use RSS description, but un-truncated and cleaned up
   const fallback = stripHtml(rssSummary || "");
-  return `<p><strong>Source: ${sourceLink}</strong></p>\n<p>${fallback}</p>\n<p><a href="${articleUrl}" target="_blank" rel="noopener noreferrer">👉 Read the full article on ${source}</a></p>`;
+  return `<p><strong>Source: ${link}</strong></p>\n<p>${fallback}</p>\n${readMore}`;
 }
 
 /** Supabase REST helper */
@@ -226,7 +267,9 @@ async function supabaseRequest(method, path, body) {
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
       "Content-Type": "application/json",
-      "Prefer": method === "POST" ? "return=minimal,resolution=ignore-duplicates" : "return=minimal",
+      "Prefer": method === "POST"
+        ? "return=minimal,resolution=ignore-duplicates"
+        : "return=minimal",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -240,62 +283,62 @@ async function supabaseRequest(method, path, body) {
 // ── Main ──────────────────────────────────────────────────────
 async function main() {
   const now = new Date();
-  console.log(`\n🗞️  Xzily News Aggregator — ${now.toISOString()}`);
-  console.log(`📅 Only importing articles from the last ${MAX_AGE_HOURS} hours (since ${new Date(Date.now() - MAX_AGE_HOURS * 3600000).toUTCString()})\n`);
+  const cutoffFresh = new Date(Date.now() - MAX_AGE_HOURS * 3600_000);
+  console.log(`\n🗞️  Xzily News Aggregator v3 — ${now.toISOString()}`);
+  console.log(`📅 Accepting articles published after ${cutoffFresh.toUTCString()} (last ${MAX_AGE_HOURS}h)`);
+  console.log(`🗑️  Auto-deleting news older than ${NEWS_RETENTION_DAYS} days`);
+  console.log(`📦 Max ${MAX_PER_FEED} articles per feed | ${FEEDS.length} feeds configured\n`);
 
   let totalInserted = 0;
   let totalSkipped  = 0;
   let totalTooOld   = 0;
+  let totalFailed   = 0;
+
+  // Track per-topic counts so we can report them
+  const topicCounts = {};
 
   for (const feed of FEEDS) {
     try {
-      console.log(`📡 Fetching: ${feed.source} [${feed.topic}] ...`);
+      process.stdout.write(`📡 ${feed.source} [${feed.topic}] ... `);
       const res = await fetch(feed.url, {
-        headers: { "User-Agent": "XzilyBlog-NewsBot/2.0" },
+        headers: { "User-Agent": "XzilyBlog-NewsBot/3.0" },
         signal: AbortSignal.timeout(15000),
       });
 
       if (!res.ok) {
-        console.warn(`   ⚠️  HTTP ${res.status} — skipping`);
+        console.log(`HTTP ${res.status} — skipped`);
         continue;
       }
 
-      const xml   = await res.text();
-      const items = parseItems(xml);
-      console.log(`   📰 Found ${items.length} articles in feed`);
-
-      // Filter to only fresh articles
-      const freshItems = items.filter(item => {
-        if (!isFresh(item.pubDate)) {
-          totalTooOld++;
-          return false;
-        }
+      const xml        = await res.text();
+      const allItems   = parseItems(xml);
+      const freshItems = allItems.filter(item => {
+        if (!isFresh(item.pubDate)) { totalTooOld++; return false; }
         return true;
       });
 
-      console.log(`   ✅ ${freshItems.length} fresh (≤${MAX_AGE_HOURS}h), ${items.length - freshItems.length} too old — skipping old ones`);
+      console.log(`${allItems.length} items, ${freshItems.length} fresh`);
 
       const categoryId = CATEGORY_MAP[feed.topic] || "c2";
 
-      for (const item of freshItems.slice(0, 10)) {
-        // Fetch full article body
-        const paragraphs = await fetchArticleBody(item.link, feed.source);
+      for (const item of freshItems.slice(0, MAX_PER_FEED)) {
+        // Fetch the full article body from the source page
+        const paragraphs = await fetchArticleBody(item.link);
 
         const rssSummary = stripHtml(item.desc);
-        const excerpt = (paragraphs.length > 0
-          ? paragraphs.slice(0, 3).join(" ") // first 3 paragraphs as excerpt
-          : rssSummary
+        const excerpt = (
+          paragraphs.length > 0
+            ? paragraphs.slice(0, 3).join(" ")
+            : rssSummary
         ).slice(0, 600);
 
-        const content = buildContent(paragraphs, rssSummary, item.link, feed.source);
-
-        // Parse publish date — use it as created_at so posts sort correctly by date
-        const publishedAt = item.pubDate ? new Date(item.pubDate).toISOString() : now.toISOString();
+        const content      = buildContent(paragraphs, rssSummary, item.link, feed.source);
+        const publishedAt  = item.pubDate ? new Date(item.pubDate).toISOString() : now.toISOString();
 
         const post = {
           slug:         slugFromUrl(item.link),
           title:        item.title.slice(0, 200),
-          excerpt:      excerpt,
+          excerpt,
           content,
           cover_image:  item.image || "images/cover-1.jpg",
           author_id:    "news-bot",
@@ -313,37 +356,48 @@ async function main() {
         try {
           await supabaseRequest("POST", "posts", post);
           totalInserted++;
-          console.log(`   ✔  [${new Date(publishedAt).toLocaleString()}] ${item.title.slice(0, 70)}...`);
+          topicCounts[feed.topic] = (topicCounts[feed.topic] || 0) + 1;
         } catch (err) {
           if (err.message.includes("duplicate") || err.message.includes("23505")) {
             totalSkipped++;
           } else {
+            totalFailed++;
             console.warn(`   ⚠️  Insert failed: ${err.message.slice(0, 120)}`);
           }
         }
       }
     } catch (err) {
-      console.warn(`   ❌ Feed error (${feed.url}): ${err.message}`);
+      console.warn(`   ❌ Feed error: ${err.message}`);
     }
   }
 
-  // ── Delete posts older than 7 days that were auto-imported ──
-  console.log("\n🧹 Cleaning up auto-imported posts older than 7 days...");
-  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // ── Delete NEWS-BOT posts older than NEWS_RETENTION_DAYS ───
+  // ⚠️  User-written posts are NEVER deleted — the filter
+  //     `author_id=eq.news-bot` ensures only auto-imported
+  //     articles are affected.
+  console.log(`\n🧹 Removing auto-imported posts older than ${NEWS_RETENTION_DAYS} days...`);
+  const deleteCutoff = new Date(Date.now() - NEWS_RETENTION_DAYS * 86_400_000).toISOString();
   try {
     await supabaseRequest(
       "DELETE",
-      `posts?author_id=eq.news-bot&created_at=lt.${cutoff}`,
+      `posts?author_id=eq.news-bot&created_at=lt.${deleteCutoff}`,
     );
-    console.log(`   ✅ Old news posts removed`);
+    console.log(`   ✅ Old auto-imported posts removed (cutoff: ${deleteCutoff})`);
   } catch (err) {
     console.warn(`   ⚠️  Cleanup error: ${err.message}`);
   }
 
+  // ── Summary ────────────────────────────────────────────────
   console.log(`\n✅ Done!`);
-  console.log(`   Inserted:    ${totalInserted}`);
-  console.log(`   Already had: ${totalSkipped}`);
-  console.log(`   Too old:     ${totalTooOld}\n`);
+  console.log(`   Inserted new:   ${totalInserted}`);
+  console.log(`   Already stored: ${totalSkipped}`);
+  console.log(`   Too old (>48h): ${totalTooOld}`);
+  console.log(`   Failed:         ${totalFailed}`);
+  console.log(`\n   Breakdown by topic:`);
+  for (const [topic, count] of Object.entries(topicCounts).sort((a, b) => b[1] - a[1])) {
+    console.log(`      ${topic.padEnd(12)} ${count}`);
+  }
+  console.log();
 }
 
 main().catch((err) => {
