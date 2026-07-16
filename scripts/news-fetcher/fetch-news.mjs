@@ -511,8 +511,26 @@ async function fetchArticleBody(url) {
       signal: AbortSignal.timeout(12000),
       redirect: "follow",
     });
-    if (!res.ok) return [];
-    const html = await res.text();
+    if (!res.ok) return { paragraphs: [], image: "" };
+    let html = await res.text();
+
+    // --- Extract OG image before stripping ---
+    const ogImage = (html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                     html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) || [])[1] || "";
+
+    // --- Strip scripts, styles, noscript, svg, nav, footer, aside, header, code, pre ---
+    html = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+      .replace(/<code[\s\S]*?<\/code>/gi, " ")
+      .replace(/<pre[\s\S]*?<\/pre>/gi, " ")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, " ")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, " ")
+      .replace(/<aside[\s\S]*?<\/aside>/gi, " ")
+      .replace(/<header[\s\S]*?<\/header>/gi, " ");
+
     const paragraphs = [];
     const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
     let m;
@@ -520,14 +538,20 @@ async function fetchArticleBody(url) {
       const text = stripHtml(m[1]).trim();
       if (
         text.length > 50 &&
-        !/cookie|subscribe|newsletter|sign.?up|follow us|copyright|terms of use|privacy policy|all rights reserved/i.test(text)
+        // Skip boilerplate / legal / nav text
+        !/cookie|subscribe|newsletter|sign.?up|follow us|copyright|terms of use|privacy policy|all rights reserved/i.test(text) &&
+        // Skip paragraphs that look like code or JSON
+        !/[{}()\[\];].*[{}()\[\];]/.test(text) &&
+        !/(function|const |var |let |=>|import |export |window\.|document\.)/.test(text) &&
+        // Skip very short words-per-sentence ratio (likely data/code dumps)
+        text.split(" ").length > 8
       ) {
         paragraphs.push(text);
       }
     }
-    return paragraphs.slice(0, 25);
+    return { paragraphs: paragraphs.slice(0, 25), image: ogImage };
   } catch {
-    return [];
+    return { paragraphs: [], image: "" };
   }
 }
 
@@ -612,17 +636,19 @@ async function main() {
     let sourceInserted = 0, sourceSkipped = 0;
 
     for (const item of freshItems.slice(0, MAX_PER_SOURCE)) {
-      const paragraphs  = await fetchArticleBody(item.link);
+      const { paragraphs, image: ogImage } = await fetchArticleBody(item.link);
       const rssSummary  = stripHtml(item.desc);
       const excerpt     = (paragraphs.length > 0 ? paragraphs.slice(0, 3).join(" ") : rssSummary).slice(0, 600);
       const content     = buildContent(paragraphs, rssSummary, item.link, source);
+      // Use RSS enclosure image → OG image from article page → no image (blank)
+      const coverImage  = item.image || ogImage || "";
 
       const post = {
         slug:         slugFromUrl(item.link),
         title:        item.title.slice(0, 200),
         excerpt,
         content,
-        cover_image:  item.image || "images/cover-1.jpg",
+        cover_image:  coverImage,
         author_id:    "news-bot",
         category_id:  categoryId,
         tags:         ["auto-import", topic, source.toLowerCase().replace(/\s+/g, "-")],

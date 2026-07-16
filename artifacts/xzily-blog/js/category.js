@@ -45,7 +45,7 @@ function cardHtml(p, i, cat) {
   return `
     <div class="mag-card">
       <a class="mag-card-media" href="article.html?slug=${p.slug}">
-        <img src="${p.coverImage}" alt="${p.title}" loading="lazy" />
+        ${p.coverImage ? `<img src="${p.coverImage}" alt="${p.title}" loading="lazy" onerror="this.style.display='none'" />` : ''}
         <span class="cat-pill absolute-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
       </a>
       <div class="mag-card-body">

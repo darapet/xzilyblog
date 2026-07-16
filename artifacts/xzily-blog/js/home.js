@@ -83,7 +83,7 @@ function featureCardHtml(p, isLead) {
   const author = isNews ? null : userById(p.authorId);
   return `
     <a href="article.html?slug=${p.slug}" class="hero-card ${isLead ? 'hero-card-lead' : 'hero-card-sm'}">
-      <img src="${p.coverImage}" alt="${escAttr(p.title)}" />
+      ${p.coverImage ? `<img src="${p.coverImage}" alt="${escAttr(p.title)}" onerror="this.style.display='none'" />` : ''}
       <div class="hero-overlay">
         <span class="cat-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
         <h3>${p.title}</h3>
@@ -102,7 +102,7 @@ function cardHtml(p, i) {
   return `
     <div class="mag-card">
       <a class="mag-card-media" href="article.html?slug=${p.slug}">
-        <img src="${p.coverImage}" alt="${escAttr(p.title)}" loading="lazy" />
+        ${p.coverImage ? `<img src="${p.coverImage}" alt="${escAttr(p.title)}" loading="lazy" onerror="this.style.display='none'" />` : ''}
         <span class="cat-pill absolute-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
       </a>
       <div class="mag-card-body">

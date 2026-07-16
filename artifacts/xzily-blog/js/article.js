@@ -75,7 +75,7 @@ async function render(p) {
       </div>
     </div>
     
-    <img class="article-cover" src="${p.coverImage}" alt="${escapeHtml(p.title)}" />
+    ${p.coverImage ? `<img class="article-cover" src="${p.coverImage}" alt="${escapeHtml(p.title)}" onerror="this.style.display='none'" />` : ''}
     
     <div class="article-body">
       ${p.content}
