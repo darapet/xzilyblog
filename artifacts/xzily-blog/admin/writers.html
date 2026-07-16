@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Writers — Xzily Admin</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <div class="admin-shell">
+      <div id="admin-sidebar-slot"></div>
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div><h1 id="adminTitle">Writers</h1><p id="adminSub"></p></div>
+        </div>
+        <div class="admin-panel">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Writer</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="writerTableBody"></tbody>
+          </table>
+          <div id="writerEmpty"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Suspend Modal -->
+    <div class="ai-write-modal" id="suspendModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:580px;">
+        <h3 id="suspendModalTitle">Suspend writer</h3>
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:18px;">
+          Provide a reason and define what the writer must submit for a review request.
+        </p>
+        <div class="field">
+          <label for="suspendReason">Reason for suspension <span style="color:var(--primary)">*</span></label>
+          <textarea id="suspendReason" rows="3" placeholder="Explain why this writer is being suspended…"></textarea>
+        </div>
+
+        <div style="margin-top:18px;">
+          <label style="font-weight:600;font-size:13.5px;display:block;margin-bottom:10px;">
+            Review requirements
+            <span style="font-weight:400;color:var(--text-muted);margin-left:6px;">— fields the writer must fill to request a review</span>
+          </label>
+          <div id="reqList"></div>
+          <button class="btn btn-outline" id="addReqBtn" style="margin-top:10px;font-size:13px;">+ Add requirement</button>
+        </div>
+
+        <div class="error" id="suspendError" style="display:none;margin-top:14px;"></div>
+        <div class="ai-write-actions" style="margin-top:20px;">
+          <button class="btn btn-outline" id="suspendCancel">Cancel</button>
+          <button class="btn btn-primary" id="suspendConfirm" style="background:var(--primary);">Suspend writer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Restrict Modal -->
+    <div class="ai-write-modal" id="restrictModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:480px;">
+        <h3>Restrict writer</h3>
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:18px;">
+          Restricted writers can log in and see their dashboard but cannot publish or create new posts.
+        </p>
+        <div class="field">
+          <label for="restrictReason">Reason <span style="color:var(--primary)">*</span></label>
+          <textarea id="restrictReason" rows="3" placeholder="Explain the restriction…"></textarea>
+        </div>
+        <div class="error" id="restrictError" style="display:none;margin-top:14px;"></div>
+        <div class="ai-write-actions" style="margin-top:20px;">
+          <button class="btn btn-outline" id="restrictCancel">Cancel</button>
+          <button class="btn btn-primary" id="restrictConfirm" style="background:#c07800;">Restrict writer</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="../js/admin-writers.js"></script>
+  </body>
+</html>
