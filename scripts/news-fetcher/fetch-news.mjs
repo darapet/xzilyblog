@@ -16,7 +16,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   process.exit(1);
 }
 
-const MAX_AGE_HOURS      = 48;   // only import articles published within 48 h
+const MAX_AGE_HOURS      = 72;   // only import articles published within 72 h (3 days)
 const MAX_PER_SOURCE     = 60;   // max articles imported per source site per run
 const NEWS_RETENTION_DAYS = 3;   // auto-delete news-bot posts after 3 days
 

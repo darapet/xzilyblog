@@ -40,7 +40,8 @@ if (!cat) {
 document.getElementById('catSidebar').innerHTML = sidebarHtml(allPublished);
 
 function cardHtml(p, i, cat) {
-  const author = userById(p.authorId);
+  const isNews = p.authorId === 'news-bot';
+  const author = isNews ? null : userById(p.authorId);
   return `
     <div class="mag-card">
       <a class="mag-card-media" href="article.html?slug=${p.slug}">
@@ -51,8 +52,7 @@ function cardHtml(p, i, cat) {
         <h3 class="mag-card-title"><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
         <p class="mag-card-excerpt">${p.excerpt}</p>
         <div class="mag-card-meta">
-          <span class="author-name">${author.name}</span>
-          <span class="sep">-</span>
+          ${author ? `<span class="author-name">${author.name}</span><span class="sep">-</span>` : ''}
           <span class="date">${formatDate(p.createdAt)}</span>
         </div>
       </div>

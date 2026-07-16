@@ -79,7 +79,8 @@ async function renderBookmarks() {
 
 function featureCardHtml(p, isLead) {
   const cat = categoryById(p.categoryId);
-  const author = userById(p.authorId);
+  const isNews = p.authorId === 'news-bot';
+  const author = isNews ? null : userById(p.authorId);
   return `
     <a href="article.html?slug=${p.slug}" class="hero-card ${isLead ? 'hero-card-lead' : 'hero-card-sm'}">
       <img src="${p.coverImage}" alt="${escAttr(p.title)}" />
@@ -87,8 +88,7 @@ function featureCardHtml(p, isLead) {
         <span class="cat-pill" style="--cat-color: ${getCatColor(cat?.slug)}">${cat ? cat.name : ''}</span>
         <h3>${p.title}</h3>
         <div class="hero-meta">
-          <span>${author.name}</span>
-          <span>&middot;</span>
+          ${author ? `<span>${author.name}</span><span>&middot;</span>` : ''}
           <span>${formatDate(p.createdAt)}</span>
         </div>
       </div>
@@ -97,7 +97,8 @@ function featureCardHtml(p, isLead) {
 
 function cardHtml(p, i) {
   const cat = categoryById(p.categoryId);
-  const author = userById(p.authorId);
+  const isNews = p.authorId === 'news-bot';
+  const author = isNews ? null : userById(p.authorId);
   return `
     <div class="mag-card">
       <a class="mag-card-media" href="article.html?slug=${p.slug}">
@@ -108,8 +109,7 @@ function cardHtml(p, i) {
         <h3 class="mag-card-title"><a href="article.html?slug=${p.slug}">${p.title}</a></h3>
         <p class="mag-card-excerpt">${p.excerpt}</p>
         <div class="mag-card-meta">
-          <span class="author-name">${author.name}</span>
-          <span class="sep">-</span>
+          ${author ? `<span class="author-name">${author.name}</span><span class="sep">-</span>` : ''}
           <span class="date">${formatDate(p.createdAt)}</span>
         </div>
       </div>

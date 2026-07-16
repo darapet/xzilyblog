@@ -43,7 +43,8 @@ function notFoundHtml() {
 }
 
 async function render(p) {
-  const author = userById(p.authorId);
+  const isNews = p.authorId === 'news-bot';
+  const author = isNews ? null : userById(p.authorId);
   const cat = categoryById(p.categoryId);
   document.getElementById('pageTitle').textContent = `${p.title} — The Educative Blog`;
   document.getElementById('pageDesc').setAttribute('content', p.excerpt);
@@ -61,9 +62,7 @@ async function render(p) {
       
       <div class="article-meta-bar">
         <div class="author-info">
-          <img src="${author.avatar}" alt="${author.name}" />
-          <div>
-            <div class="author-name">${author.name}</div>
+          ${author ? `<img src="${author.avatar}" alt="${author.name}" /><div><div class="author-name">${author.name}</div>` : '<div>'}
             <div class="publish-date">${formatDate(p.createdAt)} &middot; ${p.readingTime} MIN READ</div>
           </div>
         </div>
@@ -91,13 +90,14 @@ async function render(p) {
       <button class="icon-btn ${bookmarked ? 'is-active' : ''}" id="bookmarkBtn">${icon('bookmark', 18)} Save</button>
     </div>
     
+    ${author ? `
     <div class="author-box">
       <img src="${author.avatar}" alt="${author.name}" />
       <div>
         <h4>${author.name}</h4>
         <p>${author.bio || ''}</p>
       </div>
-    </div>
+    </div>` : ''}
     
     <section class="comments-section" id="commentsSection"></section>
   `;
