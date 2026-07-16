@@ -616,7 +616,6 @@ async function main() {
       const rssSummary  = stripHtml(item.desc);
       const excerpt     = (paragraphs.length > 0 ? paragraphs.slice(0, 3).join(" ") : rssSummary).slice(0, 600);
       const content     = buildContent(paragraphs, rssSummary, item.link, source);
-      const publishedAt = item.pubDate ? new Date(item.pubDate).toISOString() : now.toISOString();
 
       const post = {
         slug:         slugFromUrl(item.link),
@@ -630,7 +629,6 @@ async function main() {
         status:       "published",
         reading_time: readingTime(content),
         views: 0, likes: 0, featured: false, popular: false,
-        published_at: publishedAt,
       };
 
       try {
