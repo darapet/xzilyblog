@@ -2,15 +2,15 @@ import { mountAdmin } from './admin-common.js';
 import { toast } from './common.js';
 import { store } from './store.js';
 
-const session = await mountAdmin('ads.html', 'Advertisements', 'Create and manage ads shown on the public site.');
-if (session) await init();
-
 // ── State ─────────────────────────────────────────────────────────────────────
 let ads = [];
 let editingId = null;
 let pendingImageUrl = '';
 let pendingVideoUrl = '';
 let deleteTargetId  = null;
+
+const session = await mountAdmin('ads.html', 'Advertisements', 'Create and manage ads shown on the public site.');
+if (session) await init();
 
 async function init() {
   await loadAds();
