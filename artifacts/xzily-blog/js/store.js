@@ -242,9 +242,10 @@ export const store = {
   },
 
   // ---------------- Posts ----------------
-  async getPosts({ status = 'published' } = {}) {
+  async getPosts({ status = 'published', limit = null } = {}) {
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false });
     if (status !== 'all') query = query.eq('status', status);
+    if (limit) query = query.limit(limit);
     const { data, error } = await query;
     if (error) throw error;
     return (data || []).map(mapPost);

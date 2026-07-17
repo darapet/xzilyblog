@@ -394,6 +394,25 @@ h1, h2, h3, h4, h5, h6 {
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
 @media (max-width: 768px) { .grid-3 { grid-template-columns: 1fr; } }
 
+/* ── Skeleton loading ─────────────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.skeleton-box,
+.skeleton-line {
+  background: #e2e2e2;
+  border-radius: 3px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+.skeleton-card .mag-card-media { background: #e2e2e2; animation: skeleton-pulse 1.4s ease-in-out infinite; }
+.skeleton-line { display: block; height: 13px; margin-bottom: 8px; }
+.skeleton-line-full { width: 100%; }
+.skeleton-line-half { width: 55%; }
+.skeleton-card .mag-card-body { gap: 4px; }
+.skeleton-row { display: flex; padding: 10px 0; pointer-events: none; }
+.skeleton-count { color: transparent; background: #e2e2e2; border-radius: 3px; animation: skeleton-pulse 1.4s ease-in-out infinite; }
+
 .mag-card {
   background: var(--white);
   border: 1px solid var(--border);
