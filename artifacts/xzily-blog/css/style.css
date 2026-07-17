@@ -929,6 +929,104 @@ h1, h2, h3, h4, h5, h6 {
 .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
 
 /* =========================================================
+   Public-site Mobile Responsiveness
+   ========================================================= */
+
+/* ── Nav: hide search + auth link on small screens (drawer covers them) ── */
+@media (max-width: 768px) {
+  .nav-search-form { display: none; }
+  .nav-auth-link   { display: none; }
+  .magazine-header { padding: 16px 0; }
+}
+
+/* ── Page headers ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .page-header          { padding: 36px 0; }
+  .page-header h1       { font-size: 26px; }
+  .page-header p        { font-size: 15px; }
+}
+
+/* ── Hero section ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-card-lead       { height: 320px; }
+  .hero-card-lead h3    { font-size: 22px; }
+  .hero-card-sm         { height: 180px; }
+}
+
+/* ── Article page ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .article-header h1         { font-size: 26px; }
+  .article-subtitle          { font-size: 16px; }
+  .article-body              { font-size: 16px; }
+  .article-body blockquote   { font-size: 18px; }
+  .article-meta-bar          { flex-wrap: wrap; gap: 12px; }
+  .author-box                { flex-direction: column; align-items: flex-start; }
+  .comment-replies           { margin-left: 24px; }
+}
+.article-tags { flex-wrap: wrap; }
+.engage-bar   { flex-wrap: wrap; }
+
+/* ── Contact page ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .contact-grid { grid-template-columns: 1fr; gap: 30px; padding: 30px 0; }
+}
+
+/* ── About page ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .about-grid { grid-template-columns: repeat(2, 1fr); }
+  .team-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .team-grid  { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Newsletter block (about.html section) ─────────────────────────────── */
+.newsletter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+.newsletter h2 { margin-bottom: 4px; }
+.newsletter p  { margin: 0 0 4px; color: var(--text-muted); }
+.newsletter .newsletter-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .newsletter                         { flex-direction: column; align-items: flex-start; }
+  .newsletter .newsletter-form        { flex-direction: column; width: 100%; }
+  .newsletter .newsletter-form input  { width: 100%; }
+  .newsletter .newsletter-form .btn   { width: 100%; }
+}
+
+/* ── Auth cards ────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 20px; }
+}
+
+/* ── Prose / legal pages ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .prose { padding: 24px 16px; }
+}
+
+/* ── Footer bottom row ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+}
+
+/* ── Notification toast ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .notif-toast { left: 12px; right: 12px; width: auto; bottom: 12px; }
+}
+
+/* ── Search page form ──────────────────────────────────────────────────── */
+.search-page-form { flex-wrap: wrap; }
+
+/* =========================================================
    Admin dashboard
    ========================================================= */
 .admin-shell { display: flex; min-height: 100vh; background: var(--light-bg); align-items: stretch; }
