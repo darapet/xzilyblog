@@ -31,40 +31,58 @@ async function loadAds() {
 }
 
 function renderAds() {
-  const list  = document.getElementById('adsList');
+  const tbody = document.getElementById('adsList');
+  const table = document.getElementById('adsTable');
   const empty = document.getElementById('adsEmpty');
   const count = document.getElementById('adCount');
 
   count.textContent = ads.length ? `${ads.length} ad${ads.length === 1 ? '' : 's'}` : '';
 
   if (!ads.length) {
-    list.innerHTML = '';
+    tbody.innerHTML   = '';
+    table.style.display = 'none';
     empty.style.display = '';
     return;
   }
   empty.style.display = 'none';
+  table.style.display = '';
 
-  list.innerHTML = ads.map((ad) => `
-    <div class="data-row" style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #e8e2db;">
-      <div style="width:72px;height:48px;flex-shrink:0;border-radius:6px;overflow:hidden;background:#f0ece6;display:flex;align-items:center;justify-content:center;">
-        ${ad.imageUrl
-          ? `<img src="${ad.imageUrl}" alt="" style="width:100%;height:100%;object-fit:cover;" />`
-          : ad.videoUrl
-            ? `<span style="font-size:20px;">🎬</span>`
-            : `<span style="font-size:20px;color:#bbb;">📢</span>`}
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(ad.title)}</div>
-        <div style="font-size:12px;color:#888;margin-top:2px;">
-          ${posLabel(ad.position)} · ${ad.isActive ? '<span style="color:#16a34a;font-weight:600;">Active</span>' : '<span style="color:#aaa;">Inactive</span>'}
-          ${ad.videoUrl ? ' · has video' : ''}
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;flex-shrink:0;">
-        <button class="btn btn-outline btn-sm" onclick="window.__editAd('${ad.id}')">Edit</button>
-        <button class="btn btn-outline btn-sm" style="color:#b91c1c;border-color:#f5c6c6;" onclick="window.__deleteAd('${ad.id}')">Delete</button>
-      </div>
-    </div>`).join('');
+  tbody.innerHTML = ads.map((ad) => {
+    const thumb = ad.imageUrl
+      ? `<img src="${ad.imageUrl}" alt="" style="width:54px;height:40px;object-fit:cover;border-radius:7px;flex-shrink:0;background:var(--light-bg);" />`
+      : `<div style="width:54px;height:40px;border-radius:7px;background:var(--light-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${ad.videoUrl ? '🎬' : '📢'}</div>`;
+
+    const bodySnippet = ad.body
+      ? `<div class="c">${escHtml(ad.body.slice(0, 80))}${ad.body.length > 80 ? '…' : ''}</div>`
+      : '';
+
+    const extras = [
+      ad.videoUrl  ? 'has video' : '',
+      ad.linkUrl   ? 'has link'  : '',
+    ].filter(Boolean).join(' · ');
+
+    return `
+      <tr>
+        <td>
+          <div class="table-post-title">
+            ${thumb}
+            <div>
+              <div class="t">${escHtml(ad.title)}</div>
+              ${bodySnippet}
+              ${extras ? `<div class="c" style="margin-top:2px;">${extras}</div>` : ''}
+            </div>
+          </div>
+        </td>
+        <td style="white-space:nowrap;color:var(--text-muted);font-size:13px;">${posLabel(ad.position)}</td>
+        <td><span class="status-pill ${ad.isActive ? 'published' : 'draft'}">${ad.isActive ? 'Active' : 'Inactive'}</span></td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-outline btn-sm" onclick="window.__editAd('${ad.id}')">Edit</button>
+            <button class="btn btn-outline btn-sm" style="color:#b91c1c;border-color:#fecaca;" onclick="window.__deleteAd('${ad.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
 }
 
 function posLabel(p) {

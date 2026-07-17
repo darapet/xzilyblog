@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Advertisements — Xzily Admin</title>
+    <title>Advertisements — Admin</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,106 +15,126 @@
     <div class="admin-shell">
       <div id="admin-sidebar-slot"></div>
       <main class="admin-main">
+
         <div class="admin-topbar">
-          <div><h1 id="adminTitle">Advertisements</h1><p id="adminSub"></p></div>
+          <div>
+            <h1 id="adminTitle">Advertisements</h1>
+            <p id="adminSub"></p>
+          </div>
           <button class="btn btn-primary" id="newAdBtn">+ New ad</button>
         </div>
 
         <div class="admin-panel">
           <div class="admin-panel-head">
             <h3>All ads</h3>
-            <span id="adCount" style="font-size:13px;color:#888;font-weight:400;"></span>
+            <span id="adCount" style="font-size:13px;color:var(--text-muted);font-weight:400;"></span>
           </div>
-          <div id="adsList" style="display:flex;flex-direction:column;gap:0;"></div>
-          <p id="adsEmpty" style="display:none;color:#888;padding:24px 0;text-align:center;">No ads yet — click "+ New ad" to create one.</p>
+          <table class="data-table" id="adsTable" style="display:none;">
+            <thead>
+              <tr>
+                <th>Ad</th>
+                <th>Placement</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="adsList"></tbody>
+          </table>
+          <p id="adsEmpty" style="display:none;color:var(--text-muted);padding:28px 0;text-align:center;">
+            No ads yet — click "+ New ad" to create one.
+          </p>
         </div>
+
       </main>
     </div>
 
-    <!-- ── Ad modal ─────────────────────────────────────────────────────────── -->
-    <div id="adModal" class="modal-backdrop" style="display:none;">
-      <div class="modal" style="max-width:600px;width:100%;">
-        <div class="modal-head">
-          <h2 id="modalTitle">New advertisement</h2>
-          <button class="modal-close" id="modalCloseBtn">✕</button>
+    <!-- ── Ad form modal ──────────────────────────────────────────────────────── -->
+    <div class="ai-write-modal" id="adModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:620px;width:100%;max-height:90vh;overflow-y:auto;">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 id="modalTitle" style="margin:0;">New advertisement</h3>
+          <button id="modalCloseBtn" style="background:none;border:none;font-size:20px;line-height:1;cursor:pointer;color:var(--text-muted);padding:4px;">✕</button>
         </div>
-        <div class="modal-body" style="display:flex;flex-direction:column;gap:18px;">
 
-          <div class="field">
-            <label for="fAdTitle">Title <span style="color:#b91c1c;">*</span></label>
-            <input id="fAdTitle" placeholder="e.g. Sponsored by Acme Co." />
-          </div>
-
-          <div class="field">
-            <label for="fAdBody">Body text <span style="color:#888;font-weight:400;">(optional)</span></label>
-            <textarea id="fAdBody" rows="3" placeholder="Short description or call-to-action…"></textarea>
-          </div>
-
-          <div class="field">
-            <label for="fAdLink">Destination URL <span style="color:#888;font-weight:400;">(optional)</span></label>
-            <input id="fAdLink" type="url" placeholder="https://example.com" />
-          </div>
-
-          <!-- Image upload -->
-          <div class="field">
-            <label>Ad image <span style="color:#888;font-weight:400;">(optional)</span></label>
-            <div class="upload-zone compact" id="adImageZone">
-              <div class="upload-zone-inner">
-                <img id="adImagePreview" src="" alt="" style="display:none;max-height:120px;max-width:100%;object-fit:contain;border-radius:6px;" />
-                <span id="adImagePlaceholder">Click to upload image</span>
-              </div>
-              <input type="file" id="fAdImage" accept="image/*" style="display:none;" />
-            </div>
-            <p id="adImageStatus" style="font-size:12px;color:#888;margin-top:4px;"></p>
-          </div>
-
-          <!-- Video upload -->
-          <div class="field">
-            <label>Ad video <span style="color:#888;font-weight:400;">(optional · max 30 sec · max 50 MB)</span></label>
-            <div class="upload-zone compact" id="adVideoZone" style="cursor:pointer;">
-              <div class="upload-zone-inner">
-                <video id="adVideoPreview" controls style="display:none;max-height:160px;max-width:100%;border-radius:6px;"></video>
-                <span id="adVideoPlaceholder">Click to upload video (MP4, WebM)</span>
-              </div>
-              <input type="file" id="fAdVideo" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display:none;" />
-            </div>
-            <p id="adVideoStatus" style="font-size:12px;color:#888;margin-top:4px;"></p>
-          </div>
-
-          <div class="admin-grid-2">
-            <div class="field">
-              <label for="fAdPosition">Show on</label>
-              <select id="fAdPosition">
-                <option value="both">Sidebar + between posts</option>
-                <option value="sidebar">Sidebar only</option>
-                <option value="between-posts">Between posts only</option>
-              </select>
-            </div>
-            <div class="field" style="display:flex;align-items:flex-end;padding-bottom:2px;">
-              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;">
-                <input type="checkbox" id="fAdActive" checked style="width:16px;height:16px;" />
-                Active (show on site)
-              </label>
-            </div>
-          </div>
-
-          <div id="adModalError" style="display:none;padding:10px 14px;background:#fff0f0;border:1px solid #f5c6c6;border-radius:8px;color:#b91c1c;font-size:13px;"></div>
+        <div class="field">
+          <label for="fAdTitle">Title <span style="color:var(--primary);">*</span></label>
+          <input id="fAdTitle" placeholder="e.g. Sponsored by Acme Co." />
         </div>
-        <div class="modal-foot">
+
+        <div class="field">
+          <label for="fAdBody">Body text <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          <textarea id="fAdBody" rows="3" placeholder="Short description or call-to-action…" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+
+        <div class="field">
+          <label for="fAdLink">Destination URL <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          <input id="fAdLink" type="url" placeholder="https://example.com" />
+        </div>
+
+        <!-- Image upload -->
+        <div class="field">
+          <label>Ad image <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          <div class="upload-zone compact" id="adImageZone">
+            <div class="upload-zone-inner">
+              <img id="adImagePreview" src="" alt="" style="display:none;max-height:120px;max-width:100%;object-fit:contain;border-radius:6px;" />
+              <span id="adImagePlaceholder">Click to upload image</span>
+            </div>
+            <input type="file" id="fAdImage" accept="image/*" style="display:none;" />
+          </div>
+          <p id="adImageStatus" style="font-size:12px;color:var(--text-muted);margin:4px 0 0;"></p>
+        </div>
+
+        <!-- Video upload -->
+        <div class="field">
+          <label>Ad video <span style="color:var(--text-muted);font-weight:400;">(optional · max 30 sec · max 50 MB)</span></label>
+          <div class="upload-zone compact" id="adVideoZone" style="cursor:pointer;">
+            <div class="upload-zone-inner">
+              <video id="adVideoPreview" controls style="display:none;max-height:160px;max-width:100%;border-radius:6px;"></video>
+              <span id="adVideoPlaceholder">Click to upload video (MP4, WebM)</span>
+            </div>
+            <input type="file" id="fAdVideo" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display:none;" />
+          </div>
+          <p id="adVideoStatus" style="font-size:12px;color:var(--text-muted);margin:4px 0 0;"></p>
+        </div>
+
+        <div class="admin-grid-2" style="margin-bottom:4px;">
+          <div class="field">
+            <label for="fAdPosition">Show on</label>
+            <select id="fAdPosition">
+              <option value="both">Sidebar + between posts</option>
+              <option value="sidebar">Sidebar only</option>
+              <option value="between-posts">Between posts only</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;padding-bottom:2px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;">
+              <input type="checkbox" id="fAdActive" checked style="width:16px;height:16px;" />
+              Active (show on site)
+            </label>
+          </div>
+        </div>
+
+        <div id="adModalError" class="error" style="display:none;margin-top:4px;"></div>
+
+        <div class="ai-write-actions">
           <button class="btn btn-outline" id="modalCancelBtn">Cancel</button>
           <button class="btn btn-primary" id="modalSaveBtn">Save ad</button>
         </div>
       </div>
     </div>
 
-    <!-- Delete confirm modal -->
-    <div id="deleteModal" class="modal-backdrop" style="display:none;">
-      <div class="modal" style="max-width:400px;width:100%;">
-        <div class="modal-head"><h2>Delete ad?</h2><button class="modal-close" id="deleteCloseBtn">✕</button></div>
-        <div class="modal-body"><p>This will permanently remove the ad. This cannot be undone.</p></div>
-        <div class="modal-foot">
+    <!-- ── Delete confirm modal ───────────────────────────────────────────────── -->
+    <div class="ai-write-modal" id="deleteModal" style="display:none;">
+      <div class="ai-write-card" style="max-width:420px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="margin:0;">Delete ad?</h3>
+          <button id="deleteCloseBtn" style="background:none;border:none;font-size:20px;line-height:1;cursor:pointer;color:var(--text-muted);padding:4px;">✕</button>
+        </div>
+        <p>This will permanently remove the ad. This cannot be undone.</p>
+        <div class="ai-write-actions">
           <button class="btn btn-outline" id="deleteCancelBtn">Cancel</button>
-          <button class="btn btn-primary" id="deleteConfirmBtn" style="background:#b91c1c;">Delete</button>
+          <button class="btn btn-primary" id="deleteConfirmBtn" style="background:#b91c1c;border-color:#b91c1c;">Delete</button>
         </div>
       </div>
     </div>
