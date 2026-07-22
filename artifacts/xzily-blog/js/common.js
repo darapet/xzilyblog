@@ -59,10 +59,12 @@ export function getCatColor(slug) {
 }
 
 export async function renderNavbar(activePath = '', cats = [], siteSettings = {}) {
+  // Limit ticker to 5 posts — no need to fetch hundreds just for the headline strip.
+  // On the home page these share the same cached promise as the main content fetch.
   const [session, bookmarks, posts] = await Promise.all([
     store.getSession(),
     store.getBookmarkedPosts(),
-    store.getPosts({ status: 'published' }),
+    store.getPosts({ status: 'published', limit: 100 }),
   ]);
   const brandHtml = siteSettings.logoUrl
     ? `<img src="${siteSettings.logoUrl}" class="brand-logo" alt="${escapeHtml(siteSettings.siteName || 'Home')}" />`

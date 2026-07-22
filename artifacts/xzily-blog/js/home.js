@@ -2,9 +2,8 @@ import { mountLayout, formatDate, formatCount, initNotificationPrompt, getCatCol
 import { icon } from './icons.js';
 import { store } from './store.js';
 
-await mountLayout('index.html');
-
-// ── Skeleton placeholders shown immediately while data loads ────────────────
+// ── Skeleton placeholders shown IMMEDIATELY — zero network requests needed ──
+// These render synchronously so the user sees structure right away.
 const SKELETON_CARD = `
   <div class="mag-card skeleton-card">
     <div class="mag-card-media skeleton-box"></div>
@@ -25,11 +24,16 @@ document.getElementById('heroGrid').innerHTML = `
 document.getElementById('latestGrid').innerHTML = [1,2,3,4,5,6].map(() => SKELETON_CARD).join('');
 document.getElementById('trendingList').innerHTML = [1,2,3,4,5].map(() => SKELETON_ROW).join('');
 
-// ── Fetch: categories resolve fast (tiny table), posts are capped at 100 ───
+// ── Fire ALL data fetches NOW, in parallel with mountLayout ─────────────────
+// store.js promise-caches settings/categories/authors, so mountLayout's own
+// calls to those methods share the same in-flight requests — no duplicate hits.
 const postsPromise    = store.getPosts({ status: 'published', limit: 100 });
 const catsPromise     = store.getCategories();
 const authorsPromise  = store.getAuthors();
 const settingsPromise = store.getSettings();
+
+// Mount navbar/footer concurrently — reuses cached promises above
+await mountLayout('index.html');
 
 // Render category widget as soon as that tiny table comes back
 const CATEGORIES = await catsPromise;

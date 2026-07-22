@@ -129,9 +129,12 @@ function slugify(str) {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-// Module-level caches so category/author lists are only fetched once per page.
+// Module-level promise caches — storing the Promise (not just the result) so
+// concurrent callers within the same page load share a single in-flight request.
 let _catsCache = null;
 let _authorsCache = null;
+let _settingsPromise = null;
+let _postsPublishedPromise = null;
 
 function mapCategory(row) {
   return { id: row.id, slug: row.slug, name: row.name, icon: row.icon || 'sparkle', description: row.description || '' };
@@ -243,6 +246,20 @@ export const store = {
 
   // ---------------- Posts ----------------
   async getPosts({ status = 'published', limit = null } = {}) {
+    // Cache the canonical home-page query so the navbar ticker and the main
+    // content grid share a single Supabase round-trip per page load.
+    if (status === 'published' && limit === 100) {
+      if (!_postsPublishedPromise) {
+        _postsPublishedPromise = supabase
+          .from('posts').select('*').eq('status', 'published')
+          .order('created_at', { ascending: false }).limit(100)
+          .then(({ data, error }) => {
+            if (error) { _postsPublishedPromise = null; throw error; }
+            return (data || []).map(mapPost);
+          });
+      }
+      return _postsPublishedPromise;
+    }
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false });
     if (status !== 'all') query = query.eq('status', status);
     if (limit) query = query.limit(limit);
@@ -472,11 +489,16 @@ export const store = {
     return (data || []).map(mapPost);
   },
 
-  // ---------------- Site settings (admin only: Cloudinary + Groq) ----------------
+  // ---------------- Site settings (promise-cached per page load) ---------------
   async getSettings() {
-    const { data, error } = await supabase.from('site_settings').select('*').eq('id', true).maybeSingle();
-    if (error) throw error;
-    return mapSettings(data);
+    if (!_settingsPromise) {
+      _settingsPromise = supabase.from('site_settings').select('*').eq('id', true).maybeSingle()
+        .then(({ data, error }) => {
+          if (error) { _settingsPromise = null; throw error; }
+          return mapSettings(data);
+        });
+    }
+    return _settingsPromise;
   },
   async saveSettings(patch) {
     const record = {};
@@ -508,6 +530,7 @@ export const store = {
     record.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from('site_settings').update(record).eq('id', true).select().single();
     if (error) throw error;
+    _settingsPromise = null; // invalidate cache so next read picks up new values
     return mapSettings(data);
   },
 
@@ -566,16 +589,15 @@ export const store = {
     return USERS.find((u) => u.id === id) || null;
   },
 
-  // ---------------- Categories (DB-backed, cached per page load) ----------------
+  // ---------------- Categories (DB-backed, promise-cached per page load) --------
   async getCategories() {
     if (_catsCache) return _catsCache;
-    try {
-      const { data, error } = await supabase.from('categories').select('*').order('sort_order');
-      if (error) throw error;
-      _catsCache = (data || []).map(mapCategory);
-    } catch (_) {
-      _catsCache = CATEGORIES.map(mapCategory);
-    }
+    _catsCache = supabase.from('categories').select('*').order('sort_order')
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return (data || []).map(mapCategory);
+      })
+      .catch(() => CATEGORIES.map(mapCategory));
     return _catsCache;
   },
   async categoryById(id) {
@@ -610,16 +632,15 @@ export const store = {
     _catsCache = null;
   },
 
-  // ---------------- Authors (DB-backed, cached per page load) ----------------
+  // ---------------- Authors (DB-backed, promise-cached per page load) ----------
   async getAuthors() {
     if (_authorsCache) return _authorsCache;
-    try {
-      const { data, error } = await supabase.from('authors').select('*').order('sort_order');
-      if (error) throw error;
-      _authorsCache = (data || []).map(mapAuthor);
-    } catch (_) {
-      _authorsCache = USERS.map((u) => mapAuthor({ id: u.id, name: u.name, email: u.email, avatar_url: u.avatar, role: u.bio?.split('.')[0] || '', bio: u.bio }));
-    }
+    _authorsCache = supabase.from('authors').select('*').order('sort_order')
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return (data || []).map(mapAuthor);
+      })
+      .catch(() => USERS.map((u) => mapAuthor({ id: u.id, name: u.name, email: u.email, avatar_url: u.avatar, role: u.bio?.split('.')[0] || '', bio: u.bio })));
     return _authorsCache;
   },
   async authorById(id) {
