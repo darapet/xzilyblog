@@ -25,12 +25,14 @@ document.getElementById('latestGrid').innerHTML = [1,2,3,4,5,6].map(() => SKELET
 document.getElementById('trendingList').innerHTML = [1,2,3,4,5].map(() => SKELETON_ROW).join('');
 
 // ── Fire ALL data fetches NOW, in parallel with mountLayout ─────────────────
-// store.js promise-caches settings/categories/authors, so mountLayout's own
-// calls to those methods share the same in-flight requests — no duplicate hits.
-const postsPromise    = store.getPosts({ status: 'published', limit: 100 });
-const catsPromise     = store.getCategories();
-const authorsPromise  = store.getAuthors();
-const settingsPromise = store.getSettings();
+// Fetch own posts and news posts in separate queries so user-written content
+// always appears even when the scraper has inserted hundreds of news articles
+// (a single limit-100 query would return only the newest news-bot posts).
+const ownPostsPromise  = store.getPosts({ status: 'published', excludeAuthor: 'news-bot' });
+const newsPostsPromise = store.getPosts({ status: 'published', author: 'news-bot', limit: 200 });
+const catsPromise      = store.getCategories();
+const authorsPromise   = store.getAuthors();
+const settingsPromise  = store.getSettings();
 
 // Mount navbar/footer concurrently — reuses cached promises above
 await mountLayout('index.html');
@@ -44,13 +46,12 @@ document.getElementById('catGrid').innerHTML = CATEGORIES.map((c) => `
   </a>`).join('');
 
 // Wait for the rest
-const [allPosts, AUTHORS, settings] = await Promise.all([postsPromise, authorsPromise, settingsPromise]);
+const [ownPosts, rawNewsPosts, AUTHORS, settings] = await Promise.all([
+  ownPostsPromise, newsPostsPromise, authorsPromise, settingsPromise,
+]);
 
 // ── Split own posts vs auto-imported news ───────────────────────────────────
-const ownPosts  = allPosts.filter(p => p.authorId !== 'news-bot');
-const newsPosts = settings.externalNewsEnabled
-  ? allPosts.filter(p => p.authorId === 'news-bot')
-  : [];
+const newsPosts = settings.externalNewsEnabled ? rawNewsPosts : [];
 
 // Own posts: newest first
 ownPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

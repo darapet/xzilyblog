@@ -245,10 +245,15 @@ export const store = {
   },
 
   // ---------------- Posts ----------------
-  async getPosts({ status = 'published', limit = null } = {}) {
-    // Cache the canonical home-page query so the navbar ticker and the main
-    // content grid share a single Supabase round-trip per page load.
-    if (status === 'published' && limit === 100) {
+  // Options:
+  //   status        — 'published' | 'draft' | 'all'  (default: 'published')
+  //   limit         — integer or null for no limit
+  //   author        — filter to posts WHERE author_id = this value
+  //   excludeAuthor — filter to posts WHERE author_id != this value
+  async getPosts({ status = 'published', limit = null, author = null, excludeAuthor = null } = {}) {
+    // Cache the canonical navbar-ticker query (unfiltered, limit 100) so every
+    // page's navbar shares a single in-flight request per page load.
+    if (status === 'published' && limit === 100 && !author && !excludeAuthor) {
       if (!_postsPublishedPromise) {
         _postsPublishedPromise = supabase
           .from('posts').select('*').eq('status', 'published')
@@ -262,7 +267,9 @@ export const store = {
     }
     let query = supabase.from('posts').select('*').order('created_at', { ascending: false });
     if (status !== 'all') query = query.eq('status', status);
-    if (limit) query = query.limit(limit);
+    if (author)        query = query.eq('author_id', author);
+    if (excludeAuthor) query = query.neq('author_id', excludeAuthor);
+    if (limit)         query = query.limit(limit);
     const { data, error } = await query;
     if (error) throw error;
     return (data || []).map(mapPost);
