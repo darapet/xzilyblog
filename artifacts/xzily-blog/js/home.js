@@ -2,6 +2,8 @@ import { mountLayout, formatDate, formatCount, initNotificationPrompt, getCatCol
 import { icon } from './icons.js';
 import { store } from './store.js';
 
+const NEWS_PLACEHOLDER = 'images/news-placeholder.jpg';
+
 // ── Skeleton placeholders shown IMMEDIATELY — zero network requests needed ──
 // These render synchronously so the user sees structure right away.
 const SKELETON_CARD = `
@@ -136,7 +138,6 @@ async function renderBookmarks() {
 }
 
 // ── Card renderers ──────────────────────────────────────────────────────────
-const NEWS_PLACEHOLDER = 'images/news-placeholder.jpg';
 
 function newsImg(p, cls = '') {
   const isNews  = p.authorId === 'news-bot';
