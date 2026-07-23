@@ -339,6 +339,18 @@ export const libStore = {
     return mapBook(data);
   },
 
+  // ── Admin profile lookup (used for external books) ──────────────────────────
+  async getAdminProfile() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .ilike('display_name', 'xzily')
+      .limit(1)
+      .single();
+    if (error) throw error;
+    return mapProfile(data);
+  },
+
   // ── Cloudinary Uploads ─────────────────────────────────────
   async uploadCover(file, settings) {
     if (!settings.cloudinaryCloudName || !settings.cloudinaryUploadPreset) {
