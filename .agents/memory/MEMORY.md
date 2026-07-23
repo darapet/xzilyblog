@@ -1,1 +1,2 @@
 - [Xzily blog Supabase backend](xzily-blog-supabase.md) — plain-JS static site now backed by Supabase via CDN import; no-bundler pattern, RLS, admin promotion flow.
+- [GitHub token pushes](github-token-auth.md) — use the secure token with Basic auth when the built-in GitHub credential is unavailable.
