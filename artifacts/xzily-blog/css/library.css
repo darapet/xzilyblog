@@ -443,7 +443,19 @@
 /* ════════════════════════════════════════════════════
    READER PAGE
 ════════════════════════════════════════════════════ */
-.lib-reader-wrap { display: grid; grid-template-columns: 1fr 340px; gap: 30px; align-items: start; padding: 40px 0 80px; }
+/* Reader main content takes full width; sidebar flows below as a horizontal strip */
+.lib-reader-wrap { display: block; padding: 40px 0 80px; }
+.lib-reader-main { width: 100%; }
+.lib-reader-sidebar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+  align-items: start;
+}
+.lib-reader-sidebar > [style*="text-align:center"] {
+  grid-column: 1 / -1;
+}
 .lib-book-header {
   background: var(--white);
   border: 1px solid var(--border);
@@ -662,9 +674,11 @@
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 900px) {
-  .lib-reader-wrap { grid-template-columns: 1fr; }
-  .lib-reader-sidebar { order: -1; }
+  .lib-reader-sidebar { grid-template-columns: 1fr 1fr; }
   .lib-book-header { flex-direction: column; }
+}
+@media (max-width: 600px) {
+  .lib-reader-sidebar { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .lib-hero { padding: 40px 0 36px; }

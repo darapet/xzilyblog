@@ -277,10 +277,6 @@ async function loadBook() {
 
       if (archiveMatch) {
         const embedUrl = `https://archive.org/embed/${archiveMatch[1]}`;
-        // Collapse sidebar and stretch reader to full width for immersive reading
-        document.getElementById('readerWrap').style.cssText   = 'display:block';
-        document.querySelector('.lib-reader-sidebar').style.display = 'none';
-        document.querySelector('.lib-reader-main').style.maxWidth   = '100%';
         contentEl.innerHTML = `
           <div class="lib-reader-embed-wrap">
             <div class="lib-reader-embed-bar">
