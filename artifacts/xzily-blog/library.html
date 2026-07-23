@@ -109,6 +109,9 @@ function doSearch() {
 function bookCard(b, profile) {
   const cat    = getCategoryBySlug(b.category);
   const upName = profile?.displayName || 'Anonymous';
+  const cardHref = b.isExternal
+    ? `library-read.html?id=${encodeURIComponent(b.id)}`
+    : `library-host-profile.html?uid=${encodeURIComponent(b.uploaderId || '')}&book=${encodeURIComponent(b.id)}`;
   const avHtml = profile?.avatarUrl
     ? `<img src="${profile.avatarUrl}" alt="${esc(upName)}" />`
     : `<span style="font-size:10px;font-weight:800">${initials(upName)}</span>`;
@@ -116,7 +119,7 @@ function bookCard(b, profile) {
     ? `<img src="${esc(b.coverUrl)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'" />`
     : `<div class="lib-cover-placeholder">${cat.icon}</div>`;
   return `
-  <div class="lib-card" onclick="location.href='library-host-profile.html?uid=${b.uploaderId}&book=${b.id}'">
+  <div class="lib-card" onclick="location.href='${cardHref}'">
     <div class="lib-card-cover">
       ${coverHtml}
       <span class="lib-card-cat">${esc(cat.name)}</span>
