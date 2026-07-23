@@ -127,8 +127,9 @@ function avHtml(p) {
     : `<span style="font-size:13px;font-weight:800">${initials(p?.displayName||'?')}</span>`;
 }
 
-await mountLayout('library.html');
-if (!bookId) { showError(); } else { loadBook(); }
+// Run layout + data fetch in parallel — no need to wait for navbar before loading book
+const layoutPromise = mountLayout('library.html');
+if (!bookId) { await layoutPromise; showError(); } else { await Promise.all([layoutPromise, loadBook()]); }
 
 async function loadBook() {
   try {

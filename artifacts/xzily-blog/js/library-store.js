@@ -99,10 +99,23 @@ export const libStore = {
 
   // ── Profiles ──────────────────────────────────────────────
   async getProfile(userId) {
+    const KEY = `__xzily_libprofile_${userId}__`;
+    const TTL = 5 * 60 * 1000; // 5 minutes
+    try {
+      const cached = sessionStorage.getItem(KEY);
+      if (cached) {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < TTL) return data;
+      }
+    } catch(_) {}
     const { data, error } = await supabase
       .from('library_profiles').select('*').eq('id', userId).maybeSingle();
     if (error) throw error;
-    return data ? mapProfile(data) : null;
+    const profile = data ? mapProfile(data) : null;
+    if (profile) {
+      try { sessionStorage.setItem(KEY, JSON.stringify({ data: profile, ts: Date.now() })); } catch(_) {}
+    }
+    return profile;
   },
 
   async saveProfile(userId, patch) {
@@ -126,8 +139,9 @@ export const libStore = {
     if (category)   q = q.eq('category', category);
     if (uploaderId) q = q.eq('uploader_id', uploaderId);
     if (search) {
+      // Search only title + author — including description causes a slow full-table scan
       const s = search.replace(/'/g, "''");
-      q = q.or(`title.ilike.%${s}%,author_name.ilike.%${s}%,description.ilike.%${s}%`);
+      q = q.or(`title.ilike.%${s}%,author_name.ilike.%${s}%`);
     }
     if (limit) q = q.limit(limit);
     const { data, error } = await q;
@@ -136,9 +150,22 @@ export const libStore = {
   },
 
   async getBookById(id) {
+    const KEY = `__xzily_book_${id}__`;
+    const TTL = 5 * 60 * 1000; // 5 minutes
+    try {
+      const cached = sessionStorage.getItem(KEY);
+      if (cached) {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < TTL) return data;
+      }
+    } catch(_) {}
     const { data, error } = await supabase.from('books').select('*').eq('id', id).maybeSingle();
     if (error) throw error;
-    return data ? mapBook(data) : null;
+    const book = data ? mapBook(data) : null;
+    if (book) {
+      try { sessionStorage.setItem(KEY, JSON.stringify({ data: book, ts: Date.now() })); } catch(_) {}
+    }
+    return book;
   },
 
   async createBook(book) {

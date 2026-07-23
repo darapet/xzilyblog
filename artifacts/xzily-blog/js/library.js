@@ -14,6 +14,17 @@ const GUTENBERG_TOPIC_MAP = {
 };
 
 async function searchGutenberg({ keyword = '', category = null, page = 1 } = {}) {
+  // Cache results so tab/category switches are instant on revisit (10-min TTL)
+  const cacheKey = `__gut_${keyword}_${category || 'all'}_${page}__`;
+  const TTL = 10 * 60 * 1000;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { data, ts } = JSON.parse(cached);
+      if (Date.now() - ts < TTL) return data;
+    }
+  } catch(_) {}
+
   const params = new URLSearchParams({ languages: 'en', page: String(page) });
   if (keyword) params.set('search', keyword);
   const topic = GUTENBERG_TOPIC_MAP[category] || '';
@@ -21,7 +32,10 @@ async function searchGutenberg({ keyword = '', category = null, page = 1 } = {})
   const res = await fetch(`${GUTENDEX}/?${params}`);
   if (!res.ok) throw new Error('Could not reach Project Gutenberg. Check your connection.');
   const data = await res.json();
-  return { books: data.results || [], count: data.count || 0, hasNext: !!data.next };
+  const result = { books: data.results || [], count: data.count || 0, hasNext: !!data.next };
+
+  try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, ts: Date.now() })); } catch(_) {}
+  return result;
 }
 
 // ── State ────────────────────────────────────────────────
