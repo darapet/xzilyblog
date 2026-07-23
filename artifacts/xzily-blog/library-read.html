@@ -330,14 +330,10 @@ async function loadBook() {
     document.getElementById('readerWrap').style.display   = '';
 
     // ── Step 2: load sidebar data + comments all in parallel ───
-    const isExternalAdmin = book.isExternal && !book.uploaderId;
-    const profilePromise  = book.uploaderId
-      ? libStore.getProfile(book.uploaderId).catch(() => null)
-      : isExternalAdmin ? libStore.getAdminProfile().catch(() => null) : Promise.resolve(null);
-
+    // External books skip the profile fetch entirely — go straight to reading
     const [liked, profile, comments] = await Promise.all([
       session ? libStore.getLikeStatus(bookId, session.id).catch(() => false) : Promise.resolve(false),
-      profilePromise,
+      book.isExternal ? Promise.resolve(null) : (book.uploaderId ? libStore.getProfile(book.uploaderId).catch(() => null) : Promise.resolve(null)),
       libStore.getComments(bookId).catch(() => []),
     ]);
 
