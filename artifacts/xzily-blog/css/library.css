@@ -677,3 +677,25 @@
   .lib-reader-embed-frame { height: 60vh; min-height: 400px; }
   .lib-panel { padding: 18px; }
 }
+
+/* ── On-site text reader (Gutenberg plain text) ────────────────── */
+.lib-text-reader {
+  padding: 32px 40px;
+  max-height: 620px;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.95;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: 0 0 10px 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+  scroll-behavior: smooth;
+}
+.lib-text-reader p {
+  margin: 0 0 1.1em;
+  text-indent: 1.5em;
+}
+.lib-text-reader p:first-child { text-indent: 0; }
+@media (max-width: 600px) {
+  .lib-text-reader { padding: 20px 18px; font-size: 14px; }
+}
