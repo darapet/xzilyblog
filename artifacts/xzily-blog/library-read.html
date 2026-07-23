@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/library.css" />
 </head>
 <body>
+<div class="lib-reading-progress" id="readingProgress"></div>
 <div id="site-navbar"></div>
 
 <div class="lib-wrap">
@@ -485,6 +486,18 @@ function showError() {
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('errorState').style.display   = '';
 }
+
+// Reading progress bar
+(function() {
+  const bar = document.getElementById('readingProgress');
+  if (!bar) return;
+  function update() {
+    const total = document.body.scrollHeight - window.innerHeight;
+    bar.style.setProperty('--p', total > 0 ? Math.min(100, (window.scrollY / total) * 100) + '%' : '0%');
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
 </script>
 </body>
 </html>

@@ -18,11 +18,15 @@
   <section class="lib-hero">
     <div class="container">
       <div class="lib-hero-eyebrow">Free Online Library</div>
-      <h1>📚 Xzily Library</h1>
-      <p class="lib-hero-sub">Browse, read and share books across every category — Fiction, Religion, Science, History and more. Upload your own books for the world to read.</p>
+      <h1>Xzily <span class="lib-hero-title-accent">Library</span></h1>
+      <p class="lib-hero-sub">Browse, read and share books across every category — Fiction, Religion, Science, History and more.</p>
       <div class="lib-search-row">
         <input class="lib-search-box" id="searchInput" type="search" placeholder="Search by title, author or description…" />
         <button class="lib-search-btn" id="searchBtn">Search</button>
+      </div>
+      <div class="lib-hero-cta">
+        <a href="library-upload.html" class="lib-hero-upload-btn">+ Share a Book</a>
+        <span class="lib-hero-book-count" id="heroBookCount"></span>
       </div>
     </div>
   </section>
@@ -174,6 +178,8 @@ async function loadBooks() {
     });
     const books = externalEnabled ? allBooks : allBooks.filter(b => !b.isExternal);
     document.getElementById('gridCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
+    const hc = document.getElementById('heroBookCount');
+    if (hc && !hc.textContent) hc.textContent = books.length + ' books available';
 
     if (!books.length) {
       grid.innerHTML = `<div class="lib-empty">
