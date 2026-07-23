@@ -339,8 +339,13 @@ export const libStore = {
     return mapBook(data);
   },
 
-  // ── Admin profile lookup (used for external books) ──────────────────────────
+  // ── Admin profile lookup — cached in sessionStorage to avoid repeated DB hits
   async getAdminProfile() {
+    const KEY = '__xzily_admin__';
+    try {
+      const cached = sessionStorage.getItem(KEY);
+      if (cached) return JSON.parse(cached);
+    } catch(_) {}
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -348,7 +353,9 @@ export const libStore = {
       .limit(1)
       .single();
     if (error) throw error;
-    return mapProfile(data);
+    const profile = mapProfile(data);
+    try { sessionStorage.setItem(KEY, JSON.stringify(profile)); } catch(_) {}
+    return profile;
   },
 
   // ── Cloudinary Uploads ─────────────────────────────────────
