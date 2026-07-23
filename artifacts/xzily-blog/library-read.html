@@ -146,7 +146,6 @@ function gutenbergReadPanel(gutId, title, htmlUrl) {
       </p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <a href="${esc(readUrl)}" target="_blank" rel="noopener" class="btn btn-primary">📖 Read Book</a>
-        <a href="${esc(pageUrl)}" target="_blank" rel="noopener" class="btn">View on Gutenberg</a>
       </div>
     </div>`;
 }
@@ -278,13 +277,18 @@ async function loadBook() {
 
       if (archiveMatch) {
         const embedUrl = `https://archive.org/embed/${archiveMatch[1]}`;
+        // Collapse sidebar and stretch reader to full width for immersive reading
+        document.getElementById('readerWrap').style.cssText   = 'display:block';
+        document.querySelector('.lib-reader-sidebar').style.display = 'none';
+        document.querySelector('.lib-reader-main').style.maxWidth   = '100%';
         contentEl.innerHTML = `
           <div class="lib-reader-embed-wrap">
             <div class="lib-reader-embed-bar">
               <span class="lib-reader-source-badge">🏛️ Internet Archive</span>
             </div>
             <iframe class="lib-reader-embed-frame" src="${esc(embedUrl)}"
-              allowfullscreen title="${esc(book.title)}" loading="lazy"></iframe>
+              allowfullscreen title="${esc(book.title)}" loading="lazy"
+              style="height:82vh;width:100%"></iframe>
           </div>`;
 
       } else if (gutenbergMatch) {
