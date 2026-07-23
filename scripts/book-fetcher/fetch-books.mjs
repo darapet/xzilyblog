@@ -5,6 +5,8 @@
 //  Fetches popular free books from:
 //    • Internet Archive (archive.org)
 //    • Project Gutenberg (via Gutendex API)
+//    • OpenStax (openly licensed textbooks)
+//    • Open Textbook Library (openly licensed textbooks)
 //  and saves new ones to Supabase as published — no approval.
 //
 //  Env vars required (GitHub Actions secrets):
@@ -27,6 +29,8 @@ const ARCHIVE_PER_SUBJECT   = 18;   // candidates fetched per Archive.org catego
 const GUTENBERG_PER_RUN     = 60;   // extra candidates fetched from Gutenberg
 const TARGET_NEW_BOOKS_PER_RUN = 200;
 const ARCHIVE_PAGE_ROTATION  = 25;  // rotate through Archive.org result pages each day
+const OPENSTAX_PAGE_ROTATION = 5;
+const OTL_PAGE_ROTATION      = 5;
 
 // ── Supabase REST helpers (no library needed) ─────────────
 const SB_HEADERS = {
@@ -63,11 +67,11 @@ function guessCategory(text = '') {
   if (/emotional|mental health|psycholog|well-being|wellbeing|anxiety|depression|resilien/.test(s)) return 'emotional-wellbeing';
   if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
   if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
-  if (/science|physics|chemistry|biology|mathematics|astronomy|technology|computer/.test(s)) return 'science';
+  if (/science|physics|chemistry|biology|mathematics|algebra|calculus|statistics|astronomy|technology|computer/.test(s)) return 'science';
   if (/histor|biography|war|ancient|civiliz/.test(s)) return 'history';
   if (/business|economics|finance|commerce|management|marketing/.test(s)) return 'business';
   if (/self.help|personal development|motivation|success|productivity|mindfulness/.test(s)) return 'self-help';
-  if (/health|medicine|medical|wellness|nutrition|fitness/.test(s)) return 'health';
+  if (/health|medicine|medical|wellness|nutrition|fitness|anatomy|physiology|nursing/.test(s)) return 'health';
   if (/education|learning|teaching|school|university|academic/.test(s)) return 'education';
   if (/travel|geography|explorat|adventure/.test(s)) return 'travel';
   if (/\bart\b|music|film|entertainment|photography|design/.test(s)) return 'arts';
@@ -113,6 +117,139 @@ async function saveBook(book, defaultUploaderId = null) {
     console.error(`  ⚠️  Save failed: "${book.title}" — ${e.message}`);
     return false;
   }
+}
+
+function decodeHtmlEntities(value = '') {
+  return String(value)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)));
+}
+
+function cleanText(value = '') {
+  return decodeHtmlEntities(value)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function titleFromSlug(slug) {
+  return slug
+    .replace(/-([0-9])/, ' $1')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+// ── Openly licensed textbook catalogs ─────────────────────
+// These adapters store public metadata and source landing pages only.
+async function fetchOpenStaxBooks() {
+  const books = [];
+  try {
+    const dailyPage = (Math.floor(Date.now() / 86400000) % OPENSTAX_PAGE_ROTATION) + 1;
+    const res = await fetch('https://openstax.org/sitemap.xml', {
+      headers: { 'User-Agent': 'XzilyBlog-BookFetcher/1.0' },
+    });
+    if (!res.ok) throw new Error(`OpenStax sitemap responded ${res.status}`);
+
+    const xml = await res.text();
+    const slugs = [...xml.matchAll(
+      /<loc>https:\/\/openstax\.org\/details\/books\/([^<]+)<\/loc>/g,
+    )].map(match => match[1]);
+
+    const start = (dailyPage - 1) * 24;
+    for (const slug of slugs.slice(start, start + 24)) {
+      const externalUrl = `https://openstax.org/details/books/${slug}`;
+      books.push({
+        title:        titleFromSlug(slug),
+        authorName:   'OpenStax',
+        description:  'Openly licensed textbook from OpenStax. Read the source page for the current license and attribution terms.',
+        coverUrl:     '',
+        externalUrl,
+        htmlUrl:      externalUrl,
+        category:     guessCategory(slug.replace(/-/g, ' ')),
+        language:     'English',
+        publishedYear: null,
+      });
+    }
+  } catch (e) {
+    console.warn(`  OpenStax fetch error: ${e.message}`);
+  }
+  return books;
+}
+
+const OTL_SUBJECTS = [
+  { category: 'science', query: 'biology' },
+  { category: 'science', query: 'chemistry' },
+  { category: 'science', query: 'physics' },
+  { category: 'science', query: 'mathematics' },
+  { category: 'business', query: 'business' },
+  { category: 'business', query: 'accounting' },
+  { category: 'emotional-wellbeing', query: 'psychology' },
+  { category: 'education', query: 'education' },
+  { category: 'education', query: 'sociology' },
+  { category: 'arts', query: 'communication' },
+];
+
+function parseOtlEntries(xml, category) {
+  const books = [];
+  for (const match of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const entry = match[1];
+    const title = cleanText(entry.match(/<title>([\s\S]*?)<\/title>/)?.[1] || '');
+    const externalUrl = entry.match(
+      /<link[^>]+rel="alternate"[^>]+href="([^"]+)"/,
+    )?.[1] || entry.match(
+      /<id>(https:\/\/open\.umn\.edu\/opentextbooks\/textbooks\/[^<]+)<\/id>/,
+    )?.[1];
+    const authorName = cleanText(
+      entry.match(/<author>\s*<name>([\s\S]*?)<\/name>/)?.[1] || 'Open Textbook Library',
+    );
+    const content = decodeHtmlEntities(
+      entry.match(/<content[^>]*>([\s\S]*?)<\/content>/)?.[1] || '',
+    );
+    const coverUrl = content.match(/<img[^>]+src="([^"]+)"/)?.[1] || '';
+    const description = cleanText(content).slice(0, 800);
+    if (!title || !externalUrl) continue;
+    books.push({
+      title,
+      authorName,
+      description: `${description} Openly licensed textbook; read the source page for attribution terms.`,
+      coverUrl,
+      externalUrl,
+      htmlUrl: externalUrl,
+      category,
+      language: 'English',
+      publishedYear: null,
+    });
+  }
+  return books;
+}
+
+async function fetchOpenTextbookLibraryBooks() {
+  const books = [];
+  const dailyPage = (Math.floor(Date.now() / 86400000) % OTL_PAGE_ROTATION) + 1;
+  await Promise.all(OTL_SUBJECTS.map(async subject => {
+    try {
+      const url = `https://open.umn.edu/opentextbooks/subjects/${subject.query}.atom?page=${dailyPage}`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/atom+xml',
+          'User-Agent': 'XzilyBlog-BookFetcher/1.0',
+        },
+      });
+      if (!res.ok) {
+        console.warn(`  Open Textbook Library ${subject.query} responded ${res.status}`);
+        return;
+      }
+      books.push(...parseOtlEntries(await res.text(), subject.category));
+    } catch (e) {
+      console.warn(`  Open Textbook Library error (${subject.query}): ${e.message}`);
+    }
+  }));
+  return books;
 }
 
 // ── Internet Archive ──────────────────────────────────────
@@ -251,15 +388,18 @@ async function main() {
     return;
   }
 
-  const [archiveBooks, gutenbergBooks] = await Promise.all([
+  const [archiveBooks, gutenbergBooks, openStaxBooks, openTextbookBooks] = await Promise.all([
     fetchArchiveBooks(),
     fetchGutenbergBooks(),
+    fetchOpenStaxBooks(),
+    fetchOpenTextbookLibraryBooks(),
   ]);
 
   // De-duplicate and interleave categories so the 200-book target is not
   // consumed by the first few subjects in the list.
   const uniqueBooks = [...new Map(
-    [...archiveBooks, ...gutenbergBooks].map(book => [book.externalUrl, book])
+    [...archiveBooks, ...gutenbergBooks, ...openStaxBooks, ...openTextbookBooks]
+      .map(book => [book.externalUrl, book])
   ).values()];
   const byCategory = new Map();
   for (const book of uniqueBooks) {
@@ -279,7 +419,11 @@ async function main() {
     if (!addedThisRound) break;
     round++;
   }
-  console.log(`Found ${archiveBooks.length} Archive.org + ${gutenbergBooks.length} Gutenberg candidates (${uniqueBooks.length} unique)`);
+  console.log(
+    `Found ${archiveBooks.length} Archive.org + ${gutenbergBooks.length} Gutenberg + ` +
+    `${openStaxBooks.length} OpenStax + ${openTextbookBooks.length} Open Textbook Library ` +
+    `candidates (${uniqueBooks.length} unique)`,
+  );
 
   let added   = 0;
   let skipped = 0;
