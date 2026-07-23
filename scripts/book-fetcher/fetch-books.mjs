@@ -23,9 +23,10 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 }
 
 // ── Config ────────────────────────────────────────────────
-const ARCHIVE_PER_SUBJECT   = 6;    // books fetched per Archive.org subject
-const GUTENBERG_PER_RUN     = 25;   // books fetched from Gutenberg
-const MAX_NEW_BOOKS_PER_RUN = 80;   // safety cap on inserts per run
+const ARCHIVE_PER_SUBJECT   = 18;   // candidates fetched per Archive.org category
+const GUTENBERG_PER_RUN     = 60;   // extra candidates fetched from Gutenberg
+const TARGET_NEW_BOOKS_PER_RUN = 200;
+const ARCHIVE_PAGE_ROTATION  = 25;  // rotate through Archive.org result pages each day
 
 // ── Supabase REST helpers (no library needed) ─────────────
 const SB_HEADERS = {
@@ -58,6 +59,8 @@ async function dbInsert(table, record) {
 // ── Category guesser ──────────────────────────────────────
 function guessCategory(text = '') {
   const s = (Array.isArray(text) ? text.join(' ') : String(text)).toLowerCase();
+  if (/sport|athletic|football|soccer|basketball|baseball|tennis|olympic|coaching/.test(s)) return 'sports';
+  if (/emotional|mental health|psycholog|well-being|wellbeing|anxiety|depression|resilien/.test(s)) return 'emotional-wellbeing';
   if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
   if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
   if (/science|physics|chemistry|biology|mathematics|astronomy|technology|computer/.test(s)) return 'science';
@@ -115,36 +118,41 @@ async function saveBook(book, defaultUploaderId = null) {
 // ── Internet Archive ──────────────────────────────────────
 // We search by subject so each run gets fresh, varied books
 const ARCHIVE_SUBJECTS = [
-  'subject:(fiction)',
-  'subject:(science)',
-  'subject:(history)',
-  'subject:(religion)',
-  'subject:(education)',
-  'subject:(children)',
-  'subject:(philosophy)',
-  'subject:(health)',
-  'subject:(travel)',
-  'subject:(business)',
-  'subject:(law)',
-  'subject:(biography)',
+  { category: 'fiction', query: 'subject:(fiction OR literature OR novels)' },
+  { category: 'religion', query: 'subject:(religion OR spirituality OR theology)' },
+  { category: 'science', query: 'subject:(science OR technology OR mathematics)' },
+  { category: 'history', query: 'subject:(history OR biography OR civilization)' },
+  { category: 'business', query: 'subject:(business OR finance OR economics)' },
+  { category: 'self-help', query: 'subject:(self-help OR motivation OR productivity)' },
+  { category: 'health', query: 'subject:(health OR medicine OR wellness OR fitness)' },
+  { category: 'education', query: 'subject:(education OR teaching OR learning OR school)' },
+  { category: 'travel', query: 'subject:(travel OR geography OR exploration)' },
+  { category: 'arts', query: 'subject:(art OR music OR film OR photography)' },
+  { category: 'children', query: 'subject:(children OR juvenile OR young adult)' },
+  { category: 'law', query: 'subject:(law OR legal OR politics OR government)' },
+  { category: 'philosophy', query: 'subject:(philosophy OR ethics OR logic)' },
+  { category: 'comics', query: 'subject:(comics OR manga OR cartoons)' },
+  { category: 'sports', query: 'subject:(sports OR athletics OR football OR soccer OR olympics)' },
+  { category: 'emotional-wellbeing', query: 'subject:(psychology OR emotional wellbeing OR mental health OR resilience)' },
 ];
 
 async function fetchArchiveBooks() {
   const books = [];
+  const dailyPage = (Math.floor(Date.now() / 86400000) % ARCHIVE_PAGE_ROTATION) + 1;
   for (const subject of ARCHIVE_SUBJECTS) {
     try {
       const params = new URLSearchParams({
-        q:        `${subject} AND mediatype:texts AND language:English NOT mediatype:collection`,
+        q:        `${subject.query} AND mediatype:texts AND language:English NOT mediatype:collection`,
         'fl[]':   'identifier,title,creator,description,subject,year,language',
         'sort[]': 'downloads desc',
         rows:     String(ARCHIVE_PER_SUBJECT),
         output:   'json',
-        page:     '1',
+        page:     String(dailyPage),
       });
       const res  = await fetch(`https://archive.org/advancedsearch.php?${params}`, {
         headers: { 'User-Agent': 'XzilyBlog-BookFetcher/1.0' },
       });
-      if (!res.ok) { console.warn(`  Archive search failed for ${subject}: ${res.status}`); continue; }
+      if (!res.ok) { console.warn(`  Archive search failed for ${subject.category}: ${res.status}`); continue; }
       const data = await res.json();
       const docs = data?.response?.docs || [];
       for (const d of docs) {
@@ -158,7 +166,9 @@ async function fetchArchiveBooks() {
           description:  rawDesc.replace(/<[^>]+>/g, '').slice(0, 800),
           coverUrl:     `https://archive.org/services/img/${id}`,
           externalUrl:  `https://archive.org/details/${id}`,
-          category:     guessCategory(rawSub),
+          // The query is category-specific. Use it as the source of truth so
+          // broad Archive metadata cannot collapse every book into fiction.
+          category:     subject.category,
           language:     Array.isArray(d.language) ? d.language[0] : (d.language || 'English'),
           publishedYear:parseInt(d.year || '') || null,
         });
@@ -166,7 +176,7 @@ async function fetchArchiveBooks() {
       // Polite delay between requests
       await new Promise(r => setTimeout(r, 400));
     } catch (e) {
-      console.warn(`  Archive subject error (${subject}): ${e.message}`);
+      console.warn(`  Archive subject error (${subject.category}): ${e.message}`);
     }
   }
   return books;
@@ -176,8 +186,10 @@ async function fetchArchiveBooks() {
 async function fetchGutenbergBooks() {
   const books = [];
   try {
-    // Fetch the most popular English books
-    const res  = await fetch(`https://gutendex.com/books/?languages=en&page=1`, {
+    // Rotate pages so the daily job does not repeatedly fetch only the same
+    // most-popular results.
+    const dailyPage = (Math.floor(Date.now() / 86400000) % 20) + 1;
+    const res  = await fetch(`https://gutendex.com/books/?languages=en&page=${dailyPage}`, {
       headers: { 'User-Agent': 'XzilyBlog-BookFetcher/1.0' },
     });
     if (!res.ok) throw new Error(`Gutendex responded ${res.status}`);
@@ -244,19 +256,45 @@ async function main() {
     fetchGutenbergBooks(),
   ]);
 
-  const allBooks = [...archiveBooks, ...gutenbergBooks].slice(0, MAX_NEW_BOOKS_PER_RUN);
-  console.log(`Found ${archiveBooks.length} Archive.org + ${gutenbergBooks.length} Gutenberg candidates`);
+  // De-duplicate and interleave categories so the 200-book target is not
+  // consumed by the first few subjects in the list.
+  const uniqueBooks = [...new Map(
+    [...archiveBooks, ...gutenbergBooks].map(book => [book.externalUrl, book])
+  ).values()];
+  const byCategory = new Map();
+  for (const book of uniqueBooks) {
+    if (!byCategory.has(book.category)) byCategory.set(book.category, []);
+    byCategory.get(book.category).push(book);
+  }
+  const allBooks = [];
+  let round = 0;
+  while (allBooks.length < uniqueBooks.length) {
+    let addedThisRound = 0;
+    for (const books of byCategory.values()) {
+      if (books[round]) {
+        allBooks.push(books[round]);
+        addedThisRound++;
+      }
+    }
+    if (!addedThisRound) break;
+    round++;
+  }
+  console.log(`Found ${archiveBooks.length} Archive.org + ${gutenbergBooks.length} Gutenberg candidates (${uniqueBooks.length} unique)`);
 
   let added   = 0;
   let skipped = 0;
   for (const book of allBooks) {
+    if (added >= TARGET_NEW_BOOKS_PER_RUN) break;
     const saved = await saveBook(book, adminUploaderId);
     if (saved) { added++; console.log(`  ✅ Added: ${book.title}`); }
     else         { skipped++; }
     await new Promise(r => setTimeout(r, 120)); // gentle rate-limit
   }
 
-  console.log(`\n✨ Done — Added: ${added}  |  Already in library: ${skipped}`);
+  console.log(`\n✨ Done — Added: ${added}  |  Already in library or skipped: ${skipped}`);
+  if (added < TARGET_NEW_BOOKS_PER_RUN) {
+    console.warn(`⚠️  Only ${added} new books were available. The next daily run will rotate to another source page.`);
+  }
 }
 
 main().catch(e => {

@@ -18,6 +18,8 @@ export const BOOK_CATEGORIES = [
   { slug: 'law',        name: 'Law & Politics',          icon: '⚖️' },
   { slug: 'philosophy', name: 'Philosophy',              icon: '🤔' },
   { slug: 'comics',     name: 'Comics & Manga',          icon: '🎭' },
+  { slug: 'sports',     name: 'Sports & Athletics',      icon: '🏅' },
+  { slug: 'emotional-wellbeing', name: 'Emotional Wellbeing', icon: '💛' },
 ];
 
 export function getCategoryBySlug(slug) {
@@ -27,6 +29,8 @@ export function getCategoryBySlug(slug) {
 // ── Category guesser (used for external books) ─────────────
 export function guessCategory(text = '') {
   const s = (Array.isArray(text) ? text.join(' ') : String(text)).toLowerCase();
+  if (/sport|athletic|football|soccer|basketball|baseball|tennis|olympic|coaching/.test(s)) return 'sports';
+  if (/emotional|mental health|psycholog|well-being|wellbeing|anxiety|depression|resilien/.test(s)) return 'emotional-wellbeing';
   if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
   if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
   if (/science|physics|chemistry|biology|mathematics|astronomy|technology|computer/.test(s)) return 'science';
@@ -133,7 +137,7 @@ export const libStore = {
   },
 
   // ── Books ──────────────────────────────────────────────────
-  async getBooks({ category = null, status = 'published', search = null, uploaderId = null, limit = 60 } = {}) {
+  async getBooks({ category = null, status = 'published', search = null, uploaderId = null, limit = 200 } = {}) {
     let q = supabase.from('books').select('*').order('created_at', { ascending: false });
     if (status !== 'all') q = q.eq('status', status);
     if (category)   q = q.eq('category', category);

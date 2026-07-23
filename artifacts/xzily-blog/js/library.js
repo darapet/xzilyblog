@@ -11,6 +11,7 @@ const GUTENBERG_TOPIC_MAP = {
   history: 'history', business: 'business', 'self-help': 'self-help',
   health: 'health', education: 'education', travel: 'travel',
   philosophy: 'philosophy', children: 'children', law: 'law',
+  sports: 'sports', 'emotional-wellbeing': 'psychology',
 };
 
 async function searchGutenberg({ keyword = '', category = null, page = 1 } = {}) {
@@ -140,10 +141,10 @@ async function load(reset) {
         category: activeCategory,
         search:   keyword || null,
         status:   'published',
-        limit:    24,
+         limit:    200,
       });
       if (reset) commPage = 2; else commPage++;
-      hasMore = books.length === 24;
+       hasMore = books.length === 200;
       countEl.textContent = books.length ? `${books.length}+ books` : '';
       renderCommunityGrid(books, reset);
     }

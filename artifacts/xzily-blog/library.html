@@ -166,7 +166,7 @@ async function loadBooks() {
     const allBooks = await libStore.getBooks({
       category: activeCat || null,
       search:   searchVal || null,
-      limit: 60,
+       limit: 200,
     });
     const books = externalEnabled ? allBooks : allBooks.filter(b => !b.isExternal);
     document.getElementById('gridCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');

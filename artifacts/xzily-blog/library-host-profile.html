@@ -170,7 +170,7 @@ if (pendingBook) {
 async function loadBooks() {
   const grid = document.getElementById('hostGrid');
   try {
-    const books = await libStore.getBooks({ uploaderId: hostUid, limit: 60 });
+    const books = await libStore.getBooks({ uploaderId: hostUid, limit: 200 });
     document.getElementById('booksCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
     document.getElementById('statBooks').textContent  = formatCount(books.length);
     document.getElementById('statViews').textContent  = formatCount(books.reduce((s,b)=>s+b.views,0));

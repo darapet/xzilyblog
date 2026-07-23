@@ -38,9 +38,9 @@ if (sc) {
           ? '<br><br><strong style="color:var(--primary)">Your last request was rejected.</strong> You may submit a new one below.'
           : ''}
       </div>`;
-    if (existingReview.status !== 'rejected') return;
   }
 
+  if (!existingReview || existingReview.status === 'rejected') {
   // Build the review form based on requirements
   const requirements = sc.requirements || [];
   const uploadedFiles = {}; // key -> url
@@ -148,6 +148,7 @@ if (sc) {
       btn.disabled = false;
     }
   });
+  }
 
 } else {
   // No active suspension case — might be restricted page mismatch
