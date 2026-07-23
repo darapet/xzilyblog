@@ -116,8 +116,9 @@ import { mountLayout, formatCount, toast } from './js/common.js';
 import { libStore, getCategoryBySlug } from './js/library-store.js';
 import { store } from './js/store.js';
 
-const params = new URLSearchParams(location.search);
-const bookId = params.get('id');
+const params   = new URLSearchParams(location.search);
+const bookId   = params.get('id');
+const bookType = params.get('type'); // 'gutenberg' when coming from Classics tab
 
 function esc(s = '') { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function initials(n = '') { return n.split(' ').map(w => w[0]||'').join('').toUpperCase().slice(0,2)||'?'; }
@@ -127,9 +128,106 @@ function avHtml(p) {
     : `<span style="font-size:13px;font-weight:800">${initials(p?.displayName||'?')}</span>`;
 }
 
+// Gutenberg read panel — used by both Classics-tab and community Gutenberg books.
+// Gutenberg.org blocks iframes (X-Frame-Options: SAMEORIGIN) so we never try to embed;
+// instead we show a clean panel with a direct read link.
+function gutenbergReadPanel(gutId, title, htmlUrl) {
+  const readUrl  = htmlUrl || `https://www.gutenberg.org/cache/epub/${gutId}/pg${gutId}-images.html`;
+  const pageUrl  = `https://www.gutenberg.org/ebooks/${gutId}`;
+  return `
+    <div class="lib-panel" style="text-align:center;padding:52px 32px">
+      <div style="font-size:3rem;margin-bottom:16px">📖</div>
+      <div style="font-family:var(--font-condensed);font-size:22px;text-transform:uppercase;margin-bottom:10px">
+        Read on Project Gutenberg
+      </div>
+      <p style="color:var(--text-muted);max-width:420px;margin:0 auto 28px;line-height:1.6;font-size:14px">
+        This book is hosted by Project Gutenberg — a free library of over 70,000 classics.
+        Tap the button below to read it in full.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="${esc(readUrl)}" target="_blank" rel="noopener" class="btn btn-primary">📖 Read Book</a>
+        <a href="${esc(pageUrl)}" target="_blank" rel="noopener" class="btn">View on Gutenberg</a>
+      </div>
+    </div>`;
+}
+
 // Run layout + data fetch in parallel — no need to wait for navbar before loading book
 const layoutPromise = mountLayout('library.html');
-if (!bookId) { await layoutPromise; showError(); } else { await Promise.all([layoutPromise, loadBook()]); }
+if (!bookId) {
+  await layoutPromise; showError();
+} else if (bookType === 'gutenberg') {
+  await Promise.all([layoutPromise, loadGutenbergClassic()]);
+} else {
+  await Promise.all([layoutPromise, loadBook()]);
+}
+
+// ── Gutenberg Classics-tab books (numeric Gutendex ID, not in Supabase) ──────
+async function loadGutenbergClassic() {
+  try {
+    const cacheKey = `__gut_book_${bookId}__`;
+    const TTL = 10 * 60 * 1000;
+    let b = null;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const { data, ts } = JSON.parse(cached);
+        if (Date.now() - ts < TTL) b = data;
+      }
+    } catch(_) {}
+
+    if (!b) {
+      const res = await fetch(`https://gutendex.com/books/${encodeURIComponent(bookId)}`);
+      if (!res.ok) { showError(); return; }
+      b = await res.json();
+      try { sessionStorage.setItem(cacheKey, JSON.stringify({ data: b, ts: Date.now() })); } catch(_) {}
+    }
+
+    document.title = b.title + ' — Xzily Library';
+
+    // Cover
+    const cover = b.formats?.['image/jpeg'] || '';
+    const coverEl = document.getElementById('coverLg');
+    if (cover) coverEl.innerHTML = `<img src="${esc(cover)}" alt="${esc(b.title)}" onerror="this.style.display='none'" />`;
+    else coverEl.textContent = '📖';
+
+    // Header
+    const authors = (b.authors || []).map(a => a.name.replace(/,\s*\d+.*$/, '').trim()).join(', ') || 'Unknown Author';
+    document.getElementById('bookTitle').textContent  = b.title;
+    document.getElementById('bookAuthor').textContent = 'by ' + authors;
+    document.getElementById('bookMeta').innerHTML =
+      `<span class="lib-book-meta-tag cat">📖 Classic</span>
+       <span class="lib-book-meta-tag">English</span>
+       <span class="lib-book-meta-tag">⬇ ${formatCount(b.download_count || 0)} downloads</span>`;
+
+    // Description from subjects
+    const subjects = (b.subjects || []).slice(0, 5).join(', ');
+    if (subjects) {
+      document.getElementById('descPanel').style.display = '';
+      document.getElementById('bookDesc').textContent = subjects;
+    }
+
+    // Stats (no Supabase record — show download count instead)
+    document.getElementById('statViews').textContent    = formatCount(b.download_count || 0);
+    document.getElementById('statLikes').textContent    = '—';
+    document.getElementById('statComments').textContent = '—';
+
+    // Reader — direct link, no iframe (Gutenberg blocks iframe embedding)
+    const htmlEntry = Object.entries(b.formats || {}).find(([k]) => k.startsWith('text/html') && !k.includes('zip'));
+    document.getElementById('readerContent').innerHTML = gutenbergReadPanel(bookId, b.title, htmlEntry?.[1]);
+
+    // Share
+    const pageUrl = location.href;
+    document.getElementById('shareWhatsApp').addEventListener('click', () => {
+      window.open(`https://wa.me/?text=${encodeURIComponent(b.title + ' — ' + pageUrl)}`, '_blank');
+    });
+    document.getElementById('shareCopy').addEventListener('click', () => {
+      navigator.clipboard.writeText(pageUrl).then(() => toast('Link copied!')).catch(() => {});
+    });
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('readerWrap').style.display   = '';
+  } catch(e) { showError(); }
+}
 
 async function loadBook() {
   try {
@@ -190,17 +288,10 @@ async function loadBook() {
           </div>`;
 
       } else if (gutenbergMatch) {
-        const gutId  = gutenbergMatch[1];
-        const htmlUrl = book.fileUrl || `https://www.gutenberg.org/cache/epub/${gutId}/pg${gutId}-images.html`;
-        contentEl.innerHTML = `
-          <div class="lib-reader-embed-wrap">
-            <div class="lib-reader-embed-bar">
-              <span class="lib-reader-source-badge">📖 Project Gutenberg</span>
-            </div>
-            <iframe class="lib-reader-embed-frame" src="${esc(htmlUrl)}"
-              title="${esc(book.title)}" loading="lazy"
-              sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
-          </div>`;
+        // Gutenberg blocks iframe embedding — show a direct read link instead
+        const gutId   = gutenbergMatch[1];
+        const htmlUrl = book.fileUrl || null;
+        contentEl.innerHTML = gutenbergReadPanel(gutId, book.title, htmlUrl);
 
       } else {
         contentEl.innerHTML = `
