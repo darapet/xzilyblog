@@ -1123,12 +1123,14 @@ h1, h2, h3, h4, h5, h6 {
 .data-table .icon-btn { width: 32px; height: 32px; border-radius: 7px; background: var(--light-bg); color: var(--text-main); transition: background 0.15s, color 0.15s; }
 .data-table .icon-btn:hover { background: var(--border); color: var(--primary); }
 
-#statusTabs { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
-#statusTabs button {
+.tab-strip { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+.tab-strip button, .tab-strip .tab {
   padding: 8px 18px; border-radius: 20px; border: 1px solid var(--border);
   background: var(--white); font-weight: 600; font-size: 13px; color: var(--text-main);
+  cursor: pointer; font-family: inherit;
 }
-#statusTabs button.active { background: var(--dark-bg); color: var(--white); border-color: var(--dark-bg); }
+.tab-strip button:hover, .tab-strip .tab:hover { border-color: var(--dark-bg); color: var(--dark-bg); }
+.tab-strip button.active, .tab-strip .tab.active { background: var(--dark-bg); color: var(--white); border-color: var(--dark-bg); }
 
 /* ---- Rich text editor ---- */
 .editor-toolbar {
