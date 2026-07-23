@@ -72,8 +72,9 @@ export async function renderNavbar(activePath = '', cats = [], siteSettings = {}
   const bookmarkCount = bookmarks.length;
 
   const mainLinks = [
-    ['index.html', 'Home'],
-    ['about.html', 'About'],
+    ['index.html',   'Home'],
+    ['library.html', 'Library'],
+    ['about.html',   'About'],
     ['contact.html', 'Contact']
   ];
   

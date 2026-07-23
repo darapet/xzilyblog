@@ -117,6 +117,7 @@ async function init() {
   // Cloudinary
   document.getElementById('fCloudName').value    = settings.cloudinaryCloudName;
   document.getElementById('fUploadPreset').value = settings.cloudinaryUploadPreset;
+  document.getElementById('fBooksPreset').value  = settings.cloudinaryBooksPreset || '';
 
   // Groq
   for (let i = 1; i <= 5; i++) {
@@ -161,6 +162,7 @@ function wireSaveButton() {
       themeInk:     document.getElementById('fThemeInkHex').value    || document.getElementById('fThemeInk').value,
       cloudinaryCloudName:    document.getElementById('fCloudName').value,
       cloudinaryUploadPreset: document.getElementById('fUploadPreset').value,
+      cloudinaryBooksPreset:  document.getElementById('fBooksPreset').value,
       externalNewsEnabled:    document.getElementById('fExternalNews').checked,
     };
     for (let i = 1; i <= 5; i++) {

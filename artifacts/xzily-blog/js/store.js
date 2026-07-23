@@ -145,8 +145,9 @@ function mapAuthor(row) {
 
 function mapSettings(row) {
   return {
-    cloudinaryCloudName:   row?.cloudinary_cloud_name   || '',
+    cloudinaryCloudName:    row?.cloudinary_cloud_name    || '',
     cloudinaryUploadPreset: row?.cloudinary_upload_preset || '',
+    cloudinaryBooksPreset:  row?.cloudinary_books_preset  || '',
     groqApiKey1: row?.groq_api_key_1 || '',
     groqApiKey2: row?.groq_api_key_2 || '',
     groqApiKey3: row?.groq_api_key_3 || '',
@@ -512,6 +513,7 @@ export const store = {
     const strField = (src, dst) => { if (src in patch) record[dst] = (patch[src] || '').trim(); };
     strField('cloudinaryCloudName',   'cloudinary_cloud_name');
     strField('cloudinaryUploadPreset','cloudinary_upload_preset');
+    strField('cloudinaryBooksPreset', 'cloudinary_books_preset');
     for (let i = 1; i <= 5; i++) strField(`groqApiKey${i}`, `groq_api_key_${i}`);
     strField('siteName',           'site_name');
     strField('footerCredit',       'footer_credit');

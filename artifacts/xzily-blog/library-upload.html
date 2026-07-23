@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload a Book — Xzily Library</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/library.css" />
+</head>
+<body>
+<div id="site-navbar"></div>
+
+<!-- AUTH GATE -->
+<div class="lib-wrap" id="authGate" style="display:none">
+  <div class="lib-auth-gate">
+    <div class="lib-auth-gate-icon">🔒</div>
+    <div class="lib-auth-gate-title">Sign In Required</div>
+    <p class="lib-auth-gate-sub">You need to be logged in to upload books to the library.</p>
+    <a href="login.html" class="btn btn-primary">Sign In</a>
+    &nbsp;
+    <a href="library.html" class="btn btn-outline">Browse Library</a>
+  </div>
+</div>
+
+<!-- PROFILE SETUP OVERLAY -->
+<div id="profileOverlay" class="lib-profile-overlay" style="display:none">
+  <div class="lib-profile-box">
+    <h3>📋 Set Up Your Uploader Profile</h3>
+    <p>Set up your profile once — it appears next to every book you upload so readers can follow you.</p>
+    <div class="lib-form-row">
+      <div class="lib-form-group">
+        <label class="lib-label">First Name *</label>
+        <input class="lib-input" id="p-fname" placeholder="Your first name" />
+      </div>
+      <div class="lib-form-group">
+        <label class="lib-label">Last Name</label>
+        <input class="lib-input" id="p-lname" placeholder="Your last name" />
+      </div>
+    </div>
+    <div class="lib-form-group">
+      <label class="lib-label">Short Bio</label>
+      <textarea class="lib-textarea" id="p-bio" placeholder="Tell readers a little about yourself…"></textarea>
+    </div>
+    <div class="lib-form-group">
+      <label class="lib-label">Location</label>
+      <input class="lib-input" id="p-location" placeholder="e.g. Lagos, Nigeria" />
+    </div>
+    <button class="btn btn-primary" style="width:100%" id="saveProfileBtn">Save Profile &amp; Continue →</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="lib-wrap" id="mainContent" style="display:none">
+  <div class="lib-upload-wrap">
+
+    <!-- Page header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-family:var(--font-condensed);font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--primary);margin-bottom:6px">Upload Hub</div>
+        <h1 style="font-family:var(--font-condensed);font-size:2rem;margin:0">My Library</h1>
+      </div>
+      <div style="display:flex;gap:10px">
+        <a href="library.html" class="btn btn-outline">Browse Library</a>
+        <button class="btn btn-primary" id="openUploadFormBtn">+ Upload Book</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="lib-stats-row">
+      <div class="lib-stat-card"><div class="lib-stat-num" id="s-books">0</div><div class="lib-stat-lbl">Books</div></div>
+      <div class="lib-stat-card"><div class="lib-stat-num" id="s-views">0</div><div class="lib-stat-lbl">Total Views</div></div>
+      <div class="lib-stat-card"><div class="lib-stat-num" id="s-likes">0</div><div class="lib-stat-lbl">Total Likes</div></div>
+      <div class="lib-stat-card"><div class="lib-stat-num" id="s-followers">0</div><div class="lib-stat-lbl">Followers</div></div>
+    </div>
+
+    <!-- Profile card -->
+    <div class="lib-panel">
+      <div class="lib-panel-title">My Profile</div>
+      <div id="profileCardBody"></div>
+    </div>
+
+    <!-- Upload form (hidden initially) -->
+    <div class="lib-panel" id="uploadFormPanel" style="display:none">
+      <div class="lib-panel-title" id="uploadFormTitle">Upload a New Book</div>
+      <input type="hidden" id="editBookId" />
+
+      <div class="lib-form-row">
+        <div class="lib-form-group">
+          <label class="lib-label">Book Title *</label>
+          <input class="lib-input" id="f-title" placeholder="e.g. The Way of Peace" />
+        </div>
+        <div class="lib-form-group">
+          <label class="lib-label">Author Name *</label>
+          <input class="lib-input" id="f-author" placeholder="e.g. John Doe" />
+        </div>
+      </div>
+
+      <div class="lib-form-group">
+        <label class="lib-label">Description</label>
+        <textarea class="lib-textarea" id="f-desc" placeholder="Briefly describe what this book is about…"></textarea>
+      </div>
+
+      <div class="lib-form-row">
+        <div class="lib-form-group">
+          <label class="lib-label">Category *</label>
+          <select class="lib-select" id="f-cat">
+            <option value="fiction">📖 Fiction &amp; Literature</option>
+            <option value="religion">🕊️ Religion &amp; Spirituality</option>
+            <option value="science">🔬 Science &amp; Technology</option>
+            <option value="history">🏛️ History &amp; Biography</option>
+            <option value="business">💼 Business &amp; Finance</option>
+            <option value="self-help">🌱 Self-Help &amp; Motivation</option>
+            <option value="health">❤️ Health &amp; Wellness</option>
+            <option value="education">🎓 Education &amp; Academic</option>
+            <option value="travel">🌍 Travel &amp; Culture</option>
+            <option value="arts">🎨 Arts &amp; Entertainment</option>
+            <option value="children">🌟 Children &amp; Young Adult</option>
+            <option value="law">⚖️ Law &amp; Politics</option>
+            <option value="philosophy">🤔 Philosophy</option>
+            <option value="comics">🎭 Comics &amp; Manga</option>
+          </select>
+        </div>
+        <div class="lib-form-group">
+          <label class="lib-label">Language</label>
+          <input class="lib-input" id="f-lang" value="English" placeholder="English" />
+        </div>
+      </div>
+
+      <div class="lib-form-group">
+        <label class="lib-label">Published Year (optional)</label>
+        <input class="lib-input" id="f-year" type="number" min="1000" max="2099" placeholder="e.g. 2020" style="max-width:160px" />
+      </div>
+
+      <!-- Cover image -->
+      <div class="lib-form-group">
+        <label class="lib-label">Book Cover Image (optional)</label>
+        <div class="lib-file-drop" id="coverDrop">
+          <input type="file" id="coverFile" accept="image/*" />
+          <div class="lib-file-drop-icon">🖼️</div>
+          <div class="lib-file-drop-text" id="coverDropText">Click or drag an image here</div>
+          <div class="lib-file-drop-sub">PNG, JPG or WebP · max 5 MB</div>
+        </div>
+        <img id="coverPreview" style="display:none;margin-top:10px;max-width:120px;border-radius:8px;border:1px solid var(--border)" alt="Cover preview" />
+      </div>
+
+      <!-- External toggle -->
+      <div class="lib-toggle-row">
+        <label class="lib-toggle">
+          <input type="checkbox" id="f-external" />
+          <span class="lib-toggle-slider"></span>
+        </label>
+        <span class="lib-toggle-label">This is an external book (links to another website)</span>
+      </div>
+
+      <!-- PDF upload (default) -->
+      <div id="pdfSection">
+        <div class="lib-form-group">
+          <label class="lib-label">PDF File *</label>
+          <div class="lib-file-drop" id="pdfDrop">
+            <input type="file" id="pdfFile" accept=".pdf,application/pdf" />
+            <div class="lib-file-drop-icon">📄</div>
+            <div class="lib-file-drop-text" id="pdfDropText">Click or drag your PDF here</div>
+            <div class="lib-file-drop-sub">PDF only · max 50 MB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- External URL (shown when toggled) -->
+      <div id="externalSection" style="display:none">
+        <div class="lib-form-group">
+          <label class="lib-label">Book URL *</label>
+          <input class="lib-input" id="f-ext-url" placeholder="https://example.com/book.pdf or full website URL" />
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Readers will be directed to this URL to read the book.</div>
+        </div>
+      </div>
+
+      <!-- Upload progress -->
+      <div class="lib-progress" id="uploadProgress">
+        <div class="lib-progress-bar-wrap"><div class="lib-progress-bar" id="progressBar" style="width:0%"></div></div>
+        <div class="lib-progress-text" id="progressText">Uploading…</div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-outline" id="cancelUploadBtn">Cancel</button>
+        <button class="btn btn-primary" id="submitBookBtn">Submit for Review</button>
+      </div>
+    </div>
+
+    <!-- My Books -->
+    <div class="lib-panel">
+      <div class="lib-panel-title">My Books</div>
+      <div id="myBooksList"><div style="color:var(--text-muted);text-align:center;padding:24px 0;font-size:13px">Loading your books…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script type="module">
+import { mountLayout, toast } from './js/common.js';
+import { libStore, getCategoryBySlug } from './js/library-store.js';
+import { store } from './js/store.js';
+
+let _user     = null;
+let _profile  = null;
+let _settings = null;
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(n=''){return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';}
+
+await mountLayout('library.html');
+[_settings] = await Promise.all([store.getSettings().catch(()=>({}))]);
+const session = await store.getSession();
+
+if (!session) {
+  document.getElementById('authGate').style.display = '';
+} else {
+  _user    = session;
+  _profile = await libStore.getProfile(session.id).catch(()=>null);
+  if (!_profile || !_profile.displayName) {
+    document.getElementById('profileOverlay').style.display = 'flex';
+  } else {
+    showMain();
+  }
+}
+
+// ── Profile setup ──────────────────────────────────────────
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+  const fname = document.getElementById('p-fname').value.trim();
+  if (!fname) { toast('First name is required'); return; }
+  const btn = document.getElementById('saveProfileBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    _profile = await libStore.saveProfile(_user.id, {
+      displayName: (fname + ' ' + document.getElementById('p-lname').value.trim()).trim(),
+      bio:         document.getElementById('p-bio').value.trim(),
+      location:    document.getElementById('p-location').value.trim(),
+    });
+    document.getElementById('profileOverlay').style.display = 'none';
+    showMain();
+  } catch(e) { toast('Save failed: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Save Profile & Continue →';
+});
+
+// ── Main ───────────────────────────────────────────────────
+function showMain() {
+  document.getElementById('mainContent').style.display = '';
+  renderProfileCard();
+  loadStats();
+  loadMyBooks();
+}
+
+function renderProfileCard() {
+  const av = _profile.avatarUrl
+    ? `<img src="${esc(_profile.avatarUrl)}" style="width:52px;height:52px;border-radius:50%;object-fit:cover" alt="" />`
+    : `<div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#e05050);display:flex;align-items:center;justify-content:center;font-family:var(--font-condensed);font-size:1.2rem;font-weight:700;color:#fff">${initials(_profile.displayName)}</div>`;
+  document.getElementById('profileCardBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      ${av}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:18px;font-weight:700;font-family:var(--font-condensed)">${esc(_profile.displayName)}</div>
+        ${_profile.bio      ? `<div style="font-size:13px;color:var(--text-muted);margin-top:3px">${esc(_profile.bio)}</div>` : ''}
+        ${_profile.location ? `<div style="font-size:12px;color:var(--text-muted);margin-top:2px">📍 ${esc(_profile.location)}</div>` : ''}
+      </div>
+      <a href="library-host-profile.html?uid=${_user.id}" class="btn btn-outline" style="font-size:12px">View Public Profile</a>
+    </div>`;
+}
+
+async function loadStats() {
+  const books = await libStore.getBooks({ uploaderId: _user.id, status: 'all' }).catch(()=>[]);
+  document.getElementById('s-books').textContent  = books.length;
+  document.getElementById('s-views').textContent  = books.reduce((s,b)=>s+b.views, 0);
+  document.getElementById('s-likes').textContent  = books.reduce((s,b)=>s+b.likesCount, 0);
+  const p = await libStore.getProfile(_user.id).catch(()=>null);
+  document.getElementById('s-followers').textContent = p?.followersCount || 0;
+}
+
+async function loadMyBooks() {
+  const wrap  = document.getElementById('myBooksList');
+  const books = await libStore.getBooks({ uploaderId: _user.id, status: 'all' }).catch(()=>[]);
+  if (!books.length) {
+    wrap.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--text-muted)">
+      <div style="font-size:2rem;margin-bottom:10px">📚</div>
+      <div style="font-weight:600">You haven't uploaded any books yet.</div>
+      <div style="font-size:13px;margin-top:6px">Click <strong>Upload Book</strong> above to add your first one.</div>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = books.map(b => {
+    const cat   = getCategoryBySlug(b.category);
+    const sCol  = b.status==='published'?'#2e7d32':b.status==='rejected'?'#c62828':'#e65100';
+    const cover = b.coverUrl
+      ? `<img src="${esc(b.coverUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:linear-gradient(135deg,var(--dark-bg),#3a0a0a)">${cat.icon}</div>`;
+    return `<div class="lib-my-book-row">
+      <div class="lib-my-book-cover">${cover}</div>
+      <div class="lib-my-book-info">
+        <div class="lib-my-book-title">${esc(b.title)}</div>
+        <div class="lib-my-book-meta">${cat.icon} ${cat.name} · ${esc(b.authorName||'Unknown')}</div>
+        <div style="margin-top:4px">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:${sCol}20;color:${sCol}">${b.status}</span>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:8px">👁 ${b.views} · ❤️ ${b.likesCount} · 💬 ${b.commentsCount}</span>
+        </div>
+      </div>
+      <div class="lib-my-book-actions">
+        ${b.status==='published'?`<a href="library-read.html?id=${b.id}" class="btn btn-outline" style="font-size:12px">Read</a>`:''}
+        <button class="btn btn-outline" style="font-size:12px" onclick="editBook('${b.id}')">Edit</button>
+        <button class="btn btn-outline" style="font-size:12px;color:#c62828;border-color:#c62828" onclick="deleteBook('${b.id}','${esc(b.title).replace(/'/g,"\\'")}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Upload form wiring ─────────────────────────────────────
+document.getElementById('openUploadFormBtn').addEventListener('click', () => {
+  document.getElementById('editBookId').value = '';
+  document.getElementById('uploadFormTitle').textContent = 'Upload a New Book';
+  document.getElementById('submitBookBtn').textContent = 'Submit for Review';
+  resetForm();
+  document.getElementById('uploadFormPanel').style.display = '';
+  document.getElementById('uploadFormPanel').scrollIntoView({ behavior:'smooth' });
+});
+
+document.getElementById('cancelUploadBtn').addEventListener('click', () => {
+  document.getElementById('uploadFormPanel').style.display = 'none';
+  resetForm();
+});
+
+document.getElementById('f-external').addEventListener('change', e => {
+  document.getElementById('pdfSection').style.display      = e.target.checked ? 'none' : '';
+  document.getElementById('externalSection').style.display = e.target.checked ? '' : 'none';
+});
+
+document.getElementById('coverFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  document.getElementById('coverDrop').classList.add('has-file');
+  document.getElementById('coverDropText').textContent = '✓ ' + file.name;
+  const prev = document.getElementById('coverPreview');
+  prev.src = URL.createObjectURL(file); prev.style.display = 'block';
+});
+
+document.getElementById('pdfFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  document.getElementById('pdfDrop').classList.add('has-file');
+  document.getElementById('pdfDropText').textContent = '✓ ' + file.name;
+});
+
+document.getElementById('submitBookBtn').addEventListener('click', async () => {
+  const title  = document.getElementById('f-title').value.trim();
+  const author = document.getElementById('f-author').value.trim();
+  if (!title)  { toast('Book title is required');  return; }
+  if (!author) { toast('Author name is required'); return; }
+
+  const isExt    = document.getElementById('f-external').checked;
+  const extUrl   = document.getElementById('f-ext-url').value.trim();
+  const pdfFile  = document.getElementById('pdfFile').files[0];
+  const coverFile= document.getElementById('coverFile').files[0];
+  const editId   = document.getElementById('editBookId').value;
+
+  if (isExt && !extUrl)              { toast('Please enter the external book URL'); return; }
+  if (!isExt && !pdfFile && !editId) { toast('Please upload a PDF file');           return; }
+
+  const btn = document.getElementById('submitBookBtn');
+  btn.disabled = true; btn.textContent = 'Uploading…';
+  document.getElementById('uploadProgress').classList.add('show');
+
+  try {
+    let coverUrl = '';
+    let fileUrl  = '';
+
+    if (coverFile) {
+      setProgress(20, 'Uploading cover image…');
+      coverUrl = await libStore.uploadCover(coverFile, _settings);
+    }
+    if (!isExt && pdfFile) {
+      setProgress(50, 'Uploading PDF…');
+      fileUrl = await libStore.uploadPdf(pdfFile, _settings);
+    }
+
+    setProgress(80, 'Saving book details…');
+
+    const bookData = {
+      title,
+      authorName:   author,
+      description:  document.getElementById('f-desc').value.trim(),
+      category:     document.getElementById('f-cat').value,
+      language:     document.getElementById('f-lang').value.trim() || 'English',
+      publishedYear:parseInt(document.getElementById('f-year').value) || null,
+      isExternal:   isExt,
+      externalUrl:  isExt ? extUrl : '',
+    };
+    if (coverUrl) bookData.coverUrl = coverUrl;
+    if (fileUrl)  bookData.fileUrl  = fileUrl;
+
+    if (editId) {
+      await libStore.updateBook(editId, bookData);
+      toast('Book updated! Admin will review changes.');
+    } else {
+      bookData.uploaderId = _user.id;
+      await libStore.createBook(bookData);
+      toast('Book submitted for review! Admin will publish it shortly.');
+    }
+
+    setProgress(100, 'Done!');
+    setTimeout(() => document.getElementById('uploadProgress').classList.remove('show'), 1000);
+    document.getElementById('uploadFormPanel').style.display = 'none';
+    resetForm();
+    loadMyBooks();
+    loadStats();
+  } catch(e) {
+    toast('Error: ' + e.message);
+    document.getElementById('uploadProgress').classList.remove('show');
+  }
+
+  btn.disabled = false;
+  btn.textContent = editId ? 'Save Changes' : 'Submit for Review';
+});
+
+function setProgress(pct, text) {
+  document.getElementById('progressBar').style.width  = pct + '%';
+  document.getElementById('progressText').textContent = text;
+}
+
+function resetForm() {
+  ['f-title','f-author','f-desc','f-year','f-ext-url'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-lang').value = 'English';
+  document.getElementById('f-cat').value  = 'fiction';
+  document.getElementById('f-external').checked = false;
+  document.getElementById('pdfSection').style.display      = '';
+  document.getElementById('externalSection').style.display = 'none';
+  document.getElementById('pdfDropText').textContent   = 'Click or drag your PDF here';
+  document.getElementById('coverDropText').textContent = 'Click or drag an image here';
+  document.getElementById('coverPreview').style.display = 'none';
+  document.getElementById('pdfDrop').classList.remove('has-file');
+  document.getElementById('coverDrop').classList.remove('has-file');
+  document.getElementById('pdfFile').value   = '';
+  document.getElementById('coverFile').value = '';
+  document.getElementById('uploadProgress').classList.remove('show');
+}
+
+window.editBook = async function(id) {
+  const book = await libStore.getBookById(id).catch(()=>null);
+  if (!book) { toast('Could not load book'); return; }
+  document.getElementById('editBookId').value = id;
+  document.getElementById('uploadFormTitle').textContent = 'Edit Book';
+  document.getElementById('submitBookBtn').textContent   = 'Save Changes';
+  document.getElementById('f-title').value  = book.title;
+  document.getElementById('f-author').value = book.authorName;
+  document.getElementById('f-desc').value   = book.description;
+  document.getElementById('f-cat').value    = book.category;
+  document.getElementById('f-lang').value   = book.language;
+  document.getElementById('f-year').value   = book.publishedYear || '';
+  document.getElementById('f-external').checked = book.isExternal;
+  document.getElementById('pdfSection').style.display      = book.isExternal ? 'none' : '';
+  document.getElementById('externalSection').style.display = book.isExternal ? '' : 'none';
+  if (book.isExternal) document.getElementById('f-ext-url').value = book.externalUrl;
+  if (book.coverUrl) {
+    const prev = document.getElementById('coverPreview');
+    prev.src = book.coverUrl; prev.style.display = 'block';
+  }
+  document.getElementById('uploadFormPanel').style.display = '';
+  document.getElementById('uploadFormPanel').scrollIntoView({ behavior:'smooth' });
+};
+
+window.deleteBook = async function(id, title) {
+  if (!confirm('Delete "' + title + '"? This cannot be undone.')) return;
+  try {
+    await libStore.deleteBook(id);
+    toast('Book deleted.');
+    loadMyBooks(); loadStats();
+  } catch(e) { toast('Error: ' + e.message); }
+};
+</script>
+</body>
+</html>

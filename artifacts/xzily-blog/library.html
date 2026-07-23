@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library — The Educative Blog</title>
+  <meta name="description" content="Browse thousands of books across Fiction, Religion, Science, History and more." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/library.css" />
+</head>
+<body>
+<div id="site-navbar"></div>
+
+<div class="lib-wrap">
+  <!-- HERO -->
+  <section class="lib-hero">
+    <div class="container">
+      <div class="lib-hero-eyebrow">Free Online Library</div>
+      <h1>📚 Xzily Library</h1>
+      <p class="lib-hero-sub">Browse, read and share books across every category — Fiction, Religion, Science, History and more. Upload your own books for the world to read.</p>
+      <div class="lib-search-row">
+        <input class="lib-search-box" id="searchInput" type="search" placeholder="Search by title, author or description…" />
+        <button class="lib-search-btn" id="searchBtn">Search</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORY PILLS -->
+  <div class="lib-cats">
+    <div class="lib-cats-inner" id="catPills">
+      <a class="lib-cat-pill active" data-cat="">All Books</a>
+    </div>
+  </div>
+
+  <!-- BOOKS GRID -->
+  <div class="lib-main">
+    <div class="container">
+      <div class="lib-section-hdr">
+        <span class="lib-section-title" id="gridTitle">All Books</span>
+        <span class="lib-count" id="gridCount"></span>
+      </div>
+      <div id="libGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script type="module">
+import { mountLayout, formatCount } from './js/common.js';
+import { libStore, BOOK_CATEGORIES, getCategoryBySlug } from './js/library-store.js';
+
+let activeCat = '';
+let searchVal  = '';
+
+function esc(s = '') {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function initials(name = '') {
+  return name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+}
+function skeletonGrid() {
+  return `<div class="lib-skeleton-grid">${Array(8).fill(`
+    <div class="lib-skeleton-card">
+      <div class="lib-skeleton-cover"></div>
+      <div class="lib-skeleton-body">
+        <div class="lib-skeleton-line"></div>
+        <div class="lib-skeleton-line short"></div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// Build category pills
+const pillWrap = document.getElementById('catPills');
+BOOK_CATEGORIES.forEach(c => {
+  const a = document.createElement('a');
+  a.className    = 'lib-cat-pill';
+  a.dataset.cat  = c.slug;
+  a.textContent  = c.icon + ' ' + c.name;
+  pillWrap.appendChild(a);
+});
+
+pillWrap.addEventListener('click', e => {
+  const pill = e.target.closest('.lib-cat-pill');
+  if (!pill) return;
+  pillWrap.querySelectorAll('.lib-cat-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  activeCat = pill.dataset.cat || '';
+  searchVal = '';
+  document.getElementById('searchInput').value = '';
+  loadBooks();
+});
+
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+function doSearch() {
+  searchVal = document.getElementById('searchInput').value.trim();
+  activeCat = '';
+  pillWrap.querySelectorAll('.lib-cat-pill').forEach(p => p.classList.remove('active'));
+  pillWrap.querySelector('[data-cat=""]').classList.add('active');
+  loadBooks();
+}
+
+function bookCard(b, profile) {
+  const cat    = getCategoryBySlug(b.category);
+  const upName = profile?.displayName || 'Anonymous';
+  const avHtml = profile?.avatarUrl
+    ? `<img src="${profile.avatarUrl}" alt="${esc(upName)}" />`
+    : `<span style="font-size:10px;font-weight:800">${initials(upName)}</span>`;
+  const coverHtml = b.coverUrl
+    ? `<img src="${esc(b.coverUrl)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'" />`
+    : `<div class="lib-cover-placeholder">${cat.icon}</div>`;
+  return `
+  <div class="lib-card" onclick="location.href='library-host-profile.html?uid=${b.uploaderId}&book=${b.id}'">
+    <div class="lib-card-cover">
+      ${coverHtml}
+      <span class="lib-card-cat">${esc(cat.name)}</span>
+      ${b.isExternal ? '<span class="lib-card-ext-badge">External</span>' : ''}
+    </div>
+    <div class="lib-card-body">
+      <div class="lib-card-title">${esc(b.title)}</div>
+      <div class="lib-card-author">by ${esc(b.authorName || 'Unknown')}</div>
+      <div class="lib-card-uploader">
+        <div class="lib-card-av">${avHtml}</div>
+        <span class="lib-card-uploader-name">${esc(upName)}</span>
+      </div>
+      <div class="lib-card-stats">
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          ${formatCount(b.views)}
+        </span>
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+          ${formatCount(b.likesCount)}
+        </span>
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ${formatCount(b.commentsCount)}
+        </span>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function loadBooks() {
+  const grid = document.getElementById('libGrid');
+  grid.innerHTML = skeletonGrid();
+
+  const cat = getCategoryBySlug(activeCat);
+  document.getElementById('gridTitle').textContent = searchVal
+    ? `Results for "${searchVal}"`
+    : activeCat ? cat.icon + ' ' + cat.name : 'All Books';
+
+  try {
+    const books = await libStore.getBooks({
+      category: activeCat || null,
+      search:   searchVal || null,
+      limit: 60,
+    });
+    document.getElementById('gridCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
+
+    if (!books.length) {
+      grid.innerHTML = `<div class="lib-empty">
+        <div class="lib-empty-icon">📭</div>
+        <div class="lib-empty-title">No books found</div>
+        <div class="lib-empty-sub">Be the first to <a href="library-upload.html">upload one!</a></div>
+      </div>`;
+      return;
+    }
+
+    // Fetch uploader profiles in batch
+    const uids = [...new Set(books.map(b => b.uploaderId).filter(Boolean))];
+    const profiles = {};
+    await Promise.all(uids.map(async uid => {
+      profiles[uid] = await libStore.getProfile(uid).catch(() => null);
+    }));
+
+    grid.innerHTML = `<div class="lib-grid">${books.map(b => bookCard(b, profiles[b.uploaderId])).join('')}</div>`;
+  } catch (e) {
+    grid.innerHTML = `<div class="lib-empty">
+      <div class="lib-empty-icon">⚠️</div>
+      <div class="lib-empty-title">Could not load books</div>
+      <div class="lib-empty-sub">${esc(e.message)}</div>
+    </div>`;
+  }
+}
+
+// Boot
+document.getElementById('libGrid').innerHTML = skeletonGrid();
+await mountLayout('library.html');
+loadBooks();
+</script>
+</body>
+</html>

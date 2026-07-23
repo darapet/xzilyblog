@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uploader Profile — Xzily Library</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/library.css" />
+</head>
+<body>
+<div id="site-navbar"></div>
+
+<div class="lib-wrap">
+
+  <!-- Cover photo -->
+  <div class="lib-host-cover" id="hostCover">
+    <div style="width:100%;height:100%;background:linear-gradient(135deg,var(--dark-bg) 0%,#2a0a0a 100%)"></div>
+  </div>
+
+  <div class="lib-host-profile-wrap">
+
+    <!-- Identity row -->
+    <div class="lib-host-identity">
+      <div class="lib-host-avatar" id="hostAvatar">?</div>
+      <div class="lib-host-info">
+        <div class="lib-host-name" id="hostName">Loading…</div>
+        <div class="lib-host-bio"  id="hostBio"></div>
+        <div class="lib-host-meta" id="hostMeta"></div>
+      </div>
+      <div class="lib-host-actions" id="hostActions"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="lib-host-stats">
+      <div class="lib-host-stat"><div class="lib-host-stat-num" id="statBooks">0</div><div class="lib-host-stat-lbl">Books</div></div>
+      <div class="lib-host-stat"><div class="lib-host-stat-num" id="statFollowers">0</div><div class="lib-host-stat-lbl">Followers</div></div>
+      <div class="lib-host-stat"><div class="lib-host-stat-num" id="statViews">0</div><div class="lib-host-stat-lbl">Total Views</div></div>
+      <div class="lib-host-stat"><div class="lib-host-stat-num" id="statLikes">0</div><div class="lib-host-stat-lbl">Total Likes</div></div>
+    </div>
+
+    <!-- Pending book banner (if user was redirected here from library browse) -->
+    <div id="pendingBookBanner" style="display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px 20px;margin-bottom:24px;align-items:center;gap:14px">
+      <div style="font-size:1.5rem">📖</div>
+      <div>
+        <div style="font-weight:700">You're viewing the uploader's profile</div>
+        <div style="font-size:13px;color:var(--text-muted)">Click Read Now to open the book directly.</div>
+      </div>
+      <a id="readBookBtn" href="#" class="btn btn-primary" style="margin-left:auto;white-space:nowrap">Read Now →</a>
+    </div>
+
+    <!-- Books grid -->
+    <div class="lib-section-hdr">
+      <span class="lib-section-title">Books</span>
+      <span class="lib-count" id="booksCount"></span>
+    </div>
+    <div id="hostGrid">
+      <div class="lib-skeleton-grid">${Array(4).fill(`
+        <div class="lib-skeleton-card">
+          <div class="lib-skeleton-cover"></div>
+          <div class="lib-skeleton-body">
+            <div class="lib-skeleton-line"></div>
+            <div class="lib-skeleton-line short"></div>
+          </div>
+        </div>`).join('')}</div>
+    </div>
+
+  </div>
+</div>
+
+<div id="site-footer"></div>
+
+<script type="module">
+import { mountLayout, formatCount, toast } from './js/common.js';
+import { libStore, getCategoryBySlug } from './js/library-store.js';
+import { store } from './js/store.js';
+
+const params      = new URLSearchParams(location.search);
+const hostUid     = params.get('uid');
+const pendingBook = params.get('book');
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initials(n=''){return n.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';}
+
+await mountLayout('library.html');
+if (!hostUid) { location.href = 'library.html'; }
+
+const [profile, session] = await Promise.all([
+  libStore.getProfile(hostUid).catch(()=>null),
+  store.getSession(),
+]);
+
+if (!profile) {
+  document.getElementById('hostName').textContent = 'Unknown Uploader';
+} else {
+  document.title = profile.displayName + ' — Xzily Library';
+
+  // Cover
+  if (profile.coverUrl) {
+    document.getElementById('hostCover').innerHTML = `<img src="${esc(profile.coverUrl)}" style="width:100%;height:100%;object-fit:cover;display:block" alt="" />`;
+  }
+
+  // Avatar
+  const avEl = document.getElementById('hostAvatar');
+  if (profile.avatarUrl) {
+    avEl.innerHTML = `<img src="${esc(profile.avatarUrl)}" alt="${esc(profile.displayName)}" />`;
+  } else {
+    avEl.textContent = initials(profile.displayName);
+  }
+
+  document.getElementById('hostName').textContent = profile.displayName;
+  if (profile.bio) document.getElementById('hostBio').textContent = profile.bio;
+
+  // Meta tags
+  const metaItems = [];
+  if (profile.location) metaItems.push(`<span class="lib-host-meta-tag">📍 ${esc(profile.location)}</span>`);
+  if (profile.website)  metaItems.push(`<a class="lib-host-meta-tag" href="${esc(profile.website)}" target="_blank" rel="noopener">🔗 Website</a>`);
+  document.getElementById('hostMeta').innerHTML = metaItems.join('');
+
+  // Followers count
+  document.getElementById('statFollowers').textContent = formatCount(profile.followersCount);
+
+  // Actions
+  const actionsEl = document.getElementById('hostActions');
+  const isOwn = session && session.id === hostUid;
+
+  if (isOwn) {
+    const manageBtn = document.createElement('a');
+    manageBtn.className   = 'btn btn-outline';
+    manageBtn.href        = 'library-upload.html';
+    manageBtn.textContent = 'Manage Books';
+    actionsEl.appendChild(manageBtn);
+  } else if (session) {
+    let isFollowing = await libStore.getFollowStatus(session.id, hostUid).catch(()=>false);
+    const followBtn = document.createElement('button');
+    function updateFollowBtn() {
+      followBtn.className   = `lib-follow-btn ${isFollowing ? 'following' : 'not-following'}`;
+      followBtn.textContent = isFollowing ? 'Following' : '+ Follow';
+    }
+    updateFollowBtn();
+    followBtn.addEventListener('click', async () => {
+      try {
+        isFollowing = await libStore.toggleFollow(session.id, hostUid);
+        updateFollowBtn();
+        const cur = parseInt(document.getElementById('statFollowers').textContent.replace(/,/g,'')) || 0;
+        document.getElementById('statFollowers').textContent = formatCount(Math.max(0, cur + (isFollowing ? 1 : -1)));
+        toast(isFollowing ? 'Now following ' + profile.displayName : 'Unfollowed');
+      } catch(e) { toast('Error: ' + e.message); }
+    });
+    actionsEl.appendChild(followBtn);
+  } else {
+    // Not logged in — show follow button that goes to login
+    const loginBtn = document.createElement('a');
+    loginBtn.className   = 'lib-follow-btn not-following';
+    loginBtn.href        = 'login.html';
+    loginBtn.textContent = '+ Follow';
+    actionsEl.appendChild(loginBtn);
+  }
+}
+
+// Pending book banner
+if (pendingBook) {
+  const banner = document.getElementById('pendingBookBanner');
+  banner.style.display = 'flex';
+  document.getElementById('readBookBtn').href = `library-read.html?id=${pendingBook}`;
+}
+
+// Load books
+async function loadBooks() {
+  const grid = document.getElementById('hostGrid');
+  try {
+    const books = await libStore.getBooks({ uploaderId: hostUid, limit: 60 });
+    document.getElementById('booksCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
+    document.getElementById('statBooks').textContent  = formatCount(books.length);
+    document.getElementById('statViews').textContent  = formatCount(books.reduce((s,b)=>s+b.views,0));
+    document.getElementById('statLikes').textContent  = formatCount(books.reduce((s,b)=>s+b.likesCount,0));
+
+    if (!books.length) {
+      grid.innerHTML = `<div class="lib-empty">
+        <div class="lib-empty-icon">📭</div>
+        <div class="lib-empty-title">No books yet</div>
+        <div class="lib-empty-sub">This uploader hasn't published any books.</div>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = `<div class="lib-grid">${books.map(bookCard).join('')}</div>`;
+  } catch(e) {
+    grid.innerHTML = `<div class="lib-empty"><div class="lib-empty-icon">⚠️</div><div class="lib-empty-title">Could not load books</div></div>`;
+  }
+}
+
+function bookCard(b) {
+  const cat = getCategoryBySlug(b.category);
+  const cover = b.coverUrl
+    ? `<img src="${esc(b.coverUrl)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'" />`
+    : `<div class="lib-cover-placeholder">${cat.icon}</div>`;
+  return `
+  <a class="lib-card" href="library-read.html?id=${b.id}">
+    <div class="lib-card-cover">
+      ${cover}
+      <span class="lib-card-cat">${esc(cat.name)}</span>
+      ${b.isExternal ? '<span class="lib-card-ext-badge">External</span>' : ''}
+    </div>
+    <div class="lib-card-body">
+      <div class="lib-card-title">${esc(b.title)}</div>
+      <div class="lib-card-author">by ${esc(b.authorName||'Unknown')}</div>
+      <div class="lib-card-stats" style="margin-top:auto;padding-top:8px">
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          ${formatCount(b.views)}
+        </span>
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+          ${formatCount(b.likesCount)}
+        </span>
+        <span class="lib-card-stat">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ${formatCount(b.commentsCount)}
+        </span>
+      </div>
+    </div>
+  </a>`;
+}
+
+loadBooks();
+</script>
+</body>
+</html>

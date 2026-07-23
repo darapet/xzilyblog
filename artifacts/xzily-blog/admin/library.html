@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Library — Admin</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body class="admin-body">
+
+<div id="admin-sidebar-slot"></div>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <div>
+      <h1 class="admin-title" id="adminTitle">Library</h1>
+      <p class="admin-sub"   id="adminSub">Review and manage all submitted books</p>
+    </div>
+    <a href="../library-upload.html" class="btn btn-primary" style="font-size:13px">+ Upload Book</a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="tab-strip" id="filterTabs" style="margin-bottom:20px">
+    <button class="tab active" data-status="pending">⏳ Pending Review</button>
+    <button class="tab" data-status="published">✓ Published</button>
+    <button class="tab" data-status="rejected">✗ Rejected</button>
+    <button class="tab" data-status="all">All Books</button>
+  </div>
+
+  <div style="margin-bottom:14px;font-size:13px;color:var(--text-muted)" id="countLabel"></div>
+
+  <div class="admin-panel" style="padding:0;overflow:hidden">
+    <div id="booksTableWrap">
+      <div style="padding:60px 20px;text-align:center;color:var(--text-muted)">Loading…</div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { mountAdmin } from '../js/admin-common.js';
+import { libStore, getCategoryBySlug } from '../js/library-store.js';
+import { toast } from '../js/common.js';
+
+const session = await mountAdmin('library.html', 'Library', 'Review and manage all submitted books');
+if (!session) throw new Error('Not authenticated');
+
+let currentStatus = 'pending';
+
+document.getElementById('filterTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  document.querySelectorAll('#filterTabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentStatus = btn.dataset.status;
+  loadBooks();
+});
+
+async function loadBooks() {
+  const wrap = document.getElementById('booksTableWrap');
+  wrap.innerHTML = '<div style="padding:60px 20px;text-align:center;color:var(--text-muted)">Loading…</div>';
+  try {
+    const books = await libStore.getBooks({ status: currentStatus, limit: 200 });
+    document.getElementById('countLabel').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
+
+    if (!books.length) {
+      wrap.innerHTML = `<div style="padding:60px 20px;text-align:center;color:var(--text-muted)">
+        <div style="font-size:2.5rem;margin-bottom:12px">📭</div>
+        <div style="font-weight:600">No ${currentStatus === 'all' ? '' : currentStatus} books</div>
+      </div>`;
+      return;
+    }
+
+    // Batch fetch uploader profiles
+    const uids = [...new Set(books.map(b => b.uploaderId).filter(Boolean))];
+    const profiles = {};
+    await Promise.all(uids.map(async uid => {
+      profiles[uid] = await libStore.getProfile(uid).catch(()=>null);
+    }));
+
+    wrap.innerHTML = `
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:760px">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border)">
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);white-space:nowrap">Book</th>
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Category</th>
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Uploader</th>
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Stats</th>
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Status</th>
+              <th style="padding:12px 16px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${books.map(b => bookRow(b, profiles[b.uploaderId])).join('')}</tbody>
+        </table>
+      </div>`;
+
+    wrap.querySelectorAll('[data-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const { action, id, title } = btn.dataset;
+        if (action === 'publish') changeStatus(id, 'published', title, btn);
+        if (action === 'reject')  changeStatus(id, 'rejected',  title, btn);
+        if (action === 'pending') changeStatus(id, 'pending',   title, btn);
+        if (action === 'delete')  deleteBook(id, title, btn);
+      });
+    });
+  } catch(e) {
+    wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#c62828">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+function bookRow(b, profile) {
+  const cat  = getCategoryBySlug(b.category);
+  const date = b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const sStyle = { published:'background:#e8f5e9;color:#2e7d32', rejected:'background:#ffebee;color:#c62828', pending:'background:#fff3e0;color:#e65100' }[b.status] || '';
+  const actions = [
+    b.status !== 'published' ? `<button class="btn btn-outline" style="font-size:11px;padding:4px 10px;color:#2e7d32;border-color:#2e7d32" data-action="publish" data-id="${b.id}" data-title="${esc(b.title)}">✓ Publish</button>` : '',
+    b.status !== 'rejected'  ? `<button class="btn btn-outline" style="font-size:11px;padding:4px 10px;color:#c62828;border-color:#c62828" data-action="reject"  data-id="${b.id}" data-title="${esc(b.title)}">✗ Reject</button>`  : '',
+    b.status !== 'pending'   ? `<button class="btn btn-outline" style="font-size:11px;padding:4px 10px" data-action="pending" data-id="${b.id}" data-title="${esc(b.title)}">⏳ Pending</button>` : '',
+    `<button class="btn btn-outline" style="font-size:11px;padding:4px 10px;color:#c62828;border-color:#c62828" data-action="delete" data-id="${b.id}" data-title="${esc(b.title)}">🗑</button>`,
+    b.status === 'published' ? `<a href="../library-read.html?id=${b.id}" target="_blank" class="btn btn-outline" style="font-size:11px;padding:4px 10px">👁 View</a>` : '',
+  ].filter(Boolean).join('');
+
+  return `<tr style="border-bottom:1px solid var(--border)">
+    <td style="padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        ${b.coverUrl
+          ? `<img src="${esc(b.coverUrl)}" style="width:32px;height:44px;border-radius:4px;object-fit:cover;flex-shrink:0" alt="" />`
+          : `<div style="width:32px;height:44px;border-radius:4px;background:linear-gradient(135deg,var(--dark-bg),#3a0a0a);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${cat.icon}</div>`}
+        <div>
+          <div style="font-weight:700;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.title)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">by ${esc(b.authorName||'Unknown')} · ${date}</div>
+          ${b.isExternal ? '<div style="font-size:10px;color:var(--primary);font-weight:700;margin-top:2px">EXTERNAL</div>' : ''}
+        </div>
+      </div>
+    </td>
+    <td style="padding:14px 16px">
+      <span style="font-size:12px;background:var(--light-bg);padding:3px 8px;border-radius:10px;border:1px solid var(--border);white-space:nowrap">${cat.icon} ${cat.name}</span>
+    </td>
+    <td style="padding:14px 16px">
+      <div style="font-size:13px;font-weight:600">${esc(profile?.displayName||'—')}</div>
+      ${b.uploaderId ? `<a href="../library-host-profile.html?uid=${b.uploaderId}" target="_blank" style="font-size:11px;color:var(--primary)">View profile</a>` : ''}
+    </td>
+    <td style="padding:14px 16px;white-space:nowrap">
+      <div style="font-size:11px;color:var(--text-muted);display:flex;flex-direction:column;gap:2px">
+        <span>👁 ${b.views}</span>
+        <span>❤️ ${b.likesCount}</span>
+        <span>💬 ${b.commentsCount}</span>
+      </div>
+    </td>
+    <td style="padding:14px 16px">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 9px;border-radius:20px;${sStyle}">${b.status}</span>
+    </td>
+    <td style="padding:14px 16px">
+      <div style="display:flex;gap:5px;flex-wrap:wrap">${actions}</div>
+    </td>
+  </tr>`;
+}
+
+async function changeStatus(id, status, title, btn) {
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = '…';
+  try {
+    await libStore.updateBook(id, { status });
+    toast(`"${title}" → ${status}`);
+    loadBooks();
+  } catch(e) { toast('Error: ' + e.message); btn.disabled = false; btn.textContent = orig; }
+}
+
+async function deleteBook(id, title, btn) {
+  if (!confirm('Permanently delete "' + title + '"? This cannot be undone.')) return;
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = '…';
+  try {
+    await libStore.deleteBook(id);
+    toast('"' + title + '" deleted');
+    loadBooks();
+  } catch(e) { toast('Error: ' + e.message); btn.disabled = false; btn.textContent = orig; }
+}
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+loadBooks();
+</script>
+</body>
+</html>

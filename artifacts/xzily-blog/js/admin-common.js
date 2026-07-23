@@ -23,6 +23,7 @@ export function renderAdminShell(active, session) {
     ['authors.html',        'user',             'Authors'],
     ['writers.html',        'edit',             'Writers'],
     ['writer-reviews.html', 'checkCircle',      'Writer Reviews'],
+    ['library.html',        'bookmark',         'Library'],
     ['ads.html',            'barChart',         'Advertisements'],
     ['settings.html',       'settings',         'Settings'],
   ];
