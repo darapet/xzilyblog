@@ -179,7 +179,8 @@ function mapSettings(row) {
     themeAccent:  row?.theme_accent  || '#ba1818',
     themeBg:      row?.theme_bg      || '#f5f0eb',
     themeInk:     row?.theme_ink     || '#1a1a1a',
-    externalNewsEnabled: row?.external_news_enabled !== false,
+    externalNewsEnabled:    row?.external_news_enabled    !== false,
+    externalLibraryEnabled: row?.external_library_enabled !== false,
   };
 }
 
@@ -530,7 +531,8 @@ export const store = {
     strField('statsStories',       'stats_stories');
     strField('statsSections',      'stats_sections');
     strField('statsWriters',       'stats_writers');
-    if ('externalNewsEnabled' in patch) record['external_news_enabled'] = !!patch.externalNewsEnabled;
+    if ('externalNewsEnabled'    in patch) record['external_news_enabled']    = !!patch.externalNewsEnabled;
+    if ('externalLibraryEnabled' in patch) record['external_library_enabled'] = !!patch.externalLibraryEnabled;
     strField('logoUrl',            'logo_url');
     strField('faviconUrl',         'favicon_url');
     strField('themeAccent',        'theme_accent');

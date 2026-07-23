@@ -51,6 +51,7 @@
 <script type="module">
 import { mountLayout, formatCount } from './js/common.js';
 import { libStore, BOOK_CATEGORIES, getCategoryBySlug } from './js/library-store.js';
+import { store } from './js/store.js';
 
 let activeCat = '';
 let searchVal  = '';
@@ -155,11 +156,19 @@ async function loadBooks() {
     : activeCat ? cat.icon + ' ' + cat.name : 'All Books';
 
   try {
-    const books = await libStore.getBooks({
+    // Respect admin toggle: hide external books when feature is disabled
+    let externalEnabled = true;
+    try {
+      const settings = await store.getSettings();
+      externalEnabled = settings.externalLibraryEnabled !== false;
+    } catch(_) { /* if settings unavailable, default to showing everything */ }
+
+    const allBooks = await libStore.getBooks({
       category: activeCat || null,
       search:   searchVal || null,
       limit: 60,
     });
+    const books = externalEnabled ? allBooks : allBooks.filter(b => !b.isExternal);
     document.getElementById('gridCount').textContent = books.length + ' book' + (books.length !== 1 ? 's' : '');
 
     if (!books.length) {

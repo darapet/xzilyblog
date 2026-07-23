@@ -163,6 +163,24 @@
           <p class="settings-status" id="groqStatus"></p>
         </div>
 
+        <!-- External Library Books -->
+        <div class="admin-panel">
+          <div class="admin-panel-head"><h3>External Library Books</h3></div>
+          <p class="settings-hint">
+            When enabled, popular free books from <strong>Internet Archive</strong> and
+            <strong>Project Gutenberg</strong> are fetched automatically every day and shown
+            in the library — readers can browse and read them right on your site.
+            Turn this <strong>OFF</strong> to hide all externally sourced books from the library.
+          </p>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:14px;">
+            <label class="toggle-switch" for="fExternalLibrary">
+              <input type="checkbox" id="fExternalLibrary" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="externalLibraryLabel" style="font-weight:600;font-size:15px;">External library books are ON</span>
+          </div>
+        </div>
+
         <!-- External News Feed -->
         <div class="admin-panel">
           <div class="admin-panel-head"><h3>External News Feed</h3></div>

@@ -63,8 +63,7 @@
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <a href="library.html" class="btn btn-outline">Browse Library</a>
-        <button class="btn btn-outline" id="openExtFormBtn">🌐 Add External Book</button>
-        <button class="btn btn-primary" id="openUploadFormBtn">+ Upload PDF</button>
+        <button class="btn btn-primary" id="openUploadFormBtn">+ Upload Book</button>
       </div>
     </div>
 
@@ -80,76 +79,6 @@
     <div class="lib-panel">
       <div class="lib-panel-title">My Profile</div>
       <div id="profileCardBody"></div>
-    </div>
-
-    <!-- External Book Form (hidden initially) -->
-    <div class="lib-panel" id="extFormPanel" style="display:none">
-      <div class="lib-panel-title">🌐 Add External Book</div>
-      <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px">
-        Paste an <strong>Internet Archive</strong> or <strong>Project Gutenberg</strong> link —
-        we'll pull the title, author, cover and description automatically.
-        The book will be live in the library straight away.
-      </p>
-
-      <!-- Step 1: URL input -->
-      <div id="extStep1">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div class="lib-form-group" style="flex:0 0 auto">
-            <label class="lib-label">Source</label>
-            <select class="lib-select" id="ext-source" style="width:175px">
-              <option value="archive">🏛️ Internet Archive</option>
-              <option value="gutenberg">📖 Project Gutenberg</option>
-            </select>
-          </div>
-          <div class="lib-form-group" style="flex:1;min-width:220px">
-            <label class="lib-label">Book URL or Identifier</label>
-            <input class="lib-input" id="ext-url"
-              placeholder="e.g. https://archive.org/details/moby-dick  or  /ebooks/2701" />
-          </div>
-          <div style="padding-bottom:1px">
-            <button class="btn btn-primary" id="fetchExtBtn" style="white-space:nowrap">Fetch Info</button>
-          </div>
-        </div>
-        <div id="extFetchMsg" style="font-size:12px;margin-top:6px;min-height:18px;color:var(--text-muted)"></div>
-      </div>
-
-      <!-- Step 2: preview + confirm -->
-      <div id="extStep2" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
-        <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-          <img id="ext-cover-preview" src="" alt="Cover"
-            style="width:90px;border-radius:8px;border:1px solid var(--border);object-fit:cover;background:var(--light-bg);flex-shrink:0"
-            onerror="this.style.display='none'" />
-          <div style="flex:1;min-width:200px">
-            <div style="font-family:var(--font-condensed);font-size:17px;font-weight:700;margin-bottom:4px;line-height:1.2" id="ext-preview-title"></div>
-            <div style="font-size:13px;color:var(--primary);font-weight:600;margin-bottom:8px" id="ext-preview-author"></div>
-            <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:14px;max-height:72px;overflow:hidden" id="ext-preview-desc"></div>
-            <div class="lib-form-group" style="max-width:260px">
-              <label class="lib-label" style="font-size:11px">Category</label>
-              <select class="lib-select" id="ext-cat" style="font-size:13px">
-                <option value="fiction">📖 Fiction &amp; Literature</option>
-                <option value="religion">🕊️ Religion &amp; Spirituality</option>
-                <option value="science">🔬 Science &amp; Technology</option>
-                <option value="history">🏛️ History &amp; Biography</option>
-                <option value="business">💼 Business &amp; Finance</option>
-                <option value="self-help">🌱 Self-Help &amp; Motivation</option>
-                <option value="health">❤️ Health &amp; Wellness</option>
-                <option value="education">🎓 Education &amp; Academic</option>
-                <option value="travel">🌍 Travel &amp; Culture</option>
-                <option value="arts">🎨 Arts &amp; Entertainment</option>
-                <option value="children">🌟 Children &amp; Young Adult</option>
-                <option value="law">⚖️ Law &amp; Politics</option>
-                <option value="philosophy">🤔 Philosophy</option>
-                <option value="comics">🎭 Comics &amp; Manga</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;align-items:center">
-          <div id="extAddMsg" style="font-size:12px;flex:1;min-height:18px"></div>
-          <button class="btn btn-outline" id="extCancelBtn">Cancel</button>
-          <button class="btn btn-primary" id="addExtBtn">Add to Library →</button>
-        </div>
-      </div>
     </div>
 
     <!-- Upload form (hidden initially) -->
@@ -545,93 +474,6 @@ window.deleteBook = async function(id, title) {
   } catch(e) { toast('Error: ' + e.message); }
 };
 
-// ── External Book Form ─────────────────────────────────────
-const extFormPanel = document.getElementById('extFormPanel');
-
-document.getElementById('openExtFormBtn').addEventListener('click', () => {
-  const willOpen = extFormPanel.style.display !== '';
-  extFormPanel.style.display = willOpen ? '' : 'none';
-  document.getElementById('uploadFormPanel').style.display = 'none';
-  document.getElementById('extStep2').style.display = 'none';
-  document.getElementById('ext-url').value = '';
-  document.getElementById('extFetchMsg').textContent = '';
-  if (willOpen) extFormPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-});
-
-let _fetchedExtBook = null;
-
-document.getElementById('fetchExtBtn').addEventListener('click', async () => {
-  const raw    = document.getElementById('ext-url').value.trim();
-  const source = document.getElementById('ext-source').value;
-  const msgEl  = document.getElementById('extFetchMsg');
-  const btn    = document.getElementById('fetchExtBtn');
-  if (!raw) { msgEl.textContent = 'Please enter a URL or identifier.'; return; }
-  btn.disabled = true; btn.textContent = 'Fetching…';
-  msgEl.textContent = '';
-  document.getElementById('extStep2').style.display = 'none';
-  try {
-    let meta;
-    if (source === 'archive') {
-      const m = raw.match(/archive\.org\/(?:details|embed|stream|download)\/([^/?#\s]+)/i);
-      const identifier = m ? m[1] : raw.replace(/^https?:\/\/[^/]+\//, '').split('/')[0] || raw.trim();
-      meta = await libStore.fetchArchiveMeta(identifier);
-    } else {
-      const m = raw.match(/gutenberg\.org\/ebooks\/(\d+)/i) || raw.match(/^(\d+)$/);
-      if (!m) { msgEl.textContent = '❌ Paste a Gutenberg URL like https://www.gutenberg.org/ebooks/1234'; btn.disabled = false; btn.textContent = 'Fetch Info'; return; }
-      meta = await libStore.fetchGutenbergMeta(m[1]);
-    }
-    const exists = await libStore.checkExternalExists(meta.externalUrl);
-    if (exists) { msgEl.textContent = '⚠️ This book is already in the library.'; btn.disabled = false; btn.textContent = 'Fetch Info'; return; }
-    _fetchedExtBook = meta;
-    const coverEl = document.getElementById('ext-cover-preview');
-    if (meta.coverUrl) { coverEl.src = meta.coverUrl; coverEl.style.display = ''; }
-    else                { coverEl.style.display = 'none'; }
-    document.getElementById('ext-preview-title').textContent  = meta.title;
-    document.getElementById('ext-preview-author').textContent = 'by ' + meta.authorName;
-    document.getElementById('ext-preview-desc').textContent   = meta.description || '';
-    document.getElementById('ext-cat').value = meta.category || 'fiction';
-    document.getElementById('extStep2').style.display = '';
-  } catch(e) {
-    msgEl.textContent = '❌ ' + e.message;
-  }
-  btn.disabled = false; btn.textContent = 'Fetch Info';
-});
-
-document.getElementById('addExtBtn').addEventListener('click', async () => {
-  if (!_fetchedExtBook) return;
-  const btn = document.getElementById('addExtBtn');
-  const msg = document.getElementById('extAddMsg');
-  btn.disabled = true; btn.textContent = 'Adding…';
-  msg.textContent = '';
-  try {
-    await libStore.createExternalBook({
-      ..._fetchedExtBook,
-      category:   document.getElementById('ext-cat').value,
-      uploaderId: _user.id,
-    });
-    msg.textContent = '✅ Book added to the library!';
-    msg.style.color = '#16a34a';
-    _fetchedExtBook = null;
-    document.getElementById('ext-url').value = '';
-    loadMyBooks(); loadStats();
-    setTimeout(() => {
-      document.getElementById('extStep2').style.display = 'none';
-      extFormPanel.style.display = 'none';
-      msg.textContent = '';
-    }, 2000);
-  } catch(e) {
-    msg.textContent = '❌ ' + e.message;
-    msg.style.color = '#dc2626';
-  }
-  btn.disabled = false; btn.textContent = 'Add to Library →';
-});
-
-document.getElementById('extCancelBtn').addEventListener('click', () => {
-  document.getElementById('extStep2').style.display = 'none';
-  document.getElementById('ext-url').value = '';
-  document.getElementById('extFetchMsg').textContent = '';
-  _fetchedExtBook = null;
-});
 </script>
 </body>
 </html>

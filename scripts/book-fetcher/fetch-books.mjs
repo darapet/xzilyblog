@@ -207,9 +207,26 @@ async function fetchGutenbergBooks() {
   return books;
 }
 
+// ── Check admin toggle ────────────────────────────────────
+async function isExternalLibraryEnabled() {
+  try {
+    const rows = await dbSelect('site_settings', 'select=external_library_enabled&id=eq.true&limit=1');
+    if (!rows.length) return true;
+    return rows[0].external_library_enabled !== false;
+  } catch {
+    return true; // default ON if setting unreadable
+  }
+}
+
 // ── Main ──────────────────────────────────────────────────
 async function main() {
   console.log(`[${new Date().toISOString()}] 📚 Xzily Daily Book Fetcher starting…`);
+
+  const enabled = await isExternalLibraryEnabled();
+  if (!enabled) {
+    console.log('ℹ️  External library books are disabled in Admin → Settings. Skipping run.');
+    return;
+  }
 
   const [archiveBooks, gutenbergBooks] = await Promise.all([
     fetchArchiveBooks(),

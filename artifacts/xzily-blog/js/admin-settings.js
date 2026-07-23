@@ -133,6 +133,15 @@ async function init() {
     toggleLabel.textContent = toggle.checked ? 'External news is ON' : 'External news is OFF';
   });
 
+  // External library books toggle
+  const libToggle      = document.getElementById('fExternalLibrary');
+  const libToggleLabel = document.getElementById('externalLibraryLabel');
+  libToggle.checked = settings.externalLibraryEnabled !== false;
+  libToggleLabel.textContent = libToggle.checked ? 'External library books are ON' : 'External library books are OFF';
+  libToggle.addEventListener('change', () => {
+    libToggleLabel.textContent = libToggle.checked ? 'External library books are ON' : 'External library books are OFF';
+  });
+
   updateStatus(settings);
 }
 
@@ -164,6 +173,7 @@ function wireSaveButton() {
       cloudinaryUploadPreset: document.getElementById('fUploadPreset').value,
       cloudinaryBooksPreset:  document.getElementById('fBooksPreset').value,
       externalNewsEnabled:    document.getElementById('fExternalNews').checked,
+      externalLibraryEnabled: document.getElementById('fExternalLibrary').checked,
     };
     for (let i = 1; i <= 5; i++) {
       patch[`groqApiKey${i}`] = document.getElementById(`fGroqKey${i}`).value;
