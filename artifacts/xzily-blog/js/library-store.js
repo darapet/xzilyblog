@@ -24,6 +24,25 @@ export function getCategoryBySlug(slug) {
   return BOOK_CATEGORIES.find(c => c.slug === slug) || { slug, name: slug, icon: '📚' };
 }
 
+// ── Category guesser (used for external books) ─────────────
+export function guessCategory(text = '') {
+  const s = (Array.isArray(text) ? text.join(' ') : String(text)).toLowerCase();
+  if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
+  if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
+  if (/science|physics|chemistry|biology|mathematics|astronomy|technology|computer/.test(s)) return 'science';
+  if (/histor|biography|war|ancient|civiliz/.test(s)) return 'history';
+  if (/business|economics|finance|commerce|management|marketing/.test(s)) return 'business';
+  if (/self.help|personal development|motivation|success|productivity|mindfulness/.test(s)) return 'self-help';
+  if (/health|medicine|medical|wellness|nutrition|fitness/.test(s)) return 'health';
+  if (/education|learning|teaching|school|university|academic/.test(s)) return 'education';
+  if (/travel|geography|explorat|adventure/.test(s)) return 'travel';
+  if (/\bart\b|music|film|entertainment|photography|design/.test(s)) return 'arts';
+  if (/child|juvenile|young adult|picture book/.test(s)) return 'children';
+  if (/law|legal|court|politics|government|constitution/.test(s)) return 'law';
+  if (/philosophy|ethics|logic|metaphysics/.test(s)) return 'philosophy';
+  return 'fiction';
+}
+
 function mapBook(row) {
   return {
     id:           row.id,
@@ -243,6 +262,81 @@ export const libStore = {
       await supabase.rpc('increment_lib_followers', { profile_id: followingId }).catch(() => {});
     }
     return !isFollowing;
+  },
+
+  // ── External Books (Archive.org / Gutenberg) ───────────────
+
+  async fetchArchiveMeta(identifier) {
+    const res = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`);
+    if (!res.ok) throw new Error('Could not find this book on Internet Archive.');
+    const data = await res.json();
+    if (!data.metadata) throw new Error('No metadata found for this Archive.org item.');
+    const m   = data.metadata;
+    const arr = v => Array.isArray(v) ? v[0] : (v || '');
+    const subjects = Array.isArray(m.subject) ? m.subject : (m.subject ? [m.subject] : []);
+    const year = parseInt(arr(m.date) || arr(m.year)) || null;
+    return {
+      title:        arr(m.title).replace(/<[^>]+>/g, '').trim() || 'Unknown Title',
+      authorName:   arr(m.creator).replace(/<[^>]+>/g, '').trim() || 'Unknown Author',
+      description:  arr(m.description).replace(/<[^>]+>/g, '').slice(0, 800),
+      coverUrl:     `https://archive.org/services/img/${identifier}`,
+      externalUrl:  `https://archive.org/details/${identifier}`,
+      category:     guessCategory(subjects.join(' ')),
+      language:     arr(m.language) || 'English',
+      publishedYear:year,
+      source:       'archive',
+    };
+  },
+
+  async fetchGutenbergMeta(bookId) {
+    const res = await fetch(`https://gutendex.com/books/${encodeURIComponent(bookId)}`);
+    if (!res.ok) throw new Error('Could not find this book on Project Gutenberg.');
+    const b = await res.json();
+    const subjects   = b.subjects || [];
+    const htmlEntry  = Object.entries(b.formats || {}).find(([k]) => k.startsWith('text/html') && !k.includes('zip'));
+    return {
+      title:            (b.title || 'Unknown Title').trim(),
+      authorName:       (b.authors?.[0]?.name || 'Unknown Author').replace(/,\s*\d+.*$/, '').trim(),
+      description:      subjects.slice(0, 5).join(', '),
+      coverUrl:         b.formats?.['image/jpeg'] || '',
+      externalUrl:      `https://www.gutenberg.org/ebooks/${bookId}`,
+      gutenbergHtmlUrl: htmlEntry?.[1] || null,
+      category:         guessCategory(subjects.join(' ')),
+      language:         'English',
+      publishedYear:    null,
+      source:           'gutenberg',
+    };
+  },
+
+  async checkExternalExists(externalUrl) {
+    const { data } = await supabase.from('books')
+      .select('id').eq('external_url', externalUrl).maybeSingle();
+    return !!data;
+  },
+
+  async createExternalBook(book) {
+    // External books from Archive.org / Gutenberg go live immediately — no approval step
+    const record = {
+      title:          book.title,
+      author_name:    book.authorName          || '',
+      description:    book.description         || '',
+      cover_url:      book.coverUrl            || '',
+      file_url:       book.gutenbergHtmlUrl    || '',   // Gutenberg HTML URL for the reader
+      external_url:   book.externalUrl         || '',
+      is_external:    true,
+      category:       book.category            || 'fiction',
+      tags:           [],
+      uploader_id:    book.uploaderId          || null,
+      status:         'published',
+      language:       book.language            || 'English',
+      published_year: book.publishedYear       || null,
+    };
+    const { data, error } = await supabase.from('books').insert(record).select().single();
+    if (error) throw error;
+    if (book.uploaderId) {
+      await supabase.rpc('increment_lib_books', { profile_id: book.uploaderId }).catch(() => {});
+    }
+    return mapBook(data);
   },
 
   // ── Cloudinary Uploads ─────────────────────────────────────
