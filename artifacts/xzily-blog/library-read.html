@@ -186,8 +186,10 @@ async function loadGutenbergClassic() {
     // Cover
     const cover = b.formats?.['image/jpeg'] || '';
     const coverEl = document.getElementById('coverLg');
-    if (cover) coverEl.innerHTML = `<img src="${esc(cover)}" alt="${esc(b.title)}" onerror="this.style.display='none'" />`;
-    else coverEl.textContent = '📖';
+    if (cover) {
+      coverEl.innerHTML = `<img src="${esc(cover)}" alt="${esc(b.title)}" onerror="this.style.display='none'" />`;
+      document.getElementById('bookHeader').style.setProperty('--cover-url', `url("${cover}")`);
+    } else coverEl.textContent = '📖';
 
     // Header
     const authors = (b.authors || []).map(a => a.name.replace(/,\s*\d+.*$/, '').trim()).join(', ') || 'Unknown Author';
@@ -245,6 +247,7 @@ async function loadBook() {
     const cat = getCategoryBySlug(book.category);
     if (book.coverUrl) {
       coverEl.innerHTML = `<img src="${esc(book.coverUrl)}" alt="${esc(book.title)}" onerror="this.style.display='none'" />`;
+      document.getElementById('bookHeader').style.setProperty('--cover-url', `url("${book.coverUrl}")`);
     } else {
       coverEl.textContent = cat.icon;
     }

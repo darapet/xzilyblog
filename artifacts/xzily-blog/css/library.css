@@ -692,6 +692,211 @@
   .lib-panel { padding: 18px; }
 }
 
+/* ════════════════════════════════════════════════════
+   PROFESSIONAL READER REFINEMENTS
+   Cinematic header · polished frames · unified info strip
+════════════════════════════════════════════════════ */
+
+/* ── Book header — cinematic dark with blurred cover art ── */
+.lib-book-header {
+  background: linear-gradient(135deg, #0f0505 0%, #1e0808 55%, #0f0a1a 100%);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 20px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.35);
+  position: relative;
+  overflow: hidden;
+}
+/* blurred cover art ambient layer */
+.lib-book-header::before {
+  content: '';
+  position: absolute;
+  inset: -30px;
+  background-image: var(--cover-url, none);
+  background-size: cover;
+  background-position: center;
+  filter: blur(44px) saturate(1.8);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity .4s;
+}
+/* keep all child content above the blur layer */
+.lib-book-header > * { position: relative; z-index: 1; }
+
+/* cover — deeper shadow on dark bg */
+.lib-book-cover-lg {
+  box-shadow: 0 20px 56px rgba(0,0,0,.55), 0 4px 16px rgba(0,0,0,.3);
+  border-radius: 10px;
+}
+
+/* text colors inverted for dark header */
+.lib-book-header-title {
+  color: #fff;
+  font-size: 28px;
+  text-shadow: 0 1px 8px rgba(0,0,0,.4);
+}
+.lib-book-header-author { color: rgba(255,255,255,.6); }
+
+/* meta tags on dark bg */
+.lib-book-header .lib-book-meta-tag {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.18);
+  color: rgba(255,255,255,.78);
+  backdrop-filter: blur(4px);
+}
+.lib-book-header .lib-book-meta-tag.cat {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* action buttons on dark bg */
+.lib-book-header .lib-action-btn {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.22);
+  color: rgba(255,255,255,.88);
+  backdrop-filter: blur(4px);
+}
+.lib-book-header .lib-action-btn:hover {
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.38);
+  color: #fff;
+}
+.lib-book-header .lib-action-btn.liked {
+  background: rgba(186,24,24,.35);
+  border-color: #f97070;
+  color: #ffaaaa;
+}
+
+/* ── Panels — slightly more elevated ── */
+.lib-panel {
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,.06);
+  border-color: #e8e8e8;
+}
+.lib-panel-title { letter-spacing: .3px; }
+
+/* ── PDF reader — taller, better shadow ── */
+.lib-pdf-wrap {
+  border-radius: 16px;
+  box-shadow: 0 4px 28px rgba(0,0,0,.09);
+  border-color: #e8e8e8;
+}
+.lib-pdf-frame { height: 820px; }
+
+/* ── External embed — polished dark toolbar ── */
+.lib-reader-embed-wrap {
+  border-radius: 16px;
+  box-shadow: 0 4px 28px rgba(0,0,0,.1);
+  border-color: #e8e8e8;
+}
+.lib-reader-embed-bar {
+  background: #16121e;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.65);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .2px;
+  padding: 12px 18px;
+}
+.lib-reader-source-badge {
+  font-size: 11px;
+  padding: 4px 12px;
+  letter-spacing: .4px;
+  font-weight: 700;
+}
+.lib-reader-embed-frame { height: 84vh; min-height: 560px; }
+
+/* ── Info strip (sidebar boxes now flow below) — card elevation ── */
+.lib-reader-sidebar { margin-top: 20px; }
+.lib-sidebar-box {
+  border-radius: 16px;
+  box-shadow: 0 2px 14px rgba(0,0,0,.06);
+  border-color: #e8e8e8;
+  transition: box-shadow .2s;
+}
+.lib-sidebar-box:hover { box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+.lib-sidebar-box-title {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: #999;
+}
+
+/* stats chips — bigger numbers */
+.lib-stat-mini-num { font-size: 20px; }
+.lib-stat-mini {
+  border-radius: 10px;
+  background: #f5f5f7;
+  border: 1px solid transparent;
+  transition: background .18s;
+}
+
+/* share buttons — softer */
+.lib-reader-sidebar .lib-action-btn {
+  border-radius: 10px;
+  font-size: 12px;
+  padding: 9px 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+/* ── Comments — polished cards ── */
+.lib-comment-item {
+  padding: 18px 0;
+  transition: background .15s;
+}
+.lib-comment-av {
+  background: linear-gradient(135deg, var(--primary) 0%, #e05050 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  box-shadow: 0 2px 8px rgba(186,24,24,.25);
+}
+.lib-comment-author { font-size: 13px; letter-spacing: .1px; }
+.lib-comment-text { font-size: 14px; line-height: 1.65; color: #444; }
+.lib-comment-reply-btn {
+  font-size: 12px;
+  letter-spacing: .2px;
+  padding: 3px 0;
+  opacity: .75;
+  transition: opacity .15s;
+}
+.lib-comment-reply-btn:hover { opacity: 1; }
+.lib-reply-thread {
+  border-left-color: var(--primary);
+  border-left-width: 2px;
+  padding-left: 18px;
+  opacity: .9;
+}
+
+/* comment input polish */
+.lib-comment-input, .lib-comment-name {
+  border-radius: 10px;
+  font-size: 14px;
+  background: #fafafa;
+}
+.lib-comment-input:focus, .lib-comment-name:focus { background: #fff; }
+
+/* ── Uploader profile row ── */
+.lib-uploader-av {
+  box-shadow: 0 2px 10px rgba(186,24,24,.2);
+}
+.lib-uploader-name { font-size: 15px; letter-spacing: .1px; }
+
+/* ── Follow button — more refined ── */
+.lib-follow-btn {
+  border-radius: 10px;
+  font-size: 13px;
+  padding: 8px 20px;
+  letter-spacing: .2px;
+}
+
+/* ── Gutenberg / no-preview panel ── */
+.lib-panel[style*="text-align:center"] {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f7 100%);
+}
+
 /* ── On-site text reader (Gutenberg plain text) ────────────────── */
 .lib-text-reader {
   padding: 32px 40px;
