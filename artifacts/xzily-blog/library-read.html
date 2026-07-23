@@ -223,35 +223,48 @@ async function loadBook() {
           </div>`;
 
       } else if (gutenbergMatch) {
-        // Project Gutenberg — embed the HTML text
+        // Project Gutenberg — fetch plain text and render on-site (Gutenberg blocks iframes)
         const gutId = gutenbergMatch[1];
-        let htmlUrl = book.fileUrl || null;   // stored at upload time if available
-        if (!htmlUrl) {
-          // Show spinner while we fetch the HTML URL from Gutendex
-          contentEl.innerHTML = `<div class="lib-reader-embed-wrap" style="min-height:160px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);gap:8px"><span style="font-size:1.5rem">📖</span> Loading reader…</div>`;
-          try {
-            const r  = await fetch(`https://gutendex.com/books/${gutId}`);
-            const bk = await r.json();
-            const he = Object.entries(bk.formats || {}).find(([k]) => k.startsWith('text/html') && !k.includes('zip'));
-            htmlUrl  = he?.[1] || null;
-          } catch(_) { /* ignore */ }
-        }
-        if (htmlUrl) {
+        contentEl.innerHTML = `<div class="lib-reader-embed-wrap" style="min-height:200px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);gap:8px"><span style="font-size:1.5rem">📖</span> Loading book…</div>`;
+        try {
+          const txtUrl = `https://www.gutenberg.org/cache/epub/${gutId}/pg${gutId}.txt`;
+          const r = await fetch(txtUrl);
+          if (!r.ok) throw new Error('txt fetch failed');
+          let rawText = await r.text();
+          // Strip Gutenberg header/footer boilerplate
+          const startIdx = rawText.search(/*** START OF (THIS|THE) PROJECT GUTENBERG/i);
+          const endIdx   = rawText.search(/*** END OF (THIS|THE) PROJECT GUTENBERG/i);
+          if (startIdx >= 0) rawText = rawText.slice(rawText.indexOf('
+', startIdx) + 1, endIdx >= 0 ? endIdx : undefined);
+          // Convert plain text to readable HTML paragraphs
+          const bookHtml = rawText.trim()
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/
+|/g, '
+')
+            .replace(/
+{3,}/g, '
+
+')
+            .split('
+
+')
+            .map(p => `<p>${p.replace(/
+/g, '<br>')}</p>`)
+            .join('');
           contentEl.innerHTML = `
             <div class="lib-reader-embed-wrap">
               <div class="lib-reader-embed-bar">
                 <span class="lib-reader-source-badge">📖 Project Gutenberg</span>
-                <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="lib-reader-open-link">Open on Gutenberg ↗</a>
+                <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="lib-reader-open-link">View on Gutenberg ↗</a>
               </div>
-              <iframe class="lib-reader-embed-frame" src="${esc(htmlUrl)}"
-                title="${esc(book.title)}" loading="lazy"
-                sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+              <div class="lib-text-reader">${bookHtml}</div>
             </div>`;
-        } else {
+        } catch(_) {
           contentEl.innerHTML = `
             <div class="lib-reader-embed-wrap" style="text-align:center;padding:60px 40px">
               <div style="font-size:3rem;margin-bottom:16px">📖</div>
-              <p style="color:var(--text-muted);margin-bottom:20px">Read this free classic on Project Gutenberg</p>
+              <p style="color:var(--text-muted);margin-bottom:20px">This is a free classic from Project Gutenberg</p>
               <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="btn btn-primary">Read on Gutenberg ↗</a>
             </div>`;
         }
@@ -280,12 +293,18 @@ async function loadBook() {
         </div>`;
     }
 
-    // Uploader profile
-    if (book.uploaderId) {
-      const profile = await libStore.getProfile(book.uploaderId).catch(() => null);
-      if (profile) {
-        document.getElementById('uploaderBox').style.display = '';
-        document.getElementById('uploaderRow').innerHTML = `
+    // Uploader profile — for external books with no uploader, show xzily admin
+    let profileUid = book.uploaderId;
+    let profile = null;
+    if (profileUid) {
+      profile = await libStore.getProfile(profileUid).catch(() => null);
+    } else if (book.isExternal) {
+      profile = await libStore.getAdminProfile().catch(() => null);
+      if (profile) profileUid = profile.id;
+    }
+    if (profile) {
+      document.getElementById('uploaderBox').style.display = '';
+      document.getElementById('uploaderRow').innerHTML = `
           <div class="lib-uploader-av">${avHtml(profile)}</div>
           <div>
             <div class="lib-uploader-name">${esc(profile.displayName)}</div>
@@ -296,12 +315,12 @@ async function loadBook() {
 
         const viewBtn = document.createElement('a');
         viewBtn.className = 'lib-action-btn';
-        viewBtn.href = `library-host-profile.html?uid=${book.uploaderId}`;
+        viewBtn.href = `library-host-profile.html?uid=${profileUid}`;
         viewBtn.textContent = 'View Profile';
         upAct.appendChild(viewBtn);
 
-        if (session && session.id !== book.uploaderId) {
-          let isFollowing = await libStore.getFollowStatus(session.id, book.uploaderId).catch(() => false);
+        if (session && session.id !== profileUid) {
+          let isFollowing = await libStore.getFollowStatus(session.id, profileUid).catch(() => false);
           const followBtn = document.createElement('button');
           function updateFollowBtn() {
             followBtn.className = `lib-follow-btn ${isFollowing ? 'following' : 'not-following'}`;
@@ -315,7 +334,6 @@ async function loadBook() {
           });
           upAct.appendChild(followBtn);
         }
-      }
     }
 
     // Share
