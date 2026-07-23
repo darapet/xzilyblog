@@ -7,6 +7,18 @@ export const BOOK_CATEGORIES = [
   { slug: 'fiction',    name: 'Fiction & Literature',    icon: '📖' },
   { slug: 'religion',   name: 'Religion & Spirituality', icon: '🕊️' },
   { slug: 'science',    name: 'Science & Technology',    icon: '🔬' },
+  { slug: 'textbooks',  name: 'Textbooks',                icon: '📚' },
+  { slug: 'mathematics', name: 'Mathematics',             icon: '➗' },
+  { slug: 'biology',    name: 'Biology',                  icon: '🧬' },
+  { slug: 'chemistry',  name: 'Chemistry',                icon: '⚗️' },
+  { slug: 'physics',    name: 'Physics',                  icon: '⚛️' },
+  { slug: 'computer-science', name: 'Computer Science',   icon: '💻' },
+  { slug: 'engineering', name: 'Engineering',             icon: '⚙️' },
+  { slug: 'economics',  name: 'Economics',                icon: '📈' },
+  { slug: 'accounting', name: 'Accounting',               icon: '🧾' },
+  { slug: 'commerce',   name: 'Commerce & Trade',          icon: '🛒' },
+  { slug: 'agriculture', name: 'Agriculture',              icon: '🌾' },
+  { slug: 'medicine',   name: 'Medicine & Nursing',        icon: '🩺' },
   { slug: 'history',    name: 'History & Biography',     icon: '🏛️' },
   { slug: 'business',   name: 'Business & Finance',      icon: '💼' },
   { slug: 'self-help',  name: 'Self-Help & Motivation',  icon: '🌱' },
@@ -23,7 +35,28 @@ export const BOOK_CATEGORIES = [
 ];
 
 export function getCategoryBySlug(slug) {
-  return BOOK_CATEGORIES.find(c => c.slug === slug) || { slug, name: slug, icon: '📚' };
+  return BOOK_CATEGORIES.find(c => c.slug === slug) || {
+    slug,
+    name: String(slug || 'Other').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    icon: '📚',
+  };
+}
+
+export async function getAvailableCategories() {
+  const { data, error } = await supabase
+    .from('books')
+    .select('category')
+    .eq('status', 'published')
+    .limit(1000);
+  if (error) throw error;
+
+  const discovered = [...new Set((data || [])
+    .map(row => row.category)
+    .filter(Boolean))]
+    .map(slug => getCategoryBySlug(slug));
+  const known = new Map(BOOK_CATEGORIES.map(category => [category.slug, category]));
+  for (const category of discovered) known.set(category.slug, category);
+  return [...known.values()];
 }
 
 // ── Category guesser (used for external books) ─────────────
@@ -31,6 +64,18 @@ export function guessCategory(text = '') {
   const s = (Array.isArray(text) ? text.join(' ') : String(text)).toLowerCase();
   if (/sport|athletic|football|soccer|basketball|baseball|tennis|olympic|coaching/.test(s)) return 'sports';
   if (/emotional|mental health|psycholog|well-being|wellbeing|anxiety|depression|resilien/.test(s)) return 'emotional-wellbeing';
+  if (/accounting|bookkeeping|auditing/.test(s)) return 'accounting';
+  if (/commerce|commercial law|retail|trade|entrepreneurship/.test(s)) return 'commerce';
+  if (/economics|economic|econometric|macroeconom|microeconom/.test(s)) return 'economics';
+  if (/engineering|mechanical engineer|civil engineer|electrical engineer|chemical engineer/.test(s)) return 'engineering';
+  if (/computer science|programming|software|coding|informatics|data science|artificial intelligence/.test(s)) return 'computer-science';
+  if (/agriculture|agricultural|farming|horticulture|veterinary|soil science/.test(s)) return 'agriculture';
+  if (/medicine|medical|nursing|clinical|anatomy|physiology|pharmacology|public health/.test(s)) return 'medicine';
+  if (/biology|biological|botany|zoology|microbiology|genetics|ecology/.test(s)) return 'biology';
+  if (/chemistry|chemical science|organic chemistry|inorganic chemistry|biochemistry/.test(s)) return 'chemistry';
+  if (/physics|physical science|mechanics|thermodynamics|quantum|electromagnet/.test(s)) return 'physics';
+  if (/mathematics|mathematical|algebra|calculus|geometry|trigonometry|statistics|probability/.test(s)) return 'mathematics';
+  if (/textbook|college textbook|open textbook|study guide|curriculum/.test(s)) return 'textbooks';
   if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
   if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
   if (/science|physics|chemistry|biology|mathematics|astronomy|technology|computer/.test(s)) return 'science';

@@ -2,7 +2,7 @@
 //  Xzily Library — Main Browse Page
 // ═══════════════════════════════════════════════════════
 import { mountLayout, formatCount, toast } from './common.js';
-import { libStore, BOOK_CATEGORIES, getCategoryBySlug } from './library-store.js';
+import { libStore, BOOK_CATEGORIES, getCategoryBySlug, getAvailableCategories } from './library-store.js';
 
 // ── Gutenberg (Project Gutenberg free classics) ──────────
 const GUTENDEX = 'https://gutendex.com/books';
@@ -12,6 +12,11 @@ const GUTENBERG_TOPIC_MAP = {
   health: 'health', education: 'education', travel: 'travel',
   philosophy: 'philosophy', children: 'children', law: 'law',
   sports: 'sports', 'emotional-wellbeing': 'psychology',
+  mathematics: 'mathematics', biology: 'biology', chemistry: 'chemistry',
+  physics: 'physics', 'computer-science': 'computer science',
+  engineering: 'engineering', economics: 'economics', accounting: 'accounting',
+  commerce: 'commerce', agriculture: 'agriculture', medicine: 'medicine',
+  textbooks: 'textbook',
 };
 
 async function searchGutenberg({ keyword = '', category = null, page = 1 } = {}) {
@@ -46,6 +51,7 @@ let keyword        = '';
 let gutPage        = 1;
 let commPage       = 1;
 let hasMore        = false;
+let availableCategories = BOOK_CATEGORIES;
 
 // ── DOM refs ─────────────────────────────────────────────
 const grid         = document.getElementById('booksGrid');
@@ -57,6 +63,7 @@ const searchInput  = document.getElementById('libSearch');
 
 // ── Boot ─────────────────────────────────────────────────
 await mountLayout('library.html');
+availableCategories = await getAvailableCategories().catch(() => BOOK_CATEGORIES);
 renderGenrePills();
 renderSidebarGenres();
 await load(true);
@@ -89,7 +96,7 @@ loadMoreBtn.addEventListener('click', () => load(false));
 // ── Genre pills ───────────────────────────────────────────
 function renderGenrePills() {
   const wrap = document.getElementById('genrePills');
-  const all  = [{ slug: null, name: 'All Books', icon: '📚' }, ...BOOK_CATEGORIES];
+  const all  = [{ slug: null, name: 'All Books', icon: '📚' }, ...availableCategories];
   wrap.innerHTML = all.map(g =>
     `<button class="lib-genre-pill${g.slug === activeCategory ? ' active' : ''}" data-cat="${g.slug ?? ''}">${g.icon} ${g.name}</button>`
   ).join('');
@@ -107,7 +114,7 @@ function renderGenrePills() {
 function renderSidebarGenres() {
   const ul = document.getElementById('sidebarGenres');
   if (!ul) return;
-  ul.innerHTML = BOOK_CATEGORIES.map(g =>
+  ul.innerHTML = availableCategories.map(g =>
     `<li><a href="#" data-cat="${g.slug}">${g.icon} ${g.name}<span>→</span></a></li>`
   ).join('');
   ul.addEventListener('click', e => {

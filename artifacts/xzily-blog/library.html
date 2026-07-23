@@ -50,7 +50,7 @@
 
 <script type="module">
 import { mountLayout, formatCount } from './js/common.js';
-import { libStore, BOOK_CATEGORIES, getCategoryBySlug } from './js/library-store.js';
+import { libStore, BOOK_CATEGORIES, getCategoryBySlug, getAvailableCategories } from './js/library-store.js';
 import { store } from './js/store.js';
 
 let activeCat = '';
@@ -75,7 +75,8 @@ function skeletonGrid() {
 
 // Build category pills
 const pillWrap = document.getElementById('catPills');
-BOOK_CATEGORIES.forEach(c => {
+const availableCategories = await getAvailableCategories().catch(() => BOOK_CATEGORIES);
+availableCategories.forEach(c => {
   const a = document.createElement('a');
   a.className    = 'lib-cat-pill';
   a.dataset.cat  = c.slug;

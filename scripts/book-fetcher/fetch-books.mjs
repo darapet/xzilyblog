@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================
-//  Xzily Blog — Daily Book Fetcher
+//  Xzily Blog — Twice-Daily Book Fetcher
 //
 //  Fetches popular free books from:
 //    • Internet Archive (archive.org)
@@ -25,12 +25,34 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
 }
 
 // ── Config ────────────────────────────────────────────────
-const ARCHIVE_PER_SUBJECT   = 18;   // candidates fetched per Archive.org category
-const GUTENBERG_PER_RUN     = 60;   // extra candidates fetched from Gutenberg
-const TARGET_NEW_BOOKS_PER_RUN = 200;
-const ARCHIVE_PAGE_ROTATION  = 25;  // rotate through Archive.org result pages each day
+const ARCHIVE_PER_SUBJECT   = 14;   // candidates fetched per Archive.org category
+const GUTENBERG_PER_RUN     = 100;  // extra candidates fetched from Gutenberg
+const TARGET_ACADEMIC_BOOKS_PER_RUN = 200;
+const TARGET_GENERAL_BOOKS_PER_RUN  = 200;
+const TARGET_NEW_BOOKS_PER_RUN =
+  TARGET_ACADEMIC_BOOKS_PER_RUN + TARGET_GENERAL_BOOKS_PER_RUN;
+const RUN_SLOT = Math.floor(Date.now() / (12 * 60 * 60 * 1000));
+const ARCHIVE_PAGE_ROTATION  = 50;  // rotate through Archive.org result pages per run
+const GUTENBERG_PAGE_ROTATION = 40;
 const OPENSTAX_PAGE_ROTATION = 5;
 const OTL_PAGE_ROTATION      = 5;
+
+const ACADEMIC_CATEGORIES = new Set([
+  'textbooks',
+  'mathematics',
+  'biology',
+  'chemistry',
+  'physics',
+  'computer-science',
+  'engineering',
+  'economics',
+  'accounting',
+  'commerce',
+  'agriculture',
+  'medicine',
+  'education',
+  'science',
+]);
 
 // ── Supabase REST helpers (no library needed) ─────────────
 const SB_HEADERS = {
@@ -65,13 +87,25 @@ function guessCategory(text = '') {
   const s = (Array.isArray(text) ? text.join(' ') : String(text)).toLowerCase();
   if (/sport|athletic|football|soccer|basketball|baseball|tennis|olympic|coaching/.test(s)) return 'sports';
   if (/emotional|mental health|psycholog|well-being|wellbeing|anxiety|depression|resilien/.test(s)) return 'emotional-wellbeing';
+  if (/accounting|bookkeeping|auditing/.test(s)) return 'accounting';
+  if (/commerce|commercial law|retail|trade|entrepreneurship/.test(s)) return 'commerce';
+  if (/economics|economic|econometric|macroeconom|microeconom/.test(s)) return 'economics';
+  if (/engineering|mechanical engineer|civil engineer|electrical engineer|chemical engineer/.test(s)) return 'engineering';
+  if (/computer science|programming|software|coding|informatics|data science|artificial intelligence/.test(s)) return 'computer-science';
+  if (/agriculture|agricultural|farming|horticulture|veterinary|soil science/.test(s)) return 'agriculture';
+  if (/medicine|medical|nursing|clinical|anatomy|physiology|pharmacology|public health/.test(s)) return 'medicine';
+  if (/biology|biological|botany|zoology|microbiology|genetics|ecology/.test(s)) return 'biology';
+  if (/chemistry|chemical science|organic chemistry|inorganic chemistry|biochemistry/.test(s)) return 'chemistry';
+  if (/physics|physical science|mechanics|thermodynamics|quantum|electromagnet/.test(s)) return 'physics';
+  if (/mathematics|mathematical|algebra|calculus|geometry|trigonometry|statistics|probability/.test(s)) return 'mathematics';
+  if (/textbook|college textbook|open textbook|study guide|curriculum/.test(s)) return 'textbooks';
   if (/fiction|novel|stories|poetry|drama|literature/.test(s))   return 'fiction';
   if (/religion|bible|quran|spiritual|christian|islam|buddhis|theology|hindu/.test(s)) return 'religion';
-  if (/science|physics|chemistry|biology|mathematics|algebra|calculus|statistics|astronomy|technology|computer/.test(s)) return 'science';
+  if (/science|astronomy|technology|computer/.test(s)) return 'science';
   if (/histor|biography|war|ancient|civiliz/.test(s)) return 'history';
   if (/business|economics|finance|commerce|management|marketing/.test(s)) return 'business';
-  if (/self.help|personal development|motivation|success|productivity|mindfulness/.test(s)) return 'self-help';
-  if (/health|medicine|medical|wellness|nutrition|fitness|anatomy|physiology|nursing/.test(s)) return 'health';
+  if (/self.help|personal development|motivation|success|productivity|mindfulness|leadership|habits/.test(s)) return 'self-help';
+  if (/health|wellness|nutrition|fitness/.test(s)) return 'health';
   if (/education|learning|teaching|school|university|academic/.test(s)) return 'education';
   if (/travel|geography|explorat|adventure/.test(s)) return 'travel';
   if (/\bart\b|music|film|entertainment|photography|design/.test(s)) return 'arts';
@@ -149,7 +183,7 @@ function titleFromSlug(slug) {
 async function fetchOpenStaxBooks() {
   const books = [];
   try {
-    const dailyPage = (Math.floor(Date.now() / 86400000) % OPENSTAX_PAGE_ROTATION) + 1;
+    const dailyPage = (RUN_SLOT % OPENSTAX_PAGE_ROTATION) + 1;
     const res = await fetch('https://openstax.org/sitemap.xml', {
       headers: { 'User-Agent': 'XzilyBlog-BookFetcher/1.0' },
     });
@@ -182,16 +216,22 @@ async function fetchOpenStaxBooks() {
 }
 
 const OTL_SUBJECTS = [
-  { category: 'science', query: 'biology' },
-  { category: 'science', query: 'chemistry' },
-  { category: 'science', query: 'physics' },
-  { category: 'science', query: 'mathematics' },
-  { category: 'business', query: 'business' },
-  { category: 'business', query: 'accounting' },
+  { category: 'biology', query: 'biology' },
+  { category: 'chemistry', query: 'chemistry' },
+  { category: 'physics', query: 'physics' },
+  { category: 'mathematics', query: 'mathematics' },
+  { category: 'engineering', query: 'engineering' },
+  { category: 'computer-science', query: 'computer-science' },
+  { category: 'economics', query: 'economics' },
+  { category: 'accounting', query: 'accounting' },
+  { category: 'commerce', query: 'business' },
+  { category: 'medicine', query: 'health' },
+  { category: 'agriculture', query: 'agriculture' },
   { category: 'emotional-wellbeing', query: 'psychology' },
   { category: 'education', query: 'education' },
-  { category: 'education', query: 'sociology' },
+  { category: 'history', query: 'history' },
   { category: 'arts', query: 'communication' },
+  { category: 'self-help', query: 'personal-development' },
 ];
 
 function parseOtlEntries(xml, category) {
@@ -230,7 +270,7 @@ function parseOtlEntries(xml, category) {
 
 async function fetchOpenTextbookLibraryBooks() {
   const books = [];
-  const dailyPage = (Math.floor(Date.now() / 86400000) % OTL_PAGE_ROTATION) + 1;
+  const dailyPage = (RUN_SLOT % OTL_PAGE_ROTATION) + 1;
   await Promise.all(OTL_SUBJECTS.map(async subject => {
     try {
       const url = `https://open.umn.edu/opentextbooks/subjects/${subject.query}.atom?page=${dailyPage}`;
@@ -255,6 +295,19 @@ async function fetchOpenTextbookLibraryBooks() {
 // ── Internet Archive ──────────────────────────────────────
 // We search by subject so each run gets fresh, varied books
 const ARCHIVE_SUBJECTS = [
+  { category: 'textbooks', query: 'subject:(textbook OR "open textbook" OR study guide)' },
+  { category: 'mathematics', query: 'subject:(mathematics OR algebra OR calculus OR statistics)' },
+  { category: 'biology', query: 'subject:(biology OR botany OR zoology OR genetics)' },
+  { category: 'chemistry', query: 'subject:(chemistry OR biochemistry)' },
+  { category: 'physics', query: 'subject:(physics OR mechanics OR thermodynamics)' },
+  { category: 'computer-science', query: 'subject:(computer science OR programming OR software)' },
+  { category: 'engineering', query: 'subject:(engineering OR mechanical engineering OR civil engineering)' },
+  { category: 'economics', query: 'subject:(economics OR econometrics OR macroeconomics)' },
+  { category: 'accounting', query: 'subject:(accounting OR bookkeeping OR auditing)' },
+  { category: 'commerce', query: 'subject:(commerce OR entrepreneurship OR retail OR trade)' },
+  { category: 'agriculture', query: 'subject:(agriculture OR farming OR horticulture)' },
+  { category: 'medicine', query: 'subject:(medicine OR nursing OR anatomy OR physiology)' },
+  { category: 'education', query: 'subject:(education OR teaching OR curriculum OR learning)' },
   { category: 'fiction', query: 'subject:(fiction OR literature OR novels)' },
   { category: 'religion', query: 'subject:(religion OR spirituality OR theology)' },
   { category: 'science', query: 'subject:(science OR technology OR mathematics)' },
@@ -275,7 +328,7 @@ const ARCHIVE_SUBJECTS = [
 
 async function fetchArchiveBooks() {
   const books = [];
-  const dailyPage = (Math.floor(Date.now() / 86400000) % ARCHIVE_PAGE_ROTATION) + 1;
+  const dailyPage = (RUN_SLOT % ARCHIVE_PAGE_ROTATION) + 1;
   for (const subject of ARCHIVE_SUBJECTS) {
     try {
       const params = new URLSearchParams({
@@ -325,7 +378,7 @@ async function fetchGutenbergBooks() {
   try {
     // Rotate pages so the daily job does not repeatedly fetch only the same
     // most-popular results.
-    const dailyPage = (Math.floor(Date.now() / 86400000) % 20) + 1;
+    const dailyPage = (RUN_SLOT % GUTENBERG_PAGE_ROTATION) + 1;
     const res  = await fetch(`https://gutendex.com/books/?languages=en&page=${dailyPage}`, {
       headers: { 'User-Agent': 'XzilyBlog-BookFetcher/1.0' },
     });
@@ -401,28 +454,37 @@ async function main() {
     [...archiveBooks, ...gutenbergBooks, ...openStaxBooks, ...openTextbookBooks]
       .map(book => [book.externalUrl, book])
   ).values()];
-  const byCategory = new Map();
-  for (const book of uniqueBooks) {
-    if (!byCategory.has(book.category)) byCategory.set(book.category, []);
-    byCategory.get(book.category).push(book);
-  }
   const allBooks = [];
-  let round = 0;
-  while (allBooks.length < uniqueBooks.length) {
-    let addedThisRound = 0;
-    for (const books of byCategory.values()) {
-      if (books[round]) {
-        allBooks.push(books[round]);
-        addedThisRound++;
-      }
+  const roundRobin = (books, limit) => {
+    const grouped = new Map();
+    for (const book of books) {
+      if (!grouped.has(book.category)) grouped.set(book.category, []);
+      grouped.get(book.category).push(book);
     }
-    if (!addedThisRound) break;
-    round++;
-  }
+    const result = [];
+    let round = 0;
+    while (result.length < limit) {
+      let addedThisRound = 0;
+      for (const categoryBooks of grouped.values()) {
+        if (categoryBooks[round]) {
+          result.push(categoryBooks[round]);
+          addedThisRound++;
+          if (result.length >= limit) break;
+        }
+      }
+      if (!addedThisRound) break;
+      round++;
+    }
+    return result;
+  };
+  const academicBooks = uniqueBooks.filter(book => ACADEMIC_CATEGORIES.has(book.category));
+  const generalBooks = uniqueBooks.filter(book => !ACADEMIC_CATEGORIES.has(book.category));
+  allBooks.push(...roundRobin(academicBooks, TARGET_ACADEMIC_BOOKS_PER_RUN));
+  allBooks.push(...roundRobin(generalBooks, TARGET_GENERAL_BOOKS_PER_RUN));
   console.log(
     `Found ${archiveBooks.length} Archive.org + ${gutenbergBooks.length} Gutenberg + ` +
     `${openStaxBooks.length} OpenStax + ${openTextbookBooks.length} Open Textbook Library ` +
-    `candidates (${uniqueBooks.length} unique)`,
+    `candidates (${uniqueBooks.length} unique; ${academicBooks.length} academic, ${generalBooks.length} general)`,
   );
 
   let added   = 0;
@@ -437,7 +499,10 @@ async function main() {
 
   console.log(`\n✨ Done — Added: ${added}  |  Already in library or skipped: ${skipped}`);
   if (added < TARGET_NEW_BOOKS_PER_RUN) {
-    console.warn(`⚠️  Only ${added} new books were available. The next daily run will rotate to another source page.`);
+    console.warn(
+      `⚠️ Only ${added} new books were available. Requested ${TARGET_ACADEMIC_BOOKS_PER_RUN} academic ` +
+      `and ${TARGET_GENERAL_BOOKS_PER_RUN} general books; the next run will rotate to another source page.`,
+    );
   }
 }
 
