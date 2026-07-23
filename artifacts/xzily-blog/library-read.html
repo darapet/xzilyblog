@@ -51,7 +51,7 @@
           <p id="bookDesc" style="color:var(--text-muted);line-height:1.7;font-size:14px;margin:0"></p>
         </div>
 
-        <!-- Reader content (PDF embed or external link) -->
+        <!-- Reader content -->
         <div id="readerContent"></div>
 
         <!-- Comments -->
@@ -72,9 +72,9 @@
       <!-- RIGHT: Sidebar -->
       <div class="lib-reader-sidebar">
 
-        <!-- Uploader box -->
+        <!-- Publisher / uploader box -->
         <div class="lib-sidebar-box" id="uploaderBox" style="display:none">
-          <div class="lib-sidebar-box-title">Uploaded by</div>
+          <div class="lib-sidebar-box-title" id="uploaderBoxTitle">Uploaded by</div>
           <div class="lib-uploader-row" id="uploaderRow"></div>
           <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap" id="uploaderActions"></div>
         </div>
@@ -132,6 +132,7 @@ if (!bookId) { showError(); } else { loadBook(); }
 
 async function loadBook() {
   try {
+    // ── Step 1: fetch book + session in parallel ───────────────
     const [book, session] = await Promise.all([
       libStore.getBookById(bookId),
       store.getSession(),
@@ -139,9 +140,9 @@ async function loadBook() {
     if (!book || book.status !== 'published') { showError(); return; }
 
     document.title = book.title + ' — Xzily Library';
-    libStore.incrementViews(bookId);
+    libStore.incrementViews(bookId); // fire-and-forget
 
-    // Cover
+    // ── Cover ──────────────────────────────────────────────────
     const coverEl = document.getElementById('coverLg');
     const cat = getCategoryBySlug(book.category);
     if (book.coverUrl) {
@@ -150,100 +151,62 @@ async function loadBook() {
       coverEl.textContent = cat.icon;
     }
 
-    // Header info
+    // ── Header ─────────────────────────────────────────────────
     document.getElementById('bookTitle').textContent  = book.title;
     document.getElementById('bookAuthor').textContent = 'by ' + (book.authorName || 'Unknown Author');
     document.getElementById('bookMeta').innerHTML = [
       `<span class="lib-book-meta-tag cat">${cat.icon} ${cat.name}</span>`,
       `<span class="lib-book-meta-tag">${esc(book.language)}</span>`,
       book.publishedYear ? `<span class="lib-book-meta-tag">${book.publishedYear}</span>` : '',
-      book.isExternal ? '<span class="lib-book-meta-tag">External Source</span>' : '<span class="lib-book-meta-tag">PDF</span>',
     ].filter(Boolean).join('');
 
-    // Stats
+    // ── Stats ──────────────────────────────────────────────────
     document.getElementById('statViews').textContent    = formatCount(book.views + 1);
     document.getElementById('statLikes').textContent    = formatCount(book.likesCount);
     document.getElementById('statComments').textContent = formatCount(book.commentsCount);
 
-    // Actions
-    const actionsEl = document.getElementById('bookActions');
-
-    // Open external button
-    if (book.isExternal && book.externalUrl) {
-      const openBtn = document.createElement('a');
-      openBtn.className  = 'lib-action-btn primary';
-      openBtn.href       = book.externalUrl;
-      openBtn.target     = '_blank';
-      openBtn.rel        = 'noopener';
-      openBtn.innerHTML  = '🌐 Open Book';
-      actionsEl.appendChild(openBtn);
-    }
-
-    // Like button
-    let likedNow = session ? await libStore.getLikeStatus(bookId, session.id).catch(() => false) : false;
-    const likeBtn = document.createElement('button');
-    function updateLikeBtn() {
-      likeBtn.className = `lib-action-btn${likedNow ? ' liked' : ''}`;
-      likeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${likedNow?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg> <span id="likeCount">${formatCount(parseInt(document.getElementById('statLikes').textContent.replace(/,/g,''))||0)}</span>`;
-    }
-    updateLikeBtn();
-    likeBtn.addEventListener('click', async () => {
-      if (!session) { toast('Sign in to like books'); return; }
-      likedNow = await libStore.toggleLike(bookId, session.id);
-      const cur = parseInt(document.getElementById('statLikes').textContent.replace(/,/g,'')) || 0;
-      const next = Math.max(0, cur + (likedNow ? 1 : -1));
-      document.getElementById('statLikes').textContent = formatCount(next);
-      updateLikeBtn();
-    });
-    actionsEl.appendChild(likeBtn);
-
-    // Description
+    // ── Description ────────────────────────────────────────────
     if (book.description) {
       document.getElementById('descPanel').style.display = '';
       document.getElementById('bookDesc').textContent = book.description;
     }
 
-    // Reader content
+    // ── Reader content ─────────────────────────────────────────
     const contentEl = document.getElementById('readerContent');
     if (book.isExternal && book.externalUrl) {
       const archiveMatch   = book.externalUrl.match(/archive\.org\/details\/([^/?#\s]+)/i);
       const gutenbergMatch = book.externalUrl.match(/gutenberg\.org\/ebooks\/(\d+)/i);
 
       if (archiveMatch) {
-        // Internet Archive — embed their built-in book viewer
         const embedUrl = `https://archive.org/embed/${archiveMatch[1]}`;
         contentEl.innerHTML = `
           <div class="lib-reader-embed-wrap">
             <div class="lib-reader-embed-bar">
               <span class="lib-reader-source-badge">🏛️ Internet Archive</span>
-              <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="lib-reader-open-link">Open on Archive.org ↗</a>
             </div>
             <iframe class="lib-reader-embed-frame" src="${esc(embedUrl)}"
               allowfullscreen title="${esc(book.title)}" loading="lazy"></iframe>
           </div>`;
 
       } else if (gutenbergMatch) {
-        // Project Gutenberg — embed via cache HTML (no X-Frame-Options, works for all books)
-        const gutId = gutenbergMatch[1];
-        // Use stored fileUrl if available; else use the standard Gutenberg cache URL
+        const gutId  = gutenbergMatch[1];
         const htmlUrl = book.fileUrl || `https://www.gutenberg.org/cache/epub/${gutId}/pg${gutId}-images.html`;
         contentEl.innerHTML = `
           <div class="lib-reader-embed-wrap">
             <div class="lib-reader-embed-bar">
               <span class="lib-reader-source-badge">📖 Project Gutenberg</span>
-              <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="lib-reader-open-link">View on Gutenberg ↗</a>
             </div>
             <iframe class="lib-reader-embed-frame" src="${esc(htmlUrl)}"
               title="${esc(book.title)}" loading="lazy"
               sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
           </div>`;
+
       } else {
-        // Generic external source
         contentEl.innerHTML = `
-          <div class="lib-reader-embed-wrap" style="text-align:center;padding:60px 40px">
-            <div style="font-size:3rem;margin-bottom:16px">🌐</div>
-            <p style="color:var(--text-muted);margin-bottom:20px">This book is hosted on an external website</p>
-            <a href="${esc(book.externalUrl)}" target="_blank" rel="noopener" class="btn btn-primary">Read Book ↗</a>
+          <div class="lib-panel" style="text-align:center;padding:60px 40px">
+            <div style="font-size:3rem;margin-bottom:16px">📄</div>
+            <div style="font-family:var(--font-condensed);font-size:20px;text-transform:uppercase;margin-bottom:8px">No Preview Available</div>
+            <p style="color:var(--text-muted)">This book cannot be previewed in the reader.</p>
           </div>`;
       }
 
@@ -261,50 +224,7 @@ async function loadBook() {
         </div>`;
     }
 
-    // Uploader profile — for external books with no uploader, show xzily admin
-    let profileUid = book.uploaderId;
-    let profile = null;
-    if (profileUid) {
-      profile = await libStore.getProfile(profileUid).catch(() => null);
-    } else if (book.isExternal) {
-      profile = await libStore.getAdminProfile().catch(() => null);
-      if (profile) profileUid = profile.id;
-    }
-    if (profile) {
-      document.getElementById('uploaderBox').style.display = '';
-      document.getElementById('uploaderRow').innerHTML = `
-          <div class="lib-uploader-av">${avHtml(profile)}</div>
-          <div>
-            <div class="lib-uploader-name">${esc(profile.displayName)}</div>
-            <div class="lib-uploader-sub">${formatCount(profile.booksCount)} book${profile.booksCount !== 1?'s':''} · ${formatCount(profile.followersCount)} follower${profile.followersCount !== 1?'s':''}</div>
-          </div>`;
-
-        const upAct = document.getElementById('uploaderActions');
-
-        const viewBtn = document.createElement('a');
-        viewBtn.className = 'lib-action-btn';
-        viewBtn.href = `library-host-profile.html?uid=${profileUid}`;
-        viewBtn.textContent = 'View Profile';
-        upAct.appendChild(viewBtn);
-
-        if (session && session.id !== profileUid) {
-          let isFollowing = await libStore.getFollowStatus(session.id, profileUid).catch(() => false);
-          const followBtn = document.createElement('button');
-          function updateFollowBtn() {
-            followBtn.className = `lib-follow-btn ${isFollowing ? 'following' : 'not-following'}`;
-            followBtn.textContent = isFollowing ? 'Following' : '+ Follow';
-          }
-          updateFollowBtn();
-          followBtn.addEventListener('click', async () => {
-            isFollowing = await libStore.toggleFollow(session.id, book.uploaderId);
-            updateFollowBtn();
-            toast(isFollowing ? 'Now following ' + profile.displayName : 'Unfollowed');
-          });
-          upAct.appendChild(followBtn);
-        }
-    }
-
-    // Share
+    // ── Share handlers ─────────────────────────────────────────
     const pageUrl = location.href;
     document.getElementById('shareWhatsApp').addEventListener('click', () => {
       window.open(`https://wa.me/?text=${encodeURIComponent(book.title + ' — ' + pageUrl)}`, '_blank');
@@ -313,13 +233,86 @@ async function loadBook() {
       navigator.clipboard.writeText(pageUrl).then(() => toast('Link copied!')).catch(() => {});
     });
 
-    // Load comments
-    loadComments(session);
+    // ── Reveal page immediately — don't wait for sidebar ───────
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('readerWrap').style.display   = '';
+
+    // ── Step 2: load sidebar data + comments all in parallel ───
+    const isExternalAdmin = book.isExternal && !book.uploaderId;
+    const profilePromise  = book.uploaderId
+      ? libStore.getProfile(book.uploaderId).catch(() => null)
+      : isExternalAdmin ? libStore.getAdminProfile().catch(() => null) : Promise.resolve(null);
+
+    const [liked, profile, comments] = await Promise.all([
+      session ? libStore.getLikeStatus(bookId, session.id).catch(() => false) : Promise.resolve(false),
+      profilePromise,
+      libStore.getComments(bookId).catch(() => []),
+    ]);
+
+    // ── Like button ────────────────────────────────────────────
+    let likedNow = liked;
+    const actionsEl = document.getElementById('bookActions');
+    const likeBtn   = document.createElement('button');
+    function updateLikeBtn() {
+      likeBtn.className = `lib-action-btn${likedNow ? ' liked' : ''}`;
+      likeBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="${likedNow?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg> <span id="likeCount">${formatCount(book.likesCount)}</span>`;
+    }
+    updateLikeBtn();
+    likeBtn.addEventListener('click', async () => {
+      if (!session) { toast('Sign in to like books'); return; }
+      likedNow = await libStore.toggleLike(bookId, session.id);
+      const cur = parseInt(document.getElementById('statLikes').textContent.replace(/,/g,'')) || 0;
+      document.getElementById('statLikes').textContent = formatCount(Math.max(0, cur + (likedNow ? 1 : -1)));
+      updateLikeBtn();
+    });
+    actionsEl.appendChild(likeBtn);
+
+    // ── Profile sidebar ─────────────────────────────────────────
+    if (profile) {
+      const profileUid = book.uploaderId || profile.id;
+      document.getElementById('uploaderBoxTitle').textContent = isExternalAdmin ? 'Published by' : 'Uploaded by';
+      document.getElementById('uploaderBox').style.display    = '';
+      document.getElementById('uploaderRow').innerHTML = `
+          <div class="lib-uploader-av">${avHtml(profile)}</div>
+          <div>
+            <div class="lib-uploader-name">${esc(profile.displayName)}</div>
+            <div class="lib-uploader-sub">${formatCount(profile.booksCount)} book${profile.booksCount !== 1?'s':''} · ${formatCount(profile.followersCount)} follower${profile.followersCount !== 1?'s':''}</div>
+          </div>`;
+
+      if (!isExternalAdmin) {
+        // Real uploader — show View Profile + Follow
+        const upAct  = document.getElementById('uploaderActions');
+        const viewBtn = document.createElement('a');
+        viewBtn.className   = 'lib-action-btn';
+        viewBtn.href        = `library-host-profile.html?uid=${profileUid}`;
+        viewBtn.textContent = 'View Profile';
+        upAct.appendChild(viewBtn);
+
+        if (session && session.id !== profileUid) {
+          let isFollowing = await libStore.getFollowStatus(session.id, profileUid).catch(() => false);
+          const followBtn = document.createElement('button');
+          function updateFollowBtn() {
+            followBtn.className   = `lib-follow-btn ${isFollowing ? 'following' : 'not-following'}`;
+            followBtn.textContent = isFollowing ? 'Following' : '+ Follow';
+          }
+          updateFollowBtn();
+          followBtn.addEventListener('click', async () => {
+            isFollowing = await libStore.toggleFollow(session.id, profileUid);
+            updateFollowBtn();
+            toast(isFollowing ? 'Now following ' + profile.displayName : 'Unfollowed');
+          });
+          upAct.appendChild(followBtn);
+        }
+      }
+    }
+
+    // ── Comments ───────────────────────────────────────────────
+    renderComments(comments, session);
     document.getElementById('commentBtn').addEventListener('click', async () => {
       const text = document.getElementById('commentText').value.trim();
       if (!text) return;
       const name = document.getElementById('commentName').value.trim() || session?.name || 'Anonymous';
-      const btn = document.getElementById('commentBtn');
+      const btn  = document.getElementById('commentBtn');
       btn.disabled = true; btn.textContent = 'Posting…';
       try {
         await libStore.addComment(bookId, null, session?.id || null, name, text);
@@ -327,50 +320,44 @@ async function loadBook() {
         toast('Comment posted!');
         const cur = parseInt(document.getElementById('statComments').textContent.replace(/,/g,'')) || 0;
         document.getElementById('statComments').textContent = cur + 1;
-        loadComments(session);
+        const fresh = await libStore.getComments(bookId).catch(() => []);
+        renderComments(fresh, session);
       } catch (e) { toast('Error: ' + e.message); }
       btn.disabled = false; btn.textContent = 'Post Comment';
     });
 
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('readerWrap').style.display = '';
-
   } catch (e) { showError(); }
 }
 
-async function loadComments(session) {
+function renderComments(comments, session) {
   const list = document.getElementById('commentList');
-  try {
-    const comments = await libStore.getComments(bookId);
-    if (!comments.length) {
-      list.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:24px 0;font-size:13px">No comments yet — be the first!</p>`;
-      return;
-    }
-    list.innerHTML = comments.map(c => commentHtml(c)).join('');
-    list.querySelectorAll('[data-reply-btn]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const form = document.getElementById('rf-' + btn.dataset.replyBtn);
-        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
-      });
-    });
-    list.querySelectorAll('[data-reply-submit]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const cid = btn.dataset.replySubmit;
-        const inp = document.getElementById('ri-' + cid);
-        const text = inp?.value.trim();
-        if (!text) return;
-        btn.disabled = true; btn.textContent = '…';
-        try {
-          await libStore.addComment(bookId, cid, session?.id || null, session?.name || 'Anonymous', text);
-          toast('Reply posted!');
-          loadComments(session);
-        } catch (e) { toast('Error: ' + e.message); }
-        btn.disabled = false; btn.textContent = 'Reply';
-      });
-    });
-  } catch (e) {
-    list.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Could not load comments.</p>';
+  if (!comments.length) {
+    list.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:24px 0;font-size:13px">No comments yet — be the first!</p>`;
+    return;
   }
+  list.innerHTML = comments.map(c => commentHtml(c)).join('');
+  list.querySelectorAll('[data-reply-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const form = document.getElementById('rf-' + btn.dataset.replyBtn);
+      if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+  list.querySelectorAll('[data-reply-submit]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cid  = btn.dataset.replySubmit;
+      const inp  = document.getElementById('ri-' + cid);
+      const text = inp?.value.trim();
+      if (!text) return;
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        await libStore.addComment(bookId, cid, session?.id || null, session?.name || 'Anonymous', text);
+        toast('Reply posted!');
+        const fresh = await libStore.getComments(bookId).catch(() => []);
+        renderComments(fresh, session);
+      } catch (e) { toast('Error: ' + e.message); }
+      btn.disabled = false; btn.textContent = 'Reply';
+    });
+  });
 }
 
 function commentHtml(c) {
