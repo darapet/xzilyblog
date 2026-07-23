@@ -85,7 +85,7 @@ async function alreadyExists(externalUrl) {
 }
 
 // ── Save one book ─────────────────────────────────────────
-async function saveBook(book) {
+async function saveBook(book, defaultUploaderId = null) {
   if (!book.title || !book.externalUrl) return false;
   if (await alreadyExists(book.externalUrl)) return false;
 
@@ -100,7 +100,7 @@ async function saveBook(book) {
       is_external:    true,
       category:       book.category    || 'fiction',
       tags:           [],
-      uploader_id:    null,
+      uploader_id:    defaultUploaderId,
       status:         'published',
       language:       book.language    || 'English',
       published_year: book.publishedYear || null,
@@ -222,6 +222,17 @@ async function isExternalLibraryEnabled() {
 async function main() {
   console.log(`[${new Date().toISOString()}] 📚 Xzily Daily Book Fetcher starting…`);
 
+  // Look up the xzily admin profile — used as uploader for all external books
+  let adminUploaderId = null;
+  try {
+    const admins = await dbSelect('profiles', 'select=id&display_name=ilike.xzily&limit=1');
+    if (admins.length) adminUploaderId = admins[0].id;
+    if (adminUploaderId) console.log(`👤 Using admin uploader: ${adminUploaderId}`);
+    else console.warn('⚠️  Could not find xzily admin profile — books will have no uploader');
+  } catch(e) {
+    console.warn('Could not look up admin profile:', e.message);
+  }
+
   const enabled = await isExternalLibraryEnabled();
   if (!enabled) {
     console.log('ℹ️  External library books are disabled in Admin → Settings. Skipping run.');
@@ -239,7 +250,7 @@ async function main() {
   let added   = 0;
   let skipped = 0;
   for (const book of allBooks) {
-    const saved = await saveBook(book);
+    const saved = await saveBook(book, adminUploaderId);
     if (saved) { added++; console.log(`  ✅ Added: ${book.title}`); }
     else         { skipped++; }
     await new Promise(r => setTimeout(r, 120)); // gentle rate-limit
